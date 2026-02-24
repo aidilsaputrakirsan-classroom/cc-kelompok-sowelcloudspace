@@ -38,8 +38,8 @@ def team_info():
         "members": [
             # TODO: Isi dengan data tim Anda
             {"name": "Anjas Geofany Diamare", "nim": "10231016", "role": "Lead Backend"},
-            {"name": "Cantika Ade Qutnindra Maharani", "nim": "NIM2", "role": "Lead Frontend"},
-            {"name": "Nama 3", "nim": "NIM3", "role": "Lead DevOps"},
-            {"name": "Nama 4", "nim": "NIM4", "role": "Lead QA & Docs"},
+            {"name": "Cantika Ade Qutnindra Maharani", "nim": "10231024", "role": "Lead Frontend"},
+            {"name": "Arya Wijaya Saroyo", "nim": "10231020", "role": "Lead DevOps"},
+            {"name": "Meiske Handayani", "nim": "10231052", "role": "Lead QA & Docs"},
         ]
     }
