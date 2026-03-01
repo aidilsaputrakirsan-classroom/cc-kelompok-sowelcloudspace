@@ -19,11 +19,11 @@ function App() {
       });
 
     // Fetch team info
-    fetch("http://localhost:8000/team")
-      .then((res) => res.json())
-      .then((json) => setTeam(json))
-      .catch((err) => console.error("Error:", err));
-  }, []);
+    fetch("http://localhost:8000/teams")
+      .then(res => res.json())
+      .then(json => setTeam(json))
+      .catch(err => console.error("Error:", err))
+  }, [])
 
   return (
     <div style={{ padding: "2rem", fontFamily: "Arial" }}>
