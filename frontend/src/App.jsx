@@ -3,18 +3,24 @@ import Header from "./components/Header"
 import SearchBar from "./components/SearchBar"
 import ItemForm from "./components/ItemForm"
 import ItemList from "./components/ItemList"
-import SortDropdown from "./components/SortDropdown"
-import { fetchItems, createItem, updateItem, deleteItem, checkHealth } from "./services/api"
+import LoginPage from "./components/LoginPage"
+import {
+  fetchItems, createItem, updateItem, deleteItem,
+  checkHealth, login, register, setToken, clearToken,
+} from "./services/api"
 
 function App() {
-  // ==================== STATE ====================
+  // ==================== AUTH STATE ====================
+  const [user, setUser] = useState(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  // ==================== APP STATE ====================
   const [items, setItems] = useState([])
   const [totalItems, setTotalItems] = useState(0)
   const [loading, setLoading] = useState(true)
   const [isConnected, setIsConnected] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [sortBy, setSortBy] = useState("name") // default sorting
 
   // ==================== LOAD DATA ====================
   const loadItems = useCallback(async (search = "") => {
@@ -24,27 +30,64 @@ function App() {
       setItems(data.items)
       setTotalItems(data.total)
     } catch (err) {
+      if (err.message === "UNAUTHORIZED") {
+        handleLogout()
+      }
       console.error("Error loading items:", err)
     } finally {
       setLoading(false)
     }
   }, [])
 
-  // ==================== ON MOUNT ====================
   useEffect(() => {
     checkHealth().then(setIsConnected)
-    loadItems()
-  }, [loadItems])
+  }, [])
 
-  // ==================== HANDLERS ====================
-  const handleSubmit = async (itemData, editId) => {
-    if (editId) {
-      await updateItem(editId, itemData)
-      setEditingItem(null)
-    } else {
-      await createItem(itemData)
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadItems()
     }
-    loadItems(searchQuery)
+  }, [isAuthenticated, loadItems])
+
+  // ==================== AUTH HANDLERS ====================
+
+  const handleLogin = async (email, password) => {
+    const data = await login(email, password)
+    setUser(data.user)
+    setIsAuthenticated(true)
+  }
+
+  const handleRegister = async (userData) => {
+    // Register lalu otomatis login
+    await register(userData)
+    await handleLogin(userData.email, userData.password)
+  }
+
+  const handleLogout = () => {
+    clearToken()
+    setUser(null)
+    setIsAuthenticated(false)
+    setItems([])
+    setTotalItems(0)
+    setEditingItem(null)
+    setSearchQuery("")
+  }
+
+  // ==================== ITEM HANDLERS ====================
+
+  const handleSubmit = async (itemData, editId) => {
+    try {
+      if (editId) {
+        await updateItem(editId, itemData)
+        setEditingItem(null)
+      } else {
+        await createItem(itemData)
+      }
+      loadItems(searchQuery)
+    } catch (err) {
+      if (err.message === "UNAUTHORIZED") handleLogout()
+      else throw err
+    }
   }
 
   const handleEdit = (item) => {
@@ -55,12 +98,12 @@ function App() {
   const handleDelete = async (id) => {
     const item = items.find((i) => i.id === id)
     if (!window.confirm(`Yakin ingin menghapus "${item?.name}"?`)) return
-
     try {
       await deleteItem(id)
       loadItems(searchQuery)
     } catch (err) {
-      alert("Gagal menghapus: " + err.message)
+      if (err.message === "UNAUTHORIZED") handleLogout()
+      else alert("Gagal menghapus: " + err.message)
     }
   }
 
@@ -69,37 +112,31 @@ function App() {
     loadItems(query)
   }
 
-  const handleCancelEdit = () => {
-    setEditingItem(null)
-  }
-
-  // ==================== SORTING ====================
-  const getSortedItems = () => {
-    const sorted = [...items]
-    if (sortBy === "name") {
-      sorted.sort((a, b) => a.name.localeCompare(b.name))
-    } else if (sortBy === "price") {
-      sorted.sort((a, b) => a.price - b.price)
-    } else if (sortBy === "latest") {
-      sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    }
-    return sorted
-  }
-
   // ==================== RENDER ====================
+
+  // Jika belum login, tampilkan login page
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={handleLogin} onRegister={handleRegister} />
+  }
+
+  // Jika sudah login, tampilkan main app
   return (
     <div style={styles.app}>
       <div style={styles.container}>
-        <Header totalItems={totalItems} isConnected={isConnected} />
+        <Header
+          totalItems={totalItems}
+          isConnected={isConnected}
+          user={user}
+          onLogout={handleLogout}
+        />
         <ItemForm
           onSubmit={handleSubmit}
           editingItem={editingItem}
-          onCancelEdit={handleCancelEdit}
+          onCancelEdit={() => setEditingItem(null)}
         />
         <SearchBar onSearch={handleSearch} />
-        <SortDropdown sortBy={sortBy} onChange={setSortBy} />
         <ItemList
-          items={getSortedItems()}
+          items={items}
           onEdit={handleEdit}
           onDelete={handleDelete}
           loading={loading}
@@ -116,10 +153,7 @@ const styles = {
     padding: "2rem",
     fontFamily: "'Segoe UI', Arial, sans-serif",
   },
-  container: {
-    maxWidth: "900px",
-    margin: "0 auto",
-  },
+  container: { maxWidth: "900px", margin: "0 auto" },
 }
 
 export default App
