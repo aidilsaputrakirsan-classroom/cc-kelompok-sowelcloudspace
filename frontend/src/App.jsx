@@ -6,23 +6,70 @@ import ItemList from "./components/ItemList"
 import LoginPage from "./components/LoginPage"
 import {
   fetchItems, createItem, updateItem, deleteItem,
-  checkHealth, login, register, setToken, clearToken,
+  checkHealth, login, register, clearToken,
 } from "./services/api"
 
+// Komponen Toast dengan auto-dismiss
+function Toast({ message, type, onClose }) {
+  if (!message) return null
+  const bgColor = type === "success" ? "#4caf50" : "#f44336"
+
+  // Auto close setelah 3 detik
+  setTimeout(onClose, 3000)
+
+  return (
+    <div style={{
+      position: "fixed", top: "1rem", right: "1rem",
+      backgroundColor: bgColor, color: "#fff",
+      padding: "1rem", borderRadius: "4px",
+      boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+      zIndex: 1000
+    }}>
+      {message}
+      <button
+        onClick={onClose}
+        style={{ marginLeft: "1rem", background: "transparent", border: "none", color: "#fff", cursor: "pointer" }}
+      >
+        ✖
+      </button>
+    </div>
+  )
+}
+
+// Komponen Spinner
+function Spinner() {
+  return (
+    <div style={{ textAlign: "center", margin: "1rem" }}>
+      <div className="spinner" style={{
+        border: "4px solid #f3f3f3",
+        borderTop: "4px solid #3498db",
+        borderRadius: "50%",
+        width: "40px",
+        height: "40px",
+        animation: "spin 1s linear infinite",
+        margin: "0 auto"
+      }} />
+      <style>
+        {`@keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }`}
+      </style>
+    </div>
+  )
+}
+
 function App() {
-  // ==================== AUTH STATE ====================
   const [user, setUser] = useState(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  // ==================== APP STATE ====================
   const [items, setItems] = useState([])
   const [totalItems, setTotalItems] = useState(0)
   const [loading, setLoading] = useState(true)
   const [isConnected, setIsConnected] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [toast, setToast] = useState({ message: "", type: "" })
 
-  // ==================== LOAD DATA ====================
   const loadItems = useCallback(async (search = "") => {
     setLoading(true)
     try {
@@ -33,7 +80,7 @@ function App() {
       if (err.message === "UNAUTHORIZED") {
         handleLogout()
       }
-      console.error("Error loading items:", err)
+      setToast({ message: "Gagal memuat data", type: "error" })
     } finally {
       setLoading(false)
     }
@@ -49,18 +96,25 @@ function App() {
     }
   }, [isAuthenticated, loadItems])
 
-  // ==================== AUTH HANDLERS ====================
-
   const handleLogin = async (email, password) => {
-    const data = await login(email, password)
-    setUser(data.user)
-    setIsAuthenticated(true)
+    try {
+      const data = await login(email, password)
+      setUser(data.user)
+      setIsAuthenticated(true)
+      setToast({ message: "Login berhasil", type: "success" })
+    } catch (err) {
+      setToast({ message: "Login gagal: " + err.message, type: "error" })
+    }
   }
 
   const handleRegister = async (userData) => {
-    // Register lalu otomatis login
-    await register(userData)
-    await handleLogin(userData.email, userData.password)
+    try {
+      await register(userData)
+      await handleLogin(userData.email, userData.password)
+      setToast({ message: "Registrasi berhasil", type: "success" })
+    } catch (err) {
+      setToast({ message: "Registrasi gagal: " + err.message, type: "error" })
+    }
   }
 
   const handleLogout = () => {
@@ -71,22 +125,26 @@ function App() {
     setTotalItems(0)
     setEditingItem(null)
     setSearchQuery("")
+    setToast({ message: "Logout berhasil", type: "success" })
   }
 
-  // ==================== ITEM HANDLERS ====================
-
   const handleSubmit = async (itemData, editId) => {
+    setLoading(true)
     try {
       if (editId) {
         await updateItem(editId, itemData)
         setEditingItem(null)
+        setToast({ message: "Item berhasil diperbarui", type: "success" })
       } else {
         await createItem(itemData)
+        setToast({ message: "Item berhasil ditambahkan", type: "success" })
       }
       loadItems(searchQuery)
     } catch (err) {
       if (err.message === "UNAUTHORIZED") handleLogout()
-      else throw err
+      else setToast({ message: "Gagal menyimpan: " + err.message, type: "error" })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -98,12 +156,16 @@ function App() {
   const handleDelete = async (id) => {
     const item = items.find((i) => i.id === id)
     if (!window.confirm(`Yakin ingin menghapus "${item?.name}"?`)) return
+    setLoading(true)
     try {
       await deleteItem(id)
       loadItems(searchQuery)
+      setToast({ message: "Item berhasil dihapus", type: "success" })
     } catch (err) {
       if (err.message === "UNAUTHORIZED") handleLogout()
-      else alert("Gagal menghapus: " + err.message)
+      else setToast({ message: "Gagal menghapus: " + err.message, type: "error" })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -112,14 +174,10 @@ function App() {
     loadItems(query)
   }
 
-  // ==================== RENDER ====================
-
-  // Jika belum login, tampilkan login page
   if (!isAuthenticated) {
     return <LoginPage onLogin={handleLogin} onRegister={handleRegister} />
   }
 
-  // Jika sudah login, tampilkan main app
   return (
     <div style={styles.app}>
       <div style={styles.container}>
@@ -135,6 +193,7 @@ function App() {
           onCancelEdit={() => setEditingItem(null)}
         />
         <SearchBar onSearch={handleSearch} />
+        {loading && <Spinner />}
         <ItemList
           items={items}
           onEdit={handleEdit}
@@ -142,6 +201,11 @@ function App() {
           loading={loading}
         />
       </div>
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: "", type: "" })}
+      />
     </div>
   )
 }

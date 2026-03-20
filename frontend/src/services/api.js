@@ -1,7 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
-// ==================== TOKEN MANAGEMENT ====================
-
 let authToken = null
 
 export function setToken(token) {
@@ -24,7 +22,6 @@ function authHeaders() {
   return headers
 }
 
-// Helper: handle response errors
 async function handleResponse(response) {
   if (response.status === 401) {
     clearToken()
@@ -34,12 +31,9 @@ async function handleResponse(response) {
     const error = await response.json().catch(() => ({}))
     throw new Error(error.detail || `Request gagal (${response.status})`)
   }
-  // 204 No Content
   if (response.status === 204) return null
   return response.json()
 }
-
-// ==================== AUTH API ====================
 
 export async function register(userData) {
   const response = await fetch(`${API_URL}/auth/register`, {
@@ -57,6 +51,9 @@ export async function login(email, password) {
     body: JSON.stringify({ email, password }),
   })
   const data = await handleResponse(response)
+  if (!data.access_token) {
+    throw new Error(data.detail || "Email atau password salah")
+  }
   setToken(data.access_token)
   return data
 }
@@ -67,8 +64,6 @@ export async function getMe() {
   })
   return handleResponse(response)
 }
-
-// ==================== ITEMS API ====================
 
 export async function fetchItems(search = "", skip = 0, limit = 20) {
   const params = new URLSearchParams()
