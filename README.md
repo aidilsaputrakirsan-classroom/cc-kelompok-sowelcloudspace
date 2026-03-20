@@ -65,7 +65,7 @@ npm run dev
 | 1      | Setup & Hello World    | ✅     |
 | 2      | REST API + Database    | ✅     |
 | 3      | React Frontend         | ✅     |
-| 4      | Full-Stack Integration | ⬜     |
+| 4      | Full-Stack Integration | ✅     |
 | 5-7    | Docker & Compose       | ⬜     |
 | 8      | UTS Demo               | ⬜     |
 | 9-11   | CI/CD Pipeline         | ⬜     |
@@ -79,13 +79,15 @@ npm run dev
 ```text
 cc-kelompok-sowelcloudspace/
 ├── backend/
-│   ├── main.py                                  # FastAPI Backend
-│   ├── database.py                              # Entry point aplikasi backend
-│   ├── models.py                                # Definisi tabel database
-│   ├── schemas.py                               # Validasi data input/output
-│   ├── crud.py                                  # Logika operasional database 
-│   ├── requirements.txt                         # Updated
-│   └── .env.example                             # New
+│   ├── main.py                                 # Updated (auth endpoints, CORS fix)
+│   ├── auth.py                                 # BARU (JWT utilities)
+│   ├── database.py
+│   ├── models.py                               # Updated (+ User model)
+│   ├── schemas.py                              # Updated (+ auth schemas)
+│   ├── crud.py                                 # Updated (+ user CRUD)
+│   ├── requirements.txt                        # Updated (+ jose, passlib, bcrypt)
+│   ├── .env                                    # Updated (+ JWT & CORS config)
+│   └── .env.example                            # Updated
 
 ├── frontend/                                    # React Frontend (Vite)
 │   ├── public/                                  # Aset statis publik
@@ -119,17 +121,52 @@ cc-kelompok-sowelcloudspace/
 └── README.md
 ```
 
-# API Endpoints Documentation
+# API Endpoints Documentation (updated)
 Berikut adalah daftar endpoint yang telah diimplementasikan untuk mengelola data item:
 
-|   Method   |    Endpoint   |                     Penjelasan                       |
-| -----------| ------------- | -----------------------------------------------------|
-| **GET**    | `/health`     | Mengecek apakah server API berjalan dengan baik.     |
-| **GET**    | `/items`      | Mengambil seluruh daftar data item dari database.    |
-| **POST**   | `/items`      | Menambahkan data item baru ke dalam database.        |
-| **GET**    | `/items/{id}` | Mengambil detail informasi satu item berdasarkan ID. |
-| **PUT**    | `/items/{id}` | Memperbarui data item yang sudah ada berdasarkan ID. |
-| **DELETE** | `/items/{id}` | Menghapus data item dari database berdasarkan ID.    |
+
+## 🔐 Authentication
+
+| Method   | Endpoint        | Auth Required | Penjelasan |
+|-----------|----------------|---------------|------------|
+| **POST**  | `/auth/register` | No  | Mendaftarkan user baru ke sistem. |
+| **POST**  | `/auth/login`    | No  | Login user dan mendapatkan JWT access token. |
+
+---
+
+## 📦 Items
+
+| Method   | Endpoint        | Auth Required | Penjelasan |
+|-----------|----------------|---------------|------------|
+| **GET**    | `/health`        | No  | Mengecek apakah server API berjalan dengan baik. |
+| **GET**    | `/items`         | Yes | Mengambil seluruh daftar data item dari database. |
+| **POST**   | `/items`         | Yes | Menambahkan data item baru ke dalam database. |
+| **GET**    | `/items/{id}`    | Yes | Mengambil detail satu item berdasarkan ID. |
+| **PUT**    | `/items/{id}`    | Yes | Memperbarui data item berdasarkan ID. |
+| **DELETE** | `/items/{id}`    | Yes | Menghapus data item berdasarkan ID. |
+
+---
+
+## 🔑 Authentication Flow
+
+1. Register melalui endpoint `/auth/register`
+2. Login melalui endpoint `/auth/login`
+3. Copy `access_token` dari response
+4. Gunakan token pada header request:
+
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+## ❌ Authentication Error Response
+
+| Status Code | Keterangan |
+|-------------|------------|
+| 401 | Token tidak valid atau sudah expired |
+| 401 | User tidak ditemukan |
+| 403 | Akun tidak aktif |
 
 
 ## 1. Persiapan Database PostgreSQL
@@ -628,4 +665,23 @@ Seluruh endpoint telah diuji melalui Swagger UI dan berfungsi sesuai dengan spes
 | 7 | GET | /health | - | Status server healthy | 200 OK | ✅ Sesuai |
 | 8 | GET | /team | - | Informasi tim pengembang | 200 OK | ✅ Sesuai |
 
+
+# 🧪 Hasil Testing Modul 4
+
+## 🔍 Testing Scenario: Authentication & Items Flow
+
+| No | Skenario Testing | Hasil | Keterangan |
+|----|------------------|--------|------------|
+| 1 | Login page muncul | ✅ Berhasil | Halaman login tampil dengan normal saat aplikasi dibuka |
+| 2 | Register user baru | ✅ Berhasil | User baru berhasil dibuat dan tersimpan di database |
+| 3 | Otomatis login setelah register | ✅ Berhasil | Sistem langsung memberikan akses setelah registrasi |
+| 4 | Main app + items muncul | ✅ Berhasil | Dashboard dan daftar items tampil dengan benar |
+| 5 | Nama user di header | ✅ Berhasil | Nama user login tampil sesuai akun |
+| 6 | CRUD items berfungsi | ✅ Berhasil | Create, Read, Update, Delete berjalan normal |
+| 7 | Klik Logout | ✅ Berhasil | User berhasil logout dari sistem |
+| 8 | Kembali ke login page | ✅ Berhasil | Setelah logout, diarahkan ke halaman login |
+| 9 | Login kembali dengan akun tadi | ✅ Berhasil | User dapat login kembali tanpa kendala |
+| 10 | Data items masih ada | ✅ Berhasil | Data tetap tersimpan di database (persistent) |
+
+---
 
