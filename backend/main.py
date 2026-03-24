@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from database import engine, get_db
 from models import Base, User
 from schemas import (
-    ItemCreate, ItemUpdate, ItemResponse, ItemListResponse,
+    ItemCreate, ItemUpdate, ItemResponse, ItemListResponse, ItemStatsResponse,
     UserCreate, UserResponse, LoginRequest, TokenResponse,
 )
 from auth import create_access_token, get_current_user
@@ -109,6 +109,18 @@ def list_items(
 ):
     """Ambil daftar items. **Membutuhkan autentikasi.**"""
     return crud.get_items(db=db, skip=skip, limit=limit, search=search)
+
+
+@app.get("/items/stats", response_model=ItemStatsResponse)
+def get_item_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Statistik items: total, rata-rata harga, stok, dll.
+    **Membutuhkan autentikasi.**
+    """
+    return crud.get_item_stats(db=db)
 
 
 @app.get("/items/{item_id}", response_model=ItemResponse)

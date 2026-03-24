@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from models import Item, User
 from schemas import ItemCreate, ItemUpdate, UserCreate
 from auth import hash_password, verify_password
@@ -73,6 +73,37 @@ def delete_item(db: Session, item_id: int) -> bool:
     db.commit()
     return True
 
+
+def get_item_stats(db: Session) -> dict:
+    """Hitung statistik item: total, quantity, harga rata-rata/min/max, total value."""
+    total_items = db.query(func.count(Item.id)).scalar() or 0
+
+    if total_items == 0:
+        return {
+            "total_items": 0,
+            "total_quantity": 0,
+            "average_price": 0.0,
+            "min_price": 0.0,
+            "max_price": 0.0,
+            "total_value": 0.0,
+        }
+
+    stats = db.query(
+        func.sum(Item.quantity).label("total_quantity"),
+        func.avg(Item.price).label("average_price"),
+        func.min(Item.price).label("min_price"),
+        func.max(Item.price).label("max_price"),
+        func.sum(Item.price * Item.quantity).label("total_value"),
+    ).first()
+
+    return {
+        "total_items": total_items,
+        "total_quantity": int(stats.total_quantity or 0),
+        "average_price": round(float(stats.average_price or 0), 2),
+        "min_price": float(stats.min_price or 0),
+        "max_price": float(stats.max_price or 0),
+        "total_value": float(stats.total_value or 0),
+    }
 
 
 # ==================== USER CRUD ====================
