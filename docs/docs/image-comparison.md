@@ -7,6 +7,8 @@ Perintah yang digunakan:
 ```bash
 docker images
 ```
+Perintah tersebut digunakan untuk menampilkan daftar Docker image yang tersedia di komputer lokal beserta informasi detailnya. Informasi yang ditampilkan biasanya meliputi nama repository, tag (versi), image ID, waktu pembuatan, serta ukuran atau disk usage dari masing-masing image. Dalam konteks tugas ini, perintah docker images digunakan untuk melihat dan membandingkan ukuran image python:3.12, python:3.12-slim, dan python:3.12-alpine yang telah diunduh sebelumnya, sehingga hasilnya dapat dicatat dan dianalisis pada dokumentasi.
+
 
 Hasil yang diperoleh:
 
