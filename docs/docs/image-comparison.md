@@ -1,4 +1,4 @@
-# Perbandingan Ukuran Docker Image Python 3.12
+# Perbandingan Ukuran Docker Image python:3.12 vs python:3.12-slim vs python:3.12-alpine
 
 ## Hasil Pengujian
 
