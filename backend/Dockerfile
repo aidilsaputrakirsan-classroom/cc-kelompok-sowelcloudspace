@@ -25,14 +25,21 @@ RUN pip install --no-cache-dir -r requirements.txt
 #    Layer ini rebuild setiap kali kode berubah
 COPY . .
 
+# 6.5. Buat non-root user untuk security best practice
+RUN useradd -m appuser && \
+    chown -R appuser:appuser /app
+
 # 7. Dokumentasikan port yang digunakan
 EXPOSE 8000
 
-# 8. Healthcheck — cek endpoint /health setiap 30 detik
+# 8. Switch ke non-root user
+USER appuser
+
+# 9. Healthcheck — cek endpoint /health setiap 30 detik
 #    Docker akan menandai container sebagai healthy/unhealthy
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# 9. Command untuk menjalankan aplikasi
-#    --host 0.0.0.0: agar bisa diakses dari luar container
+# 10. Command untuk menjalankan aplikasi
+#     --host 0.0.0.0: agar bisa diakses dari luar container
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
