@@ -1,181 +1,147 @@
 import os
-from dotenv import load_dotenv
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from jose import jwt, JWTError
+from dotenv import load_dotenv
 
-from database import engine, get_db
-from models import Base, User
-from schemas import (
-    ItemCreate, ItemUpdate, ItemResponse, ItemListResponse, ItemStatsResponse,
-    UserCreate, UserResponse, LoginRequest, TokenResponse,
-)
-from auth import create_access_token, get_current_user
+from database import engine, Base, get_db
 import crud
+from schemas import TaskCreate, TaskUpdate, TaskResponse, UserCreate, LoginRequest
+from auth import create_token
 
 load_dotenv()
 
-# Buat semua tabel
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(
-    title="Cloud App API",
-    description="REST API untuk mata kuliah Komputasi Awan — SI ITK",
-    version="0.4.0",
-)
+app = FastAPI(title="Sowel Task API")
 
-# ==================== CORS (FIXED) ====================
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
-origins_list = [origin.strip() for origin in allowed_origins.split(",")]
+# ==================== CONFIG ====================
+SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey123")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
 
+# ==================== CORS ====================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins_list,
-    allow_credentials=True,
+    allow_origins=[os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# ==================== AUTH ====================
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-# ==================== HEALTH CHECK ====================
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_id
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
+# ==================== ROOT & HEALTH ====================
+@app.get("/")
+def root():
+    return {"message": "Sowel Task API running"}
+
 
 @app.get("/health")
-def health_check():
-    return {"status": "healthy", "version": "0.4.0"}
+def health():
+    return {"status": "healthy"}
 
 
-# ==================== AUTH ENDPOINTS (PUBLIC) ====================
+# ==================== AUTH ENDPOINT ====================
 
-@app.post("/auth/register", response_model=UserResponse, status_code=201)
-def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    """
-    Registrasi user baru.
-    
-    - **email**: Email unik (akan digunakan untuk login)
-    - **name**: Nama lengkap
-    - **password**: Minimal 8 karakter
-    """
-    user = crud.create_user(db=db, user_data=user_data)
-    if not user:
-        raise HTTPException(status_code=400, detail="Email sudah terdaftar")
-    return user
-
-
-@app.post("/auth/login", response_model=TokenResponse)
-def login(login_data: LoginRequest, db: Session = Depends(get_db)):
-    """
-    Login dan dapatkan JWT token.
-    
-    Token berlaku selama 60 menit (default).
-    Gunakan token di header: `Authorization: Bearer <token>`
-    """
-    user = crud.authenticate_user(db=db, email=login_data.email, password=login_data.password)
-    if not user:
-        raise HTTPException(status_code=401, detail="Email atau password salah")
-
-    token = create_access_token(data={"sub": str(user.id)})
+@app.post("/auth/register")
+def register(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = crud.create_user(db, user)
+    if not db_user:
+        raise HTTPException(400, "Email already registered")
     return {
-        "access_token": token,
-        "token_type": "bearer",
-        "user": user,
+        "id": db_user.id,
+        "email": db_user.email,
+        "name": db_user.name,
     }
 
 
-@app.get("/auth/me", response_model=UserResponse)
-def get_me(current_user: User = Depends(get_current_user)):
-    """Ambil profil user yang sedang login."""
-    return current_user
-
-
-# ==================== ITEM ENDPOINTS (PROTECTED) ====================
-
-@app.post("/items", response_model=ItemResponse, status_code=201)
-def create_item(
-    item: ItemCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Buat item baru. **Membutuhkan autentikasi.**"""
-    return crud.create_item(db=db, item_data=item)
-
-
-@app.get("/items", response_model=ItemListResponse)
-def list_items(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
-    search: str = Query(None),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Ambil daftar items. **Membutuhkan autentikasi.**"""
-    return crud.get_items(db=db, skip=skip, limit=limit, search=search)
-
-
-@app.get("/items/stats", response_model=ItemStatsResponse)
-def get_item_stats(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
+@app.post("/auth/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """
-    Statistik items: total, rata-rata harga, stok, dll.
-    **Membutuhkan autentikasi.**
+    Login menggunakan OAuth2 password flow.
+    - username: isi dengan email
+    - password: isi dengan password
+    Swagger UI Authorize button akan otomatis menggunakan form ini.
     """
-    return crud.get_item_stats(db=db)
+    user = crud.authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(401, "Email atau password salah")
+
+    token = create_token(user.id)
+    return {"access_token": token, "token_type": "bearer"}
 
 
-@app.get("/items/{item_id}", response_model=ItemResponse)
-def get_item(
-    item_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Ambil satu item. **Membutuhkan autentikasi.**"""
-    item = crud.get_item(db=db, item_id=item_id)
-    if not item:
-        raise HTTPException(status_code=404, detail=f"Item {item_id} tidak ditemukan")
-    return item
+# ==================== TASK (PROTECTED) ====================
+
+# CREATE
+@app.post("/tasks", response_model=TaskResponse)
+def create(task: TaskCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    return crud.create_task(db, task)
 
 
-@app.put("/items/{item_id}", response_model=ItemResponse)
-def update_item(
-    item_id: int,
-    item: ItemUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Update item. **Membutuhkan autentikasi.**"""
-    updated = crud.update_item(db=db, item_id=item_id, item_data=item)
-    if not updated:
-        raise HTTPException(status_code=404, detail=f"Item {item_id} tidak ditemukan")
-    return updated
+# READ ALL
+@app.get("/tasks")
+def read_all(db: Session = Depends(get_db), user=Depends(get_current_user)):
+    return crud.get_tasks(db)
 
 
-@app.delete("/items/{item_id}", status_code=204)
-def delete_item(
-    item_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Hapus item. **Membutuhkan autentikasi.**"""
-    success = crud.delete_item(db=db, item_id=item_id)
-    if not success:
-        raise HTTPException(status_code=404, detail=f"Item {item_id} tidak ditemukan")
-    return None
+# READ ONE
+@app.get("/tasks/{task_id}", response_model=TaskResponse)
+def read_one(task_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    task = crud.get_task(db, task_id)
+    if not task:
+        raise HTTPException(404, "Task not found")
+    return task
 
 
-# ==================== TEAM INFO ====================
+# UPDATE
+@app.put("/tasks/{task_id}", response_model=TaskResponse)
+def update(task_id: int, data: TaskUpdate, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    task = crud.update_task(db, task_id, data)
+    if not task:
+        raise HTTPException(404, "Task not found")
+    return task
 
-@app.get("/team")
-def team_info():
-    """Informasi tim."""
+
+# DELETE
+@app.delete("/tasks/{task_id}")
+def delete(task_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    if not crud.delete_task(db, task_id):
+        raise HTTPException(404, "Task not found")
+    return {"message": "Deleted"}
+
+
+# COMPLETE TASK
+@app.put("/tasks/{task_id}/complete")
+def complete(task_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    task = crud.update_task(db, task_id, TaskUpdate(status="done"))
+    return task
+
+
+# STATS — harus di atas route {task_id} agar tidak konflik,
+# tapi FastAPI match berdasarkan urutan, jadi letakkan di bawah tidak masalah
+# selama path-nya unik (/tasks/stats vs /tasks/{task_id})
+@app.get("/tasks/stats")
+def stats(db: Session = Depends(get_db), user=Depends(get_current_user)):
+    tasks = crud.get_tasks(db)
+    total = len(tasks)
+    done = len([t for t in tasks if t.status == "done"])
     return {
-        "team": "cloud-team-sowelcloudspace",
-        "members": [
-            # TODO: Isi dengan data tim Anda
-            {"name": "Anjas Geofany Diamare", "nim": "10231016", "role": "Lead Backend"},
-            {"name": "Cantika Ade Qutnindra Maharani", "nim": "10231024", "role": "Lead Frontend"},
-            {"name": "Arya Wijaya Saroyo", "nim": "10231020", "role": "Lead DevOps"},
-            {"name": "Meiske Handayani", "nim": "10231052", "role": "Lead QA & Docs"},
-        ],
+        "total": total,
+        "completed": done,
+        "pending": total - done,
     }
-
