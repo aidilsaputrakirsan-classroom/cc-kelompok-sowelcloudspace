@@ -1,19 +1,60 @@
-/* Reset default Vite styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 * {
   box-sizing: border-box;
-}
-
-body {
   margin: 0;
   padding: 0;
 }
 
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
 input:focus {
-  border-color: #2E75B6 !important;
+  border-color: #7c5cbf !important;
+  outline: none;
+}
+
+button {
+  font-family: 'Inter', sans-serif;
 }
 
 button:hover {
-  opacity: 0.9;
+  opacity: 0.92;
   transform: translateY(-1px);
-  transition: all 0.15s;
+  transition: all 0.15s ease;
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+::selection {
+  background: #c4b5fd;
+  color: white;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c4b5fd;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7c5cbf;
 }

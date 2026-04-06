@@ -1,81 +1,75 @@
 import { useState, useEffect, useCallback } from "react"
 import Header from "./components/Header"
-import SearchBar from "./components/SearchBar"
-import ItemForm from "./components/ItemForm"
-import ItemList from "./components/ItemList"
+import TaskForm from "./components/TaskForm"
+import TaskList from "./components/TaskList"
 import LoginPage from "./components/LoginPage"
 import {
-  fetchItems, createItem, updateItem, deleteItem,
-  checkHealth, login, register, clearToken,
+  fetchTasks, createTask, updateTask, deleteTask, completeTask,
+  checkHealth, login, register, clearToken, getToken,
 } from "./services/api"
 
 // Komponen Toast dengan auto-dismiss
 function Toast({ message, type, onClose }) {
   if (!message) return null
-  const bgColor = type === "success" ? "#4caf50" : "#f44336"
 
-  // Auto close setelah 3 detik
-  setTimeout(onClose, 3000)
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000)
+    return () => clearTimeout(timer)
+  }, [message, onClose])
 
   return (
     <div style={{
-      position: "fixed", top: "1rem", right: "1rem",
-      backgroundColor: bgColor, color: "#fff",
-      padding: "1rem", borderRadius: "4px",
-      boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-      zIndex: 1000
+      position: "fixed", top: "1.5rem", right: "1.5rem",
+      background: type === "success"
+        ? "linear-gradient(135deg, #34d399, #10b981)"
+        : "linear-gradient(135deg, #f87171, #ef4444)",
+      color: "#fff",
+      padding: "1rem 1.5rem", borderRadius: "12px",
+      boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
+      zIndex: 1000,
+      display: "flex", alignItems: "center", gap: "0.75rem",
+      fontFamily: "'Inter', sans-serif",
+      fontSize: "0.9rem",
+      fontWeight: 500,
+      animation: "slideIn 0.3s ease-out",
     }}>
+      <span>{type === "success" ? "✅" : "❌"}</span>
       {message}
       <button
         onClick={onClose}
-        style={{ marginLeft: "1rem", background: "transparent", border: "none", color: "#fff", cursor: "pointer" }}
+        style={{
+          marginLeft: "0.5rem", background: "rgba(255,255,255,0.2)",
+          border: "none", color: "#fff", cursor: "pointer",
+          borderRadius: "50%", width: "24px", height: "24px",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "0.8rem",
+        }}
       >
-        ✖
+        ✕
       </button>
-    </div>
-  )
-}
-
-// Komponen Spinner
-function Spinner() {
-  return (
-    <div style={{ textAlign: "center", margin: "1rem" }}>
-      <div className="spinner" style={{
-        border: "4px solid #f3f3f3",
-        borderTop: "4px solid #3498db",
-        borderRadius: "50%",
-        width: "40px",
-        height: "40px",
-        animation: "spin 1s linear infinite",
-        margin: "0 auto"
-      }} />
-      <style>
-        {`@keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }`}
-      </style>
+      <style>{`
+        @keyframes slideIn {
+          from { transform: translateX(100px); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
     </div>
   )
 }
 
 function App() {
-  const [user, setUser] = useState(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [items, setItems] = useState([])
-  const [totalItems, setTotalItems] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(!!getToken())
+  const [tasks, setTasks] = useState([])
+  const [loading, setLoading] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
-  const [editingItem, setEditingItem] = useState(null)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [editingTask, setEditingTask] = useState(null)
   const [toast, setToast] = useState({ message: "", type: "" })
 
-  const loadItems = useCallback(async (search = "") => {
+  const loadTasks = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await fetchItems(search)
-      setItems(data.items)
-      setTotalItems(data.total)
+      const data = await fetchTasks()
+      setTasks(Array.isArray(data) ? data : [])
     } catch (err) {
       if (err.message === "UNAUTHORIZED") {
         handleLogout()
@@ -92,54 +86,43 @@ function App() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      loadItems()
+      loadTasks()
     }
-  }, [isAuthenticated, loadItems])
+  }, [isAuthenticated, loadTasks])
 
   const handleLogin = async (email, password) => {
-    try {
-      const data = await login(email, password)
-      setUser(data.user)
-      setIsAuthenticated(true)
-      setToast({ message: "Login berhasil", type: "success" })
-    } catch (err) {
-      setToast({ message: "Login gagal: " + err.message, type: "error" })
-    }
+    const data = await login(email, password)
+    setIsAuthenticated(true)
+    setToast({ message: "Login berhasil!", type: "success" })
+    return data
   }
 
   const handleRegister = async (userData) => {
-    try {
-      await register(userData)
-      await handleLogin(userData.email, userData.password)
-      setToast({ message: "Registrasi berhasil", type: "success" })
-    } catch (err) {
-      setToast({ message: "Registrasi gagal: " + err.message, type: "error" })
-    }
+    await register(userData)
+    await handleLogin(userData.email, userData.password)
+    setToast({ message: "Registrasi berhasil!", type: "success" })
   }
 
   const handleLogout = () => {
     clearToken()
-    setUser(null)
     setIsAuthenticated(false)
-    setItems([])
-    setTotalItems(0)
-    setEditingItem(null)
-    setSearchQuery("")
+    setTasks([])
+    setEditingTask(null)
     setToast({ message: "Logout berhasil", type: "success" })
   }
 
-  const handleSubmit = async (itemData, editId) => {
+  const handleSubmit = async (taskData, editId) => {
     setLoading(true)
     try {
       if (editId) {
-        await updateItem(editId, itemData)
-        setEditingItem(null)
-        setToast({ message: "Item berhasil diperbarui", type: "success" })
+        await updateTask(editId, taskData)
+        setEditingTask(null)
+        setToast({ message: "Task berhasil diperbarui", type: "success" })
       } else {
-        await createItem(itemData)
-        setToast({ message: "Item berhasil ditambahkan", type: "success" })
+        await createTask(taskData)
+        setToast({ message: "Task berhasil ditambahkan", type: "success" })
       }
-      loadItems(searchQuery)
+      loadTasks()
     } catch (err) {
       if (err.message === "UNAUTHORIZED") handleLogout()
       else setToast({ message: "Gagal menyimpan: " + err.message, type: "error" })
@@ -148,19 +131,19 @@ function App() {
     }
   }
 
-  const handleEdit = (item) => {
-    setEditingItem(item)
+  const handleEdit = (task) => {
+    setEditingTask(task)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   const handleDelete = async (id) => {
-    const item = items.find((i) => i.id === id)
-    if (!window.confirm(`Yakin ingin menghapus "${item?.name}"?`)) return
+    const task = tasks.find((t) => t.id === id)
+    if (!window.confirm(`Yakin ingin menghapus "${task?.title}"?`)) return
     setLoading(true)
     try {
-      await deleteItem(id)
-      loadItems(searchQuery)
-      setToast({ message: "Item berhasil dihapus", type: "success" })
+      await deleteTask(id)
+      loadTasks()
+      setToast({ message: "Task berhasil dihapus", type: "success" })
     } catch (err) {
       if (err.message === "UNAUTHORIZED") handleLogout()
       else setToast({ message: "Gagal menghapus: " + err.message, type: "error" })
@@ -169,35 +152,62 @@ function App() {
     }
   }
 
-  const handleSearch = (query) => {
-    setSearchQuery(query)
-    loadItems(query)
+  const handleComplete = async (id) => {
+    try {
+      await completeTask(id)
+      loadTasks()
+      setToast({ message: "Task selesai! 🎉", type: "success" })
+    } catch (err) {
+      if (err.message === "UNAUTHORIZED") handleLogout()
+      else setToast({ message: "Gagal: " + err.message, type: "error" })
+    }
   }
 
   if (!isAuthenticated) {
-    return <LoginPage onLogin={handleLogin} onRegister={handleRegister} />
+    return (
+      <>
+        <LoginPage onLogin={handleLogin} onRegister={handleRegister} />
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ message: "", type: "" })}
+        />
+      </>
+    )
   }
 
   return (
-    <div style={styles.app}>
-      <div style={styles.container}>
+    <div style={appStyles.app}>
+      <div style={appStyles.container}>
         <Header
-          totalItems={totalItems}
+          totalTasks={tasks.length}
+          completedTasks={tasks.filter(t => t.status === "done").length}
           isConnected={isConnected}
-          user={user}
           onLogout={handleLogout}
         />
-        <ItemForm
+        <TaskForm
           onSubmit={handleSubmit}
-          editingItem={editingItem}
-          onCancelEdit={() => setEditingItem(null)}
+          editingTask={editingTask}
+          onCancelEdit={() => setEditingTask(null)}
         />
-        <SearchBar onSearch={handleSearch} />
-        {loading && <Spinner />}
-        <ItemList
-          items={items}
+        {loading && (
+          <div style={{ textAlign: "center", margin: "2rem" }}>
+            <div style={{
+              border: "3px solid #e5e7eb",
+              borderTop: "3px solid #7c5cbf",
+              borderRadius: "50%",
+              width: "36px", height: "36px",
+              animation: "spin 0.8s linear infinite",
+              margin: "0 auto",
+            }} />
+            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+          </div>
+        )}
+        <TaskList
+          tasks={tasks}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onComplete={handleComplete}
           loading={loading}
         />
       </div>
@@ -210,12 +220,12 @@ function App() {
   )
 }
 
-const styles = {
+const appStyles = {
   app: {
     minHeight: "100vh",
-    backgroundColor: "#f0f2f5",
+    background: "linear-gradient(135deg, #f3f0ff 0%, #ede9fe 50%, #f5f3ff 100%)",
     padding: "2rem",
-    fontFamily: "'Segoe UI', Arial, sans-serif",
+    fontFamily: "'Inter', 'Segoe UI', sans-serif",
   },
   container: { maxWidth: "900px", margin: "0 auto" },
 }

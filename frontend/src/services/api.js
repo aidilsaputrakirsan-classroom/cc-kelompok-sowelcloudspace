@@ -1,9 +1,10 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
 
-let authToken = null
+let authToken = localStorage.getItem("sowel_token") || null
 
 export function setToken(token) {
   authToken = token
+  localStorage.setItem("sowel_token", token)
 }
 
 export function getToken() {
@@ -12,10 +13,14 @@ export function getToken() {
 
 export function clearToken() {
   authToken = null
+  localStorage.removeItem("sowel_token")
 }
 
-function authHeaders() {
-  const headers = { "Content-Type": "application/json" }
+function authHeaders(isForm = false) {
+  const headers = {}
+  if (!isForm) {
+    headers["Content-Type"] = "application/json"
+  }
   if (authToken) {
     headers["Authorization"] = `Bearer ${authToken}`
   }
@@ -35,6 +40,8 @@ async function handleResponse(response) {
   return response.json()
 }
 
+// ==================== AUTH ====================
+
 export async function register(userData) {
   const response = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
@@ -45,10 +52,15 @@ export async function register(userData) {
 }
 
 export async function login(email, password) {
+  // OAuth2PasswordRequestForm expects form-urlencoded with "username" field
+  const formData = new URLSearchParams()
+  formData.append("username", email)
+  formData.append("password", password)
+
   const response = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: formData.toString(),
   })
   const data = await handleResponse(response)
   if (!data.access_token) {
@@ -58,46 +70,58 @@ export async function login(email, password) {
   return data
 }
 
-export async function getMe() {
-  const response = await fetch(`${API_URL}/auth/me`, {
+// ==================== TASKS ====================
+
+export async function fetchTasks() {
+  const response = await fetch(`${API_URL}/tasks`, {
     headers: authHeaders(),
   })
   return handleResponse(response)
 }
 
-export async function fetchItems(search = "", skip = 0, limit = 20) {
-  const params = new URLSearchParams()
-  if (search) params.append("search", search)
-  params.append("skip", skip)
-  params.append("limit", limit)
-
-  const response = await fetch(`${API_URL}/items?${params}`, {
+export async function fetchTask(id) {
+  const response = await fetch(`${API_URL}/tasks/${id}`, {
     headers: authHeaders(),
   })
   return handleResponse(response)
 }
 
-export async function createItem(itemData) {
-  const response = await fetch(`${API_URL}/items`, {
+export async function createTask(taskData) {
+  const response = await fetch(`${API_URL}/tasks`, {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify(itemData),
+    body: JSON.stringify(taskData),
   })
   return handleResponse(response)
 }
 
-export async function updateItem(id, itemData) {
-  const response = await fetch(`${API_URL}/items/${id}`, {
+export async function updateTask(id, taskData) {
+  const response = await fetch(`${API_URL}/tasks/${id}`, {
     method: "PUT",
     headers: authHeaders(),
-    body: JSON.stringify(itemData),
+    body: JSON.stringify(taskData),
   })
   return handleResponse(response)
 }
 
-export async function deleteItem(id) {
-  const response = await fetch(`${API_URL}/items/${id}`, {
+export async function completeTask(id) {
+  const response = await fetch(`${API_URL}/tasks/${id}/complete`, {
+    method: "PUT",
+    headers: authHeaders(),
+  })
+  return handleResponse(response)
+}
+
+export async function deleteTask(id) {
+  const response = await fetch(`${API_URL}/tasks/${id}`, {
     method: "DELETE",
+    headers: authHeaders(),
+  })
+  return handleResponse(response)
+}
+
+export async function fetchStats() {
+  const response = await fetch(`${API_URL}/tasks/stats`, {
     headers: authHeaders(),
   })
   return handleResponse(response)
