@@ -5,7 +5,7 @@
 - **Keterangan:** API berhasil connected.
 
 **Hasil Pengujian**
-![tes-1](images/hasil-ui-test/tes-1.png)
+![tes-1](images/hasil-ui-test/test-1.png)
 
 
 ### Test Case 2: Items dari Modul 2 muncul di daftar?
@@ -46,13 +46,6 @@
 
 **Hasil Pengujian**
 ![tes-6](images/hasil-ui-test/test-6.png)
-
-### Test Case 7: Cari item via SearchBar
-- **Status:** Pass ✅
-- **Keterangan:** Data berhasil dicari dengan searchbar.
-
-**Hasil Pengujian**
-![tes-7](images/hasil-ui-test/test-7.png)
 
 
 ### Test Case 8: Hapus item,confirm dialog muncul?
