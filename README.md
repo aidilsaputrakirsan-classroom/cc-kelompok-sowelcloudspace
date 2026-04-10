@@ -78,72 +78,90 @@ npm run dev
 
 ```text
 cc-kelompok-sowelcloudspace/
-├── backend/
-│   ├── main.py                                 # Updated (auth endpoints, CORS fix)
-│   ├── auth.py                                 # BARU (JWT utilities)
-│   ├── database.py
-│   ├── models.py                               # Updated (+ User model)
-│   ├── schemas.py                              # Updated (+ auth schemas)
-│   ├── crud.py                                 # Updated (+ user CRUD)
-│   ├── requirements.txt                        # Updated (+ jose, passlib, bcrypt)
-│   ├── .env                                    # Updated (+ JWT & CORS config)
-│   └── .env.example                            # Updated
-
+├── backend/                                     # FastAPI Backend
+│   ├── scripts/
+│   │   └── wait-for-db.sh                       # Startup script — ping PostgreSQL sebelum start uvicorn
+│   ├── main.py                                  # Entry point aplikasi (auth endpoints, CORS, task CRUD)
+│   ├── auth.py                                  # JWT utilities (create token)
+│   ├── database.py                              # Koneksi database & session management
+│   ├── models.py                                # SQLAlchemy models (Task, User)
+│   ├── schemas.py                               # Pydantic schemas (TaskCreate, TaskUpdate, TaskResponse, UserCreate)
+│   ├── crud.py                                  # CRUD operations (user + task)
+│   ├── requirements.txt                         # Python dependencies (fastapi, jose, passlib, bcrypt, dll)
+│   ├── Dockerfile                               # Docker image config (multi-step, healthcheck, wait-for-db)
+│   ├── .dockerignore                            # File yang dikecualikan dari Docker build
+│   ├── .env                                     # Environment variables (DATABASE_URL, JWT, CORS)
+│   └── .env.example                             # Template konfigurasi environment
+│
 ├── frontend/                                    # React Frontend (Vite)
 │   ├── public/                                  # Aset statis publik
+│   │   └── vite.svg
 │   ├── src/                                     # Source code utama
 │   │   ├── assets/                              # Gambar & aset statis
+│   │   │   └── react.svg
+│   │   ├── components/
+│   │   │   ├── Header.jsx                       # Header & statistik task
+│   │   │   ├── LoginPage.jsx                    # Halaman login & register
+│   │   │   ├── SearchBar.jsx                    # Input pencarian task
+│   │   │   ├── SortDropdown.jsx                 # Dropdown sorting task
+│   │   │   ├── TaskCard.jsx                     # Card untuk setiap task
+│   │   │   ├── TaskForm.jsx                     # Form create/edit task
+│   │   │   ├── TaskList.jsx                     # Container daftar tasks
+│   │   │   └── ItemList.jsx                     # Container daftar items (legacy)
+│   │   ├── services/
+│   │   │   └── api.js                           # Semua fungsi fetch API
 │   │   ├── App.jsx                              # Komponen utama React
 │   │   ├── App.css                              # Style komponen App
-        ├── components/
-            ├── Header.jsx                       # Judul & statistik
-            ├── SearchBar.jsx                    # Input pencarian
-            ├── ItemForm.jsx                     # Form create/edit item
-            ├── ItemList.jsx                     # Container daftar items
-            └── ItemCard.jsx                     # Card untuk setiap item
-        ├── services/
-        │   └── api.js                           # Semua fungsi fetch API
-        └── main.jsx                             # Entry point (tidak diubah)
-        └── index.css                            # Style global
+│   │   ├── main.jsx                             # Entry point React
+│   │   └── index.css                            # Style global
 │   ├── index.html                               # Template HTML utama
 │   ├── package.json                             # Dependency & scripts Node.js
 │   ├── vite.config.js                           # Konfigurasi Vite
 │   └── eslint.config.js                         # Konfigurasi ESLint
 │
 ├── docs/                                        # Dokumentasi tim
+│   ├── docs/
+│   │   └── image-comparison.md
+│   ├── images/                                  # Screenshot endpoint & hasil testing
 │   ├── member-[Anjas-Geofany-Diamare].md
 │   ├── member-arya.md
 │   ├── member-Cantika Ade Qutnindra Maharani.md
-│   └── member-Meiske Handayani.md
+│   ├── member-Meiske Handayani.md
+│   ├── api-test-results.md
+│   ├── docker-cheatsheet.md
+│   └── ui-test-result.md
 │
-├── -p/                                          # Folder tambahan (saat ini kosong)
+├── setup.sh                                     # Script setup awal proyek
 ├── .gitignore
 └── README.md
 ```
 
-# API Endpoints Documentation (updated)
-Berikut adalah daftar endpoint yang telah diimplementasikan untuk mengelola data item:
+# API Endpoints Documentation
 
+Berikut adalah daftar endpoint yang telah diimplementasikan pada aplikasi Sowel Task:
 
 ## 🔐 Authentication
 
 | Method   | Endpoint        | Auth Required | Penjelasan |
 |-----------|----------------|---------------|------------|
 | **POST**  | `/auth/register` | No  | Mendaftarkan user baru ke sistem. |
-| **POST**  | `/auth/login`    | No  | Login user dan mendapatkan JWT access token. |
+| **POST**  | `/auth/login`    | No  | Login user (OAuth2 password flow) dan mendapatkan JWT access token. |
 
 ---
 
-## 📦 Items
+## ✅ Tasks
 
-| Method   | Endpoint        | Auth Required | Penjelasan |
-|-----------|----------------|---------------|------------|
-| **GET**    | `/health`        | No  | Mengecek apakah server API berjalan dengan baik. |
-| **GET**    | `/items`         | Yes | Mengambil seluruh daftar data item dari database. |
-| **POST**   | `/items`         | Yes | Menambahkan data item baru ke dalam database. |
-| **GET**    | `/items/{id}`    | Yes | Mengambil detail satu item berdasarkan ID. |
-| **PUT**    | `/items/{id}`    | Yes | Memperbarui data item berdasarkan ID. |
-| **DELETE** | `/items/{id}`    | Yes | Menghapus data item berdasarkan ID. |
+| Method   | Endpoint                | Auth Required | Penjelasan |
+|-----------|------------------------|---------------|------------|
+| **GET**    | `/`                    | No  | Root endpoint — mengecek apakah API berjalan. |
+| **GET**    | `/health`              | No  | Health check — status server. |
+| **POST**   | `/tasks`              | Yes | Membuat task baru. |
+| **GET**    | `/tasks`               | Yes | Mengambil seluruh daftar task. |
+| **GET**    | `/tasks/{task_id}`     | Yes | Mengambil detail satu task berdasarkan ID. |
+| **PUT**    | `/tasks/{task_id}`     | Yes | Memperbarui data task berdasarkan ID. |
+| **DELETE** | `/tasks/{task_id}`     | Yes | Menghapus task berdasarkan ID. |
+| **PUT**    | `/tasks/{task_id}/complete` | Yes | Menandai task sebagai selesai (status → done). |
+| **GET**    | `/tasks/stats`         | Yes | Menampilkan statistik task (total, completed, pending). |
 
 ---
 
@@ -158,6 +176,8 @@ Berikut adalah daftar endpoint yang telah diimplementasikan untuk mengelola data
 Authorization: Bearer <access_token>
 ```
 
+Atau gunakan tombol **Authorize** di Swagger UI (`/docs`) untuk otomatis menambahkan token.
+
 ---
 
 ## ❌ Authentication Error Response
@@ -165,9 +185,10 @@ Authorization: Bearer <access_token>
 | Status Code | Keterangan |
 |-------------|------------|
 | 401 | Token tidak valid atau sudah expired |
-| 401 | User tidak ditemukan |
-| 403 | Akun tidak aktif |
+| 401 | Email atau password salah |
+| 400 | Email sudah terdaftar |
 
+---
 
 ## 1. Persiapan Database PostgreSQL
 
@@ -178,7 +199,7 @@ Tahap awal dilakukan untuk menghubungkan aplikasi dengan database sehingga data 
 Langkah-langkah yang dilakukan:
 
 - **Setup PostgreSQL**  
-  Membuat database baru bernama `cloudapp` menggunakan **psql** atau **pgAdmin**.
+  Membuat database baru bernama `sowel_task` menggunakan **psql** atau **pgAdmin**.
 
 - **Konfigurasi Environment**  
   Membuat file `.env` untuk menyimpan konfigurasi database, khususnya `DATABASE_URL` yang berisi informasi:
@@ -192,7 +213,15 @@ Langkah-langkah yang dilakukan:
 Contoh isi `.env`:
 
 ```env
-DATABASE_URL=postgresql://username:password@localhost:5432/cloudapp
+DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/sowel_task
+
+# JWT
+SECRET_KEY=your-secret-key-minimum-32-characters
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+
+# CORS
+ALLOWED_ORIGINS=http://localhost:5173
 ```
 
 - **Instalasi Dependencies**
@@ -200,16 +229,21 @@ DATABASE_URL=postgresql://username:password@localhost:5432/cloudapp
 Library yang digunakan pada backend diinstal menggunakan pip:
 
 ```bash
-pip install sqlalchemy psycopg2-binary python-dotenv
+pip install -r requirements.txt
 ```
 
 Penjelasan library:
 
 | Library | Fungsi |
 |-------|-------|
-| SQLAlchemy | ORM (Object Relational Mapping) untuk berinteraksi dengan database menggunakan objek Python |
+| FastAPI | Web framework untuk REST API |
+| Uvicorn | ASGI server untuk menjalankan FastAPI |
+| SQLAlchemy | ORM (Object Relational Mapping) untuk berinteraksi dengan database |
 | psycopg2-binary | Driver PostgreSQL untuk Python |
 | python-dotenv | Membaca konfigurasi dari file `.env` |
+| python-jose | Library untuk membuat dan memverifikasi JWT token |
+| passlib + bcrypt | Hashing dan verifikasi password |
+| pydantic[email] | Validasi data request/response |
 
 ---
 
@@ -222,9 +256,11 @@ Struktur utama backend:
 | File | Fungsi |
 |-----|------|
 | **database.py** | Mengatur koneksi database dan menyediakan session database untuk setiap request API |
-| **models.py** | Mendefinisikan struktur tabel database menggunakan SQLAlchemy ORM |
-| **schemas.py** | Mendefinisikan struktur data request dan response menggunakan Pydantic |
-| **crud.py** | Berisi fungsi untuk operasi database seperti Create, Read, Update, dan Delete |
+| **models.py** | Mendefinisikan struktur tabel database (Task & User) menggunakan SQLAlchemy ORM |
+| **schemas.py** | Mendefinisikan struktur data request dan response (Task & Auth) menggunakan Pydantic |
+| **crud.py** | Berisi fungsi untuk operasi database (CRUD task + user authentication) |
+| **auth.py** | Utility untuk membuat JWT access token |
+| **scripts/wait-for-db.sh** | Startup script yang menunggu PostgreSQL siap sebelum menjalankan uvicorn |
 
 Dengan arsitektur ini, logika aplikasi menjadi lebih modular dan mudah untuk dikembangkan di masa depan.
 
@@ -242,19 +278,22 @@ Seluruh komponen backend diintegrasikan pada file `main.py`. File ini berfungsi 
 
 - **Penyediaan Endpoint API**
 
-Aplikasi menyediakan beberapa endpoint utama untuk mengelola resource `/items`, yaitu:
+Aplikasi menyediakan beberapa endpoint utama untuk mengelola resource `/tasks`, yaitu:
 
-- Create item
-- Get item
-- Update item
-- Delete item
-- Get list item
-- Statistik item
+- Create task
+- Get all tasks
+- Get task by ID
+- Update task
+- Delete task
+- Complete task (mark as done)
+- Statistik task
 
 Selain itu tersedia endpoint tambahan seperti:
 
-- `/health` → mengecek status server  
-- `/team` → menampilkan informasi tim pengembang
+- `/` → root endpoint (API running check)
+- `/health` → mengecek status server
+- `/auth/register` → registrasi user baru
+- `/auth/login` → login dan mendapatkan JWT token
 
 - **Testing melalui Swagger UI**
 
@@ -311,6 +350,7 @@ Melalui halaman ini pengguna dapat:
 - melihat parameter request
 - melihat response API
 - melakukan pengujian endpoint secara langsung
+- menggunakan tombol **Authorize** untuk menambahkan JWT token
 
 ---
 
@@ -326,31 +366,7 @@ Dengan demikian seluruh skenario pengujian dinyatakan **berhasil (PASS)**.
 
 ### 3.1 Hasil Pengujian Endpoint
 
-#### 1. DELETE /items/{item_id}
-
-**Method**
-
-```
-DELETE
-```
-
-**URL**
-
-```
-/items/{item_id}
-```
-
-**Response Code**
-
-```
-204 No Content
-```
-
-Endpoint ini digunakan untuk **menghapus data item berdasarkan ID**.
-
----
-
-#### 2. GET /health
+#### 1. GET /health
 
 **Method**
 
@@ -374,8 +390,7 @@ GET
 
 ```json
 {
-  "status": "healthy",
-  "version": "0.2.0"
+  "status": "healthy"
 }
 ```
 
@@ -383,18 +398,28 @@ Endpoint ini digunakan untuk **mengecek status server backend**.
 
 ---
 
-#### 3. GET /items/{item_id}
+#### 2. POST /auth/register
 
 **Method**
 
 ```
-GET
+POST
 ```
 
 **URL**
 
 ```
-/items/{item_id}
+/auth/register
+```
+
+**Request Body**
+
+```json
+{
+  "email": "user@example.com",
+  "name": "Test User",
+  "password": "password123"
+}
 ```
 
 **Response Code**
@@ -407,32 +432,35 @@ GET
 
 ```json
 {
-  "name": "Laptop",
-  "description": "Laptop untuk cloud computing",
-  "price": 15000000,
-  "quantity": 10,
-  "id": 12,
-  "created_at": "2026-03-08T20:46:17.888499+08:00",
-  "updated_at": null
+  "id": 1,
+  "email": "user@example.com",
+  "name": "Test User"
 }
 ```
 
-Endpoint ini digunakan untuk **mengambil data item berdasarkan ID**.
+Endpoint ini digunakan untuk **mendaftarkan user baru ke dalam sistem**.
 
 ---
 
-#### 4. GET /items/stats
+#### 3. POST /auth/login
 
 **Method**
 
 ```
-GET
+POST
 ```
 
 **URL**
 
 ```
-/items/stats
+/auth/login
+```
+
+**Request Body** (OAuth2 form)
+
+```
+username: user@example.com
+password: password123
 ```
 
 **Response Code**
@@ -445,26 +473,67 @@ GET
 
 ```json
 {
-  "total_items": 3,
-  "total_value": 15460000,
-  "most_expensive": {
-    "id": 12,
-    "name": "Laptop",
-    "price": 14000000
-  },
-  "cheapest": {
-    "id": 9,
-    "name": "Mouse Wireless",
-    "price": 250000
-  }
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "token_type": "bearer"
 }
 ```
 
-Endpoint ini digunakan untuk **menampilkan statistik data item yang tersimpan di database**.
+Endpoint ini digunakan untuk **login user dan mendapatkan JWT access token**.
 
 ---
 
-#### 5. GET /items
+#### 4. POST /tasks
+
+**Method**
+
+```
+POST
+```
+
+**URL**
+
+```
+/tasks
+```
+
+**Request Body**
+
+```json
+{
+  "title": "Belajar Cloud Computing",
+  "description": "Menyelesaikan modul Docker",
+  "priority": "high",
+  "deadline": "2026-04-15T23:59:00",
+  "assigned_to": "Anjas"
+}
+```
+
+**Response Code**
+
+```
+200 OK
+```
+
+**Response Body**
+
+```json
+{
+  "title": "Belajar Cloud Computing",
+  "description": "Menyelesaikan modul Docker",
+  "priority": "high",
+  "deadline": "2026-04-15T23:59:00",
+  "assigned_to": "Anjas",
+  "id": 1,
+  "status": "pending",
+  "created_at": "2026-04-10T15:00:00+08:00"
+}
+```
+
+Endpoint ini digunakan untuk **membuat task baru**.
+
+---
+
+#### 5. GET /tasks
 
 **Method**
 
@@ -475,7 +544,7 @@ GET
 **URL**
 
 ```
-/items
+/tasks
 ```
 
 **Response Code**
@@ -489,40 +558,23 @@ GET
 ```json
 [
   {
-    "name": "Mouse Wireless",
-    "description": "Mouse bluetooth",
-    "price": 250000,
-    "quantity": 20,
-    "id": 11,
-    "created_at": "2026-03-08T11:58:01.374431+08:00",
-    "updated_at": null
-  },
-  {
-    "name": "Keyboard Mechanical",
-    "description": "Keyboard untuk coding",
-    "price": 1200000,
-    "quantity": 8,
-    "id": "10",
-    "created_at": "2026-03-03T09:04:14.647867+08:00",
-    "updated_at": null
-  },
-  {
-    "name": "Mouse Wireless",
-    "description": "Mouse bluetooth",
-    "price": 250000,
-    "quantity": 20,
-    "id": 9,
-    "created_at": "2026-03-03T09:04:10.858001+08:00",
-    "updated_at": null
+    "title": "Belajar Cloud Computing",
+    "description": "Menyelesaikan modul Docker",
+    "priority": "high",
+    "deadline": "2026-04-15T23:59:00",
+    "assigned_to": "Anjas",
+    "id": 1,
+    "status": "pending",
+    "created_at": "2026-04-10T15:00:00+08:00"
   }
 ]
 ```
 
-Endpoint ini digunakan untuk **menampilkan seluruh data item yang tersimpan di database**.
+Endpoint ini digunakan untuk **menampilkan seluruh data task yang tersimpan di database**.
 
 ---
 
-#### 6. GET /team
+#### 6. GET /tasks/{task_id}
 
 **Method**
 
@@ -533,7 +585,7 @@ GET
 **URL**
 
 ```
-/team
+/tasks/{task_id}
 ```
 
 **Response Code**
@@ -546,75 +598,22 @@ GET
 
 ```json
 {
-  "team": "cloud-team-sowelcloudspace",
-  "members": [
-    {
-      "name": "Anjas Geofany Diamare",
-      "nim": "10231016",
-      "role": "Lead Backend"
-    },
-    {
-      "name": "Cantika Ade Qutnindra Maharani",
-      "nim": "10231024",
-      "role": "Lead Frontend"
-    },
-    {
-      "name": "Arya Wijaya Saroyo",
-      "nim": "10231020",
-      "role": "Lead DevOps"
-    },
-    {
-      "name": "Meiske Handayani",
-      "nim": "10231052",
-      "role": "Lead QA & Docs"
-    }
-  ]
+  "title": "Belajar Cloud Computing",
+  "description": "Menyelesaikan modul Docker",
+  "priority": "high",
+  "deadline": "2026-04-15T23:59:00",
+  "assigned_to": "Anjas",
+  "id": 1,
+  "status": "pending",
+  "created_at": "2026-04-10T15:00:00+08:00"
 }
 ```
 
-Endpoint ini digunakan untuk **menampilkan informasi tim pengembang aplikasi**.
+Endpoint ini digunakan untuk **mengambil detail task berdasarkan ID**.
 
 ---
 
-#### 7. POST /items
-
-**Method**
-
-```
-POST
-```
-
-**URL**
-
-```
-/items
-```
-
-**Response Code**
-
-```
-201 Created
-```
-
-**Response Body**
-
-```json
-{
-  "name": "Laptop",
-  "description": "Laptop untuk cloud computing",
-  "price": 15000000,
-  "quantity": 10,
-  "id": 12,
-  "created_at": "2026-03-08T20:46:17.888499+08:00",
-  "updated_at": null
-}
-```
-
-Endpoint ini digunakan untuk **menambahkan data item baru ke dalam database**.
-
----
-
-#### 8. PUT /items/{item_id}
+#### 7. PUT /tasks/{task_id}
 
 **Method**
 
@@ -625,7 +624,16 @@ PUT
 **URL**
 
 ```
-/items/{item_id}
+/tasks/{task_id}
+```
+
+**Request Body**
+
+```json
+{
+  "title": "Belajar Cloud Computing (Updated)",
+  "priority": "medium"
+}
 ```
 
 **Response Code**
@@ -638,50 +646,159 @@ PUT
 
 ```json
 {
-  "name": "Laptop",
-  "description": "Laptop untuk cloud computing",
-  "price": 14000000,
-  "quantity": 10,
-  "id": 12,
-  "created_at": "2026-03-08T20:46:17.888499+08:00",
-  "updated_at": "2026-03-08T21:35:50.002500+08:00"
+  "title": "Belajar Cloud Computing (Updated)",
+  "description": "Menyelesaikan modul Docker",
+  "priority": "medium",
+  "deadline": "2026-04-15T23:59:00",
+  "assigned_to": "Anjas",
+  "id": 1,
+  "status": "pending",
+  "created_at": "2026-04-10T15:00:00+08:00"
 }
 ```
 
-Endpoint ini digunakan untuk **memperbarui data item yang sudah ada berdasarkan ID**.
+Endpoint ini digunakan untuk **memperbarui data task berdasarkan ID**.
+
+---
+
+#### 8. PUT /tasks/{task_id}/complete
+
+**Method**
+
+```
+PUT
+```
+
+**URL**
+
+```
+/tasks/{task_id}/complete
+```
+
+**Response Code**
+
+```
+200 OK
+```
+
+**Response Body**
+
+```json
+{
+  "title": "Belajar Cloud Computing (Updated)",
+  "description": "Menyelesaikan modul Docker",
+  "priority": "medium",
+  "deadline": "2026-04-15T23:59:00",
+  "assigned_to": "Anjas",
+  "id": 1,
+  "status": "done",
+  "created_at": "2026-04-10T15:00:00+08:00"
+}
+```
+
+Endpoint ini digunakan untuk **menandai task sebagai selesai (status menjadi "done")**.
+
+---
+
+#### 9. GET /tasks/stats
+
+**Method**
+
+```
+GET
+```
+
+**URL**
+
+```
+/tasks/stats
+```
+
+**Response Code**
+
+```
+200 OK
+```
+
+**Response Body**
+
+```json
+{
+  "total": 5,
+  "completed": 2,
+  "pending": 3
+}
+```
+
+Endpoint ini digunakan untuk **menampilkan statistik task (total, completed, pending)**.
+
+---
+
+#### 10. DELETE /tasks/{task_id}
+
+**Method**
+
+```
+DELETE
+```
+
+**URL**
+
+```
+/tasks/{task_id}
+```
+
+**Response Code**
+
+```
+200 OK
+```
+
+**Response Body**
+
+```json
+{
+  "message": "Deleted"
+}
+```
+
+Endpoint ini digunakan untuk **menghapus task berdasarkan ID**.
+
+---
 
 ### 3.2 Rangkuman Hasil Pengujian
 
 Seluruh endpoint telah diuji melalui Swagger UI dan berfungsi sesuai dengan spesifikasi. Backend dinyatakan stabil serta siap untuk integrasi dengan frontend dan deployment ke lingkungan cloud. 🚀
 
-| No | Method | URL | Request Body | Response Body (Actual) | HTTP Status Code | Hasil Pengujian |
-|----|-------|-----|-------------|-----------------------|-----------------|----------------|
-| 1 | POST | /items | `{name, description, price, quantity}` | Data item baru + ID & Timestamp | 201 Created | ✅ Sesuai |
-| 2 | GET | /items | - | List item (JSON Array) | 200 OK | ✅ Sesuai |
-| 3 | GET | /items/12 | - | Detail item (Laptop) | 200 OK | ✅ Sesuai |
-| 4 | PUT | /items/12 | `{price: 14000000}` | Data item ter-update & timestamp berubah | 200 OK | ✅ Sesuai |
-| 5 | DELETE | /items/11 | - | Item berhasil dihapus | 204 No Content | ✅ Sesuai |
-| 6 | GET | /items/stats | - | Statistik item (total item, nilai total, item termahal & termurah) | 200 OK | ✅ Sesuai |
-| 7 | GET | /health | - | Status server healthy | 200 OK | ✅ Sesuai |
-| 8 | GET | /team | - | Informasi tim pengembang | 200 OK | ✅ Sesuai |
+| No | Method | URL | Auth | Request Body | Response Body (Actual) | HTTP Status Code | Hasil |
+|----|--------|-----|------|-------------|------------------------|-----------------|-------|
+| 1 | GET | `/health` | No | - | Status healthy | 200 OK | ✅ |
+| 2 | POST | `/auth/register` | No | `{email, name, password}` | User data (id, email, name) | 200 OK | ✅ |
+| 3 | POST | `/auth/login` | No | `{username, password}` (form) | JWT access token | 200 OK | ✅ |
+| 4 | POST | `/tasks` | Yes | `{title, description, priority, deadline, assigned_to}` | Task baru + ID & timestamp | 200 OK | ✅ |
+| 5 | GET | `/tasks` | Yes | - | List task (JSON Array) | 200 OK | ✅ |
+| 6 | GET | `/tasks/{id}` | Yes | - | Detail task | 200 OK | ✅ |
+| 7 | PUT | `/tasks/{id}` | Yes | `{field: value}` | Task ter-update | 200 OK | ✅ |
+| 8 | PUT | `/tasks/{id}/complete` | Yes | - | Task dengan status "done" | 200 OK | ✅ |
+| 9 | GET | `/tasks/stats` | Yes | - | Statistik (total, completed, pending) | 200 OK | ✅ |
+| 10 | DELETE | `/tasks/{id}` | Yes | - | `{"message": "Deleted"}` | 200 OK | ✅ |
 
 
 # 🧪 Hasil Testing Modul 4
 
-## 🔍 Testing Scenario: Authentication & Items Flow
+## 🔍 Testing Scenario: Authentication & Tasks Flow
 
 | No | Skenario Testing | Hasil | Keterangan |
 |----|------------------|--------|------------|
 | 1 | Login page muncul | ✅ Berhasil | Halaman login tampil dengan normal saat aplikasi dibuka |
 | 2 | Register user baru | ✅ Berhasil | User baru berhasil dibuat dan tersimpan di database |
 | 3 | Otomatis login setelah register | ✅ Berhasil | Sistem langsung memberikan akses setelah registrasi |
-| 4 | Main app + items muncul | ✅ Berhasil | Dashboard dan daftar items tampil dengan benar |
+| 4 | Main app + tasks muncul | ✅ Berhasil | Dashboard dan daftar tasks tampil dengan benar |
 | 5 | Nama user di header | ✅ Berhasil | Nama user login tampil sesuai akun |
-| 6 | CRUD items berfungsi | ✅ Berhasil | Create, Read, Update, Delete berjalan normal |
+| 6 | CRUD tasks berfungsi | ✅ Berhasil | Create, Read, Update, Delete berjalan normal |
 | 7 | Klik Logout | ✅ Berhasil | User berhasil logout dari sistem |
 | 8 | Kembali ke login page | ✅ Berhasil | Setelah logout, diarahkan ke halaman login |
 | 9 | Login kembali dengan akun tadi | ✅ Berhasil | User dapat login kembali tanpa kendala |
-| 10 | Data items masih ada | ✅ Berhasil | Data tetap tersimpan di database (persistent) |
+| 10 | Data tasks masih ada | ✅ Berhasil | Data tetap tersimpan di database (persistent) |
 
 ---
-
