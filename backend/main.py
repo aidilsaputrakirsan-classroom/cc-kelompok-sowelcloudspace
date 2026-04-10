@@ -55,6 +55,35 @@ def health():
     return {"status": "healthy"}
 
 
+@app.get("/team")
+def team():
+    return {
+        "team": "cloud-team-sowelcloudspace",
+        "members": [
+            {
+                "name": "Anjas Geofany Diamare",
+                "nim": "10231016",
+                "role": "Lead Backend",
+            },
+            {
+                "name": "Cantika Ade Qutnindra Maharani",
+                "nim": "10231024",
+                "role": "Lead Frontend",
+            },
+            {
+                "name": "Arya Wijaya Saroyo",
+                "nim": "10231020",
+                "role": "Lead DevOps",
+            },
+            {
+                "name": "Meiske Handayani",
+                "nim": "10231052",
+                "role": "Lead QA & Docs",
+            },
+        ],
+    }
+
+
 # ==================== AUTH ENDPOINT ====================
 
 @app.post("/auth/register")
