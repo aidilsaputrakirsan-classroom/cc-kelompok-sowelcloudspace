@@ -3,53 +3,53 @@
 # Komputasi Awan — SI ITK
 # ============================================================
 # Usage:
-#   docker compose up -d          # Start semua services
-#   docker compose down            # Stop & remove
-#   docker compose logs -f         # Lihat logs
-#   docker compose ps              # Status services
+#   docker compose up -d          # Start semua services di background
+#   docker compose down            # Menghentikan & menghapus container
+#   docker compose logs -f         # Melihat log secara realtime
+#   docker compose ps              # Melihat status service
 # ============================================================
 
 services:
   # ==================== DATABASE ====================
   db:
-    image: postgres:16-alpine
+    image: postgres:16-alpine                                       # Menggunakan image PostgreSQL ringan (alpine)
     container_name: cloudapp-db
-    restart: unless-stopped
+    restart: unless-stopped                                         # Restart otomatis kecuali dihentikan manual
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: arya123
-      POSTGRES_DB: cloudapp
+      POSTGRES_USER: postgres                                       # Username database
+      POSTGRES_PASSWORD: arya123                                    # Password database
+      POSTGRES_DB: cloudapp                                         # Nama database
     ports:
-      - "5433:5432"
+      - "5433:5432"                                                 # Map port lokal 5433 → port PostgreSQL 5432 di container
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data                             # Menyimpan data agar tidak hilang (data persistence)
     networks:
-      - cloudnet
+      - cloudnet                                                    # Menghubungkan ke network internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d cloudapp"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cloudapp"]     # Cek apakah DB siap menerima koneksi
+      interval: 10s                                                 # Interval pengecekan
+      timeout: 5s                                                   # Batas waktu tiap pengecekan
+      retries: 5                                                    # Jumlah percobaan sebelum dianggap gagal
+      start_period: 10s                                             # Waktu tunggu sebelum mulai healthcheck
 
   # ==================== BACKEND ====================
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: ./backend                                            # Lokasi source code backend
+      dockerfile: Dockerfile                                        # File Dockerfile backend
     container_name: cloudapp-backend
     restart: unless-stopped
     env_file:
-      - ./backend/.env.docker
+      - ./backend/.env.docker                                       # Environment variable khusus untuk Docker
     ports:
-      - "8000:8000"
+      - "8000:8000"                                                 # Expose API backend ke localhost:8000
     networks:
       - cloudnet
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_healthy                                  # Backend hanya start jika database sudah siap
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]  # Cek endpoint /health
       interval: 30s
       timeout: 10s
       retries: 3
@@ -58,26 +58,26 @@ services:
   # ==================== FRONTEND ====================
   frontend:
     build:
-      context: ./frontend
+      context: ./frontend                                          # Lokasi source code frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://localhost:8000
+        VITE_API_URL: http://localhost:8000                        # URL backend yang digunakan saat build frontend
     container_name: cloudapp-frontend
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "3000:80"                                                  # Akses frontend di localhost:3000 (Nginx port 80)
     networks:
       - cloudnet
     depends_on:
-      - backend
+      - backend                                                    # Frontend dijalankan setelah backend
 
 # ==================== VOLUMES ====================
 volumes:
   pgdata:
-    name: cloudapp-pgdata
+    name: cloudapp-pgdata                                          # Volume untuk menyimpan data PostgreSQL
 
 # ==================== NETWORKS ====================
 networks:
   cloudnet:
-    name: cloudapp-network
-    driver: bridge
+    name: cloudapp-network                                         # Nama network antar container
+    driver: bridge                                                 # Menggunakan bridge network (default Docker)
