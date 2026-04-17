@@ -1,23 +1,26 @@
 import TaskCard from "./TaskCard"
 
-function TaskList({ tasks, onEdit, onDelete, onComplete, loading }) {
+function TaskList({ tasks, searchQuery, priorityFilter, onEdit, onDelete, onComplete, loading }) {
   if (loading) {
-    return <p style={styles.message}>⏳ Memuat data...</p>
+    return <p style={styles.message}>Memuat data...</p>
   }
 
   if (tasks.length === 0) {
     return (
       <div style={styles.empty}>
-        <p style={styles.emptyIcon}>📋</p>
-        <p style={styles.emptyText}>Belum ada task.</p>
+        <p style={styles.emptyIcon}>Task</p>
+        <p style={styles.emptyText}>
+          {searchQuery || priorityFilter !== "all" ? "Task tidak ditemukan." : "Belum ada task."}
+        </p>
         <p style={styles.emptyHint}>
-          Gunakan form di atas untuk menambahkan task pertama.
+          {searchQuery || priorityFilter !== "all"
+            ? "Coba kata kunci lain atau ubah filter priority untuk melihat task yang lain."
+            : "Gunakan form di atas untuk menambahkan task pertama."}
         </p>
       </div>
     )
   }
 
-  // Sort: pending first, then done; within each group sort by created_at desc
   const sorted = [...tasks].sort((a, b) => {
     if (a.status === "done" && b.status !== "done") return 1
     if (a.status !== "done" && b.status === "done") return -1
@@ -61,8 +64,10 @@ const styles = {
     fontFamily: "'Inter', sans-serif",
   },
   emptyIcon: {
-    fontSize: "3rem",
+    fontSize: "1.2rem",
     margin: "0 0 0.5rem 0",
+    fontWeight: 700,
+    color: "#7c5cbf",
   },
   emptyText: {
     fontSize: "1.1rem",

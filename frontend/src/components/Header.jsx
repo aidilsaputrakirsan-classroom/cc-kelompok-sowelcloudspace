@@ -1,34 +1,41 @@
-function Header({ totalTasks, completedTasks, isConnected, onLogout }) {
+function Header({
+  totalTasks,
+  completedTasks,
+  isConnected,
+  onLogout,
+}) {
   const pendingTasks = totalTasks - completedTasks
 
   return (
     <header style={styles.header}>
-      <div style={styles.left}>
-        <h1 style={styles.title}>📋 Sowel Task</h1>
-        <p style={styles.subtitle}>Task Management — Cloud Computing</p>
-      </div>
-      <div style={styles.right}>
-        <div style={styles.stats}>
-          <span style={styles.badge}>
-            {totalTasks} total
-          </span>
-          <span style={{ ...styles.badge, background: "rgba(52,211,153,0.2)", color: "#059669" }}>
-            ✅ {completedTasks} done
-          </span>
-          <span style={{ ...styles.badge, background: "rgba(251,191,36,0.2)", color: "#d97706" }}>
-            ⏳ {pendingTasks} pending
-          </span>
-          <span style={{
-            ...styles.statusDot,
-            backgroundColor: isConnected ? "#E2EFDA" : "#FBE5D6",
-            color: isConnected ? "#059669" : "#dc2626",
-          }}>
-            {isConnected ? "🟢 Connected" : "🔴 Disconnected"}
-          </span>
+      <div style={styles.topRow}>
+        <div style={styles.left}>
+          <h1 style={styles.title}>Sowel Task</h1>
+          <p style={styles.subtitle}>Kelola dan cari task berdasarkan nama dengan cepat</p>
         </div>
-        <button onClick={onLogout} style={styles.btnLogout} id="logout-btn">
-          🚪 Logout
-        </button>
+        <div style={styles.right}>
+          <div style={styles.stats}>
+            <span style={styles.badge}>{totalTasks} total</span>
+            <span style={{ ...styles.badge, background: "rgba(52,211,153,0.2)", color: "#059669" }}>
+              {completedTasks} done
+            </span>
+            <span style={{ ...styles.badge, background: "rgba(251,191,36,0.2)", color: "#d97706" }}>
+              {pendingTasks} pending
+            </span>
+            <span
+              style={{
+                ...styles.statusDot,
+                backgroundColor: isConnected ? "#E2EFDA" : "#FBE5D6",
+                color: isConnected ? "#059669" : "#dc2626",
+              }}
+            >
+              {isConnected ? "Connected" : "Disconnected"}
+            </span>
+          </div>
+          <button onClick={onLogout} style={styles.btnLogout} id="logout-btn">
+            Logout
+          </button>
+        </div>
       </div>
     </header>
   )
@@ -37,8 +44,7 @@ function Header({ totalTasks, completedTasks, isConnected, onLogout }) {
 const styles = {
   header: {
     display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "column",
     padding: "1.5rem 2rem",
     background: "linear-gradient(135deg, #7c5cbf, #9b8ec4)",
     color: "white",
@@ -46,12 +52,18 @@ const styles = {
     marginBottom: "1.5rem",
     boxShadow: "0 8px 30px rgba(124, 92, 191, 0.25)",
     fontFamily: "'Inter', sans-serif",
+    gap: "1rem",
+  },
+  topRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
     flexWrap: "wrap",
     gap: "1rem",
   },
   left: {},
   title: { margin: 0, fontSize: "1.6rem", fontWeight: 800 },
-  subtitle: { margin: "0.25rem 0 0 0", fontSize: "0.85rem", opacity: 0.8 },
+  subtitle: { margin: "0.25rem 0 0 0", fontSize: "0.85rem", opacity: 0.82 },
   right: {
     display: "flex",
     flexDirection: "column",

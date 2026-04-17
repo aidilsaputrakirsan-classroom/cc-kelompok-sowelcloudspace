@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import Header from "./components/Header"
 import TaskForm from "./components/TaskForm"
+import SearchBar from "./components/SearchBar"
 import TaskList from "./components/TaskList"
 import LoginPage from "./components/LoginPage"
 import {
@@ -8,7 +9,6 @@ import {
   checkHealth, login, register, clearToken, getToken,
 } from "./services/api"
 
-// Komponen Toast dengan auto-dismiss
 function Toast({ message, type, onClose }) {
   if (!message) return null
 
@@ -33,7 +33,7 @@ function Toast({ message, type, onClose }) {
       fontWeight: 500,
       animation: "slideIn 0.3s ease-out",
     }}>
-      <span>{type === "success" ? "✅" : "❌"}</span>
+      <span>{type === "success" ? "OK" : "ERR"}</span>
       {message}
       <button
         onClick={onClose}
@@ -45,7 +45,7 @@ function Toast({ message, type, onClose }) {
           fontSize: "0.8rem",
         }}
       >
-        ✕
+        x
       </button>
       <style>{`
         @keyframes slideIn {
@@ -63,7 +63,17 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [priorityFilter, setPriorityFilter] = useState("all")
   const [toast, setToast] = useState({ message: "", type: "" })
+
+  const filteredTasks = tasks.filter((task) => {
+    const normalizedQuery = searchQuery.trim().toLowerCase()
+    const matchesTitle = !normalizedQuery || task.title?.toLowerCase().includes(normalizedQuery)
+    const matchesPriority = priorityFilter === "all" || task.priority === priorityFilter
+
+    return matchesTitle && matchesPriority
+  })
 
   const loadTasks = useCallback(async () => {
     setLoading(true)
@@ -108,6 +118,8 @@ function App() {
     setIsAuthenticated(false)
     setTasks([])
     setEditingTask(null)
+    setSearchQuery("")
+    setPriorityFilter("all")
     setToast({ message: "Logout berhasil", type: "success" })
   }
 
@@ -156,7 +168,7 @@ function App() {
     try {
       await completeTask(id)
       loadTasks()
-      setToast({ message: "Task selesai! 🎉", type: "success" })
+      setToast({ message: "Task selesai!", type: "success" })
     } catch (err) {
       if (err.message === "UNAUTHORIZED") handleLogout()
       else setToast({ message: "Gagal: " + err.message, type: "error" })
@@ -181,7 +193,7 @@ function App() {
       <div style={appStyles.container}>
         <Header
           totalTasks={tasks.length}
-          completedTasks={tasks.filter(t => t.status === "done").length}
+          completedTasks={tasks.filter((task) => task.status === "done").length}
           isConnected={isConnected}
           onLogout={handleLogout}
         />
@@ -189,6 +201,14 @@ function App() {
           onSubmit={handleSubmit}
           editingTask={editingTask}
           onCancelEdit={() => setEditingTask(null)}
+        />
+        <SearchBar
+          totalTasks={tasks.length}
+          filteredTasks={filteredTasks.length}
+          searchQuery={searchQuery}
+          priorityFilter={priorityFilter}
+          onSearchChange={setSearchQuery}
+          onPriorityChange={setPriorityFilter}
         />
         {loading && (
           <div style={{ textAlign: "center", margin: "2rem" }}>
@@ -204,7 +224,9 @@ function App() {
           </div>
         )}
         <TaskList
-          tasks={tasks}
+          tasks={filteredTasks}
+          searchQuery={searchQuery}
+          priorityFilter={priorityFilter}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onComplete={handleComplete}
