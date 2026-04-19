@@ -78,6 +78,8 @@ npm run dev
 
 ```text
 cc-kelompok-sowelcloudspace/
+├── docker-compose.yml                           # BARU (orchestrasi multi-container: backend, frontend, db, dll)
+
 ├── backend/                                     # FastAPI Backend
 │   ├── scripts/
 │   │   └── wait-for-db.sh                       # Startup script — ping PostgreSQL sebelum start uvicorn
@@ -91,9 +93,10 @@ cc-kelompok-sowelcloudspace/
 │   ├── Dockerfile                               # Docker image config (multi-step, healthcheck, wait-for-db)
 │   ├── .dockerignore                            # File yang dikecualikan dari Docker build
 │   ├── .env                                     # Environment variables (DATABASE_URL, JWT, CORS)
+│   ├── .env.docker                              # BARU (env khusus untuk container Docker)
 │   └── .env.example                             # Template konfigurasi environment
 │
-├── frontend/                                    # React Frontend (Vite)
+├── frontend/                                    # React Frontend (Vite + Nginx)
 │   ├── public/                                  # Aset statis publik
 │   │   └── vite.svg
 │   ├── src/                                     # Source code utama
@@ -108,16 +111,19 @@ cc-kelompok-sowelcloudspace/
 │   │   │   ├── TaskForm.jsx                     # Form create/edit task
 │   │   │   ├── TaskList.jsx                     # Container daftar tasks
 │   │   │   └── ItemList.jsx                     # Container daftar items (legacy)
-│   │   ├── services/
-│   │   │   └── api.js                           # Semua fungsi fetch API
-│   │   ├── App.jsx                              # Komponen utama React
-│   │   ├── App.css                              # Style komponen App
-│   │   ├── main.jsx                             # Entry point React
-│   │   └── index.css                            # Style global
+│   ├── services/
+│   │   └── api.js                               # Semua fungsi fetch API
+│   ├── App.jsx                                  # Komponen utama React
+│   ├── App.css                                  # Style komponen App
+│   ├── main.jsx                                 # Entry point React
+│   ├── index.css                                # Style global
 │   ├── index.html                               # Template HTML utama
 │   ├── package.json                             # Dependency & scripts Node.js
 │   ├── vite.config.js                           # Konfigurasi Vite
-│   └── eslint.config.js                         # Konfigurasi ESLint
+│   ├── eslint.config.js                         # Konfigurasi ESLint
+│   ├── Dockerfile                               # BARU (build + serve pakai Nginx)
+│   ├── nginx.conf                               # BARU (config reverse proxy / static serve)
+│   └── .dockerignore                            # BARU
 │
 ├── docs/                                        # Dokumentasi tim
 │   ├── docs/
