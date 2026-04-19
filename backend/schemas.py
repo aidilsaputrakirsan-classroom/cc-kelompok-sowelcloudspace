@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
@@ -34,9 +34,17 @@ class TaskResponse(TaskBase):
 # ================= AUTH =================
 
 class UserCreate(BaseModel):
-    email: str
+    # Validasi Email dengan regex (memastikan format user@domain.com)
+    email: str = Field(..., pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
+    
     name: str
-    password: str
+    
+    # Validasi Password: Minimal 8 karakter
+    password: str = Field(
+        ..., 
+        min_length=8, 
+        description="Password minimal 8 karakter"
+    )
 
 class LoginRequest(BaseModel):
     email: str
