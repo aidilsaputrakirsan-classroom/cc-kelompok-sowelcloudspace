@@ -129,6 +129,19 @@ def read_all(db: Session = Depends(get_db), user=Depends(get_current_user)):
     return crud.get_tasks(db)
 
 
+# STATS
+@app.get("/tasks/stats")
+def stats(db: Session = Depends(get_db), user=Depends(get_current_user)):
+    tasks = crud.get_tasks(db)
+    total = len(tasks)
+    done = len([t for t in tasks if t.status == "done"])
+    return {
+        "total": total,
+        "completed": done,
+        "pending": total - done,
+    }
+
+
 # READ ONE
 @app.get("/tasks/{task_id}", response_model=TaskResponse)
 def read_one(task_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
@@ -161,17 +174,3 @@ def complete(task_id: int, db: Session = Depends(get_db), user=Depends(get_curre
     task = crud.update_task(db, task_id, TaskUpdate(status="done"))
     return task
 
-
-# STATS — harus di atas route {task_id} agar tidak konflik,
-# tapi FastAPI match berdasarkan urutan, jadi letakkan di bawah tidak masalah
-# selama path-nya unik (/tasks/stats vs /tasks/{task_id})
-@app.get("/tasks/stats")
-def stats(db: Session = Depends(get_db), user=Depends(get_current_user)):
-    tasks = crud.get_tasks(db)
-    total = len(tasks)
-    done = len([t for t in tasks if t.status == "done"])
-    return {
-        "total": total,
-        "completed": done,
-        "pending": total - done,
-    }
