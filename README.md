@@ -32,7 +32,13 @@ Secara keseluruhan, aplikasi ini menjadi solusi ringan namun efektif untuk kebut
 
 ## 🏗️ Architecture
 
-[React Frontend] <--HTTP--> [FastAPI Backend] <--SQL--> [PostgreSQL]
+User (Browser)
+     ↓
+[ React Frontend (Docker Container) ]
+     ↓ HTTP
+[ FastAPI Backend (Docker Container) ]
+     ↓
+[ PostgreSQL Database (Docker Container + Volume) ]
 
 ---
 
@@ -44,17 +50,21 @@ Secara keseluruhan, aplikasi ini menjadi solusi ringan namun efektif untuk kebut
 - Node.js 18+
 - Git
 
-### ⚙️ Backend Setup
+### ⚙️ Backend Setup (Without Docker)
 
-cd backend  
-pip install -r requirements.txt  
+cd backend
+pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 
-### 🎨 Frontend Setup
+### 🎨 Frontend Setup (Without Docker)
 
-cd frontend  
-npm install  
+cd frontend
+npm install
 npm run dev
+
+### 🐳 Run with Docker
+
+docker-compose up --build
 
 ---
 
