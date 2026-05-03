@@ -4,6 +4,7 @@ import TaskForm from "./components/TaskForm"
 import SearchBar from "./components/SearchBar"
 import TaskList from "./components/TaskList"
 import LoginPage from "./components/LoginPage"
+import AboutPage from "./components/AboutPage"
 import {
   fetchTasks, createTask, updateTask, deleteTask, completeTask,
   checkHealth, login, register, clearToken, getToken,
@@ -59,6 +60,7 @@ function Toast({ message, type, onClose }) {
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!getToken())
+  const [currentPage, setCurrentPage] = useState("home")
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(false)
   const [isConnected, setIsConnected] = useState(false)
@@ -116,6 +118,7 @@ function App() {
   const handleLogout = () => {
     clearToken()
     setIsAuthenticated(false)
+    setCurrentPage("home")
     setTasks([])
     setEditingTask(null)
     setSearchQuery("")
@@ -178,7 +181,15 @@ function App() {
   if (!isAuthenticated) {
     return (
       <>
-        <LoginPage onLogin={handleLogin} onRegister={handleRegister} />
+        {currentPage === "about" ? (
+          <AboutPage onBack={() => setCurrentPage("home")} />
+        ) : (
+          <LoginPage
+            onLogin={handleLogin}
+            onRegister={handleRegister}
+            onOpenAbout={() => setCurrentPage("about")}
+          />
+        )}
         <Toast
           message={toast.message}
           type={toast.type}
@@ -191,47 +202,54 @@ function App() {
   return (
     <div style={appStyles.app}>
       <div style={appStyles.container}>
-        <Header
-          totalTasks={tasks.length}
-          completedTasks={tasks.filter((task) => task.status === "done").length}
-          isConnected={isConnected}
-          onLogout={handleLogout}
-        />
-        <TaskForm
-          onSubmit={handleSubmit}
-          editingTask={editingTask}
-          onCancelEdit={() => setEditingTask(null)}
-        />
-        <SearchBar
-          totalTasks={tasks.length}
-          filteredTasks={filteredTasks.length}
-          searchQuery={searchQuery}
-          priorityFilter={priorityFilter}
-          onSearchChange={setSearchQuery}
-          onPriorityChange={setPriorityFilter}
-        />
-        {loading && (
-          <div style={{ textAlign: "center", margin: "2rem" }}>
-            <div style={{
-              border: "3px solid #e5e7eb",
-              borderTop: "3px solid #7c5cbf",
-              borderRadius: "50%",
-              width: "36px", height: "36px",
-              animation: "spin 0.8s linear infinite",
-              margin: "0 auto",
-            }} />
-            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-          </div>
+        {currentPage === "about" ? (
+          <AboutPage onBack={() => setCurrentPage("home")} />
+        ) : (
+          <>
+            <Header
+              totalTasks={tasks.length}
+              completedTasks={tasks.filter((task) => task.status === "done").length}
+              isConnected={isConnected}
+              onLogout={handleLogout}
+              onOpenAbout={() => setCurrentPage("about")}
+            />
+            <TaskForm
+              onSubmit={handleSubmit}
+              editingTask={editingTask}
+              onCancelEdit={() => setEditingTask(null)}
+            />
+            <SearchBar
+              totalTasks={tasks.length}
+              filteredTasks={filteredTasks.length}
+              searchQuery={searchQuery}
+              priorityFilter={priorityFilter}
+              onSearchChange={setSearchQuery}
+              onPriorityChange={setPriorityFilter}
+            />
+            {loading && (
+              <div style={{ textAlign: "center", margin: "2rem" }}>
+                <div style={{
+                  border: "3px solid #e5e7eb",
+                  borderTop: "3px solid #7c5cbf",
+                  borderRadius: "50%",
+                  width: "36px", height: "36px",
+                  animation: "spin 0.8s linear infinite",
+                  margin: "0 auto",
+                }} />
+                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+              </div>
+            )}
+            <TaskList
+              tasks={filteredTasks}
+              searchQuery={searchQuery}
+              priorityFilter={priorityFilter}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onComplete={handleComplete}
+              loading={loading}
+            />
+          </>
         )}
-        <TaskList
-          tasks={filteredTasks}
-          searchQuery={searchQuery}
-          priorityFilter={priorityFilter}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onComplete={handleComplete}
-          loading={loading}
-        />
       </div>
       <Toast
         message={toast.message}
