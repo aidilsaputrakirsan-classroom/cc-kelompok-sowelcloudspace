@@ -3,6 +3,7 @@ function Header({
   completedTasks,
   isConnected,
   onLogout,
+  onOpenAbout,
 }) {
   const pendingTasks = totalTasks - completedTasks
 
@@ -32,9 +33,14 @@ function Header({
               {isConnected ? "Connected" : "Disconnected"}
             </span>
           </div>
-          <button onClick={onLogout} style={styles.btnLogout} id="logout-btn">
-            Logout
-          </button>
+          <div style={styles.actions}>
+            <button onClick={onOpenAbout} style={styles.btnSecondary} id="about-btn">
+              About
+            </button>
+            <button onClick={onLogout} style={styles.btnLogout} id="logout-btn">
+              Logout
+            </button>
+          </div>
         </div>
       </div>
     </header>
@@ -70,6 +76,12 @@ const styles = {
     alignItems: "flex-end",
     gap: "0.6rem",
   },
+  actions: {
+    display: "flex",
+    gap: "0.6rem",
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+  },
   stats: {
     display: "flex",
     gap: "0.4rem",
@@ -99,6 +111,18 @@ const styles = {
     cursor: "pointer",
     fontSize: "0.8rem",
     fontWeight: 600,
+    transition: "all 0.2s",
+    fontFamily: "'Inter', sans-serif",
+  },
+  btnSecondary: {
+    padding: "0.4rem 1rem",
+    background: "white",
+    color: "#6d4cb3",
+    border: "1px solid rgba(255,255,255,0.3)",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "0.8rem",
+    fontWeight: 700,
     transition: "all 0.2s",
     fontFamily: "'Inter', sans-serif",
   },
