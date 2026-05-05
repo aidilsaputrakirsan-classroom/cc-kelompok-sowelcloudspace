@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-function LoginPage({ onLogin, onRegister }) {
+function LoginPage({ onLogin, onRegister, onOpenAbout }) {
   const [isRegister, setIsRegister] = useState(false)
   const [formData, setFormData] = useState({
     email: "",
@@ -205,6 +205,9 @@ function LoginPage({ onLogin, onRegister }) {
               </span>
             )}
           </div>
+          <button type="button" style={styles.aboutButton} onClick={onOpenAbout}>
+            About This Project
+          </button>
         </div>
       </div>
 
@@ -388,6 +391,19 @@ const styles = {
     fontSize: "0.88rem",
     textAlign: "center",
     fontWeight: 500,
+  },
+  aboutButton: {
+    width: "100%",
+    marginTop: "1rem",
+    padding: "0.85rem",
+    background: "transparent",
+    color: "#7c5cbf",
+    border: "1px solid #d6ccf5",
+    borderRadius: "30px",
+    cursor: "pointer",
+    fontSize: "0.95rem",
+    fontWeight: 700,
+    fontFamily: "'Inter', sans-serif",
   },
 }
 
