@@ -327,6 +327,7 @@ function App() {
           <LoginPage
             onLogin={handleLogin}
             onRegister={handleRegister}
+            onOpenAbout={() => setCurrentPage("about")}
           />
         )}
         <Toast
