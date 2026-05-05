@@ -8,7 +8,6 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
     name: "",
   })
   const [showPassword, setShowPassword] = useState(false)
-  const [agreeTerms, setAgreeTerms] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -23,8 +22,18 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
 
     try {
       if (isRegister) {
+        if (!formData.email.trim()) {
+          setError("Email wajib diisi")
+          setLoading(false)
+          return
+        }
+        if (!formData.email.includes("@")) {
+          setError("Email harus menggunakan karakter @")
+          setLoading(false)
+          return
+        }
         if (!formData.name.trim()) {
-          setError("Nama wajib diisi")
+          setError("Username wajib diisi")
           setLoading(false)
           return
         }
@@ -74,29 +83,47 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
             {isRegister && (
               <div style={styles.fieldGroup}>
                 <input
-                  type="text"
-                  name="name"
-                  id="register-name"
-                  value={formData.name}
+                  type="email"
+                  name="email"
+                  id="register-email"
+                  value={formData.email}
                   onChange={handleChange}
-                  placeholder="Full Name"
+                  placeholder="Email"
                   style={styles.input}
+                  autoComplete="email"
                 />
               </div>
             )}
 
-            <div style={styles.fieldGroup}>
-              <input
-                type="text"
-                name="email"
-                id="login-username"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Username"
-                style={styles.input}
-                autoComplete="username"
-              />
-            </div>
+            {isRegister && (
+              <div style={styles.fieldGroup}>
+                <input
+                  type="text"
+                  name="name"
+                  id="register-username"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Username"
+                  style={styles.input}
+                  autoComplete="username"
+                />
+              </div>
+            )}
+
+            {!isRegister && (
+              <div style={styles.fieldGroup}>
+                <input
+                  type="text"
+                  name="email"
+                  id="login-username"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Username"
+                  style={styles.input}
+                  autoComplete="username"
+                />
+              </div>
+            )}
 
             <div style={styles.fieldGroup}>
               <div style={styles.passwordWrapper}>
@@ -135,20 +162,6 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
                 </div>
               )}
             </div>
-
-            {!isRegister && (
-              <label style={styles.checkboxLabel} id="agree-terms-label">
-                <input
-                  type="checkbox"
-                  checked={agreeTerms}
-                  onChange={(e) => setAgreeTerms(e.target.checked)}
-                  style={styles.checkbox}
-                  id="agree-terms"
-                />
-                I agree to the <span style={styles.link}>terms of service</span> and{" "}
-                <span style={styles.link}>privacy policy</span>
-              </label>
-            )}
 
             <button
               type="submit"
@@ -336,26 +349,6 @@ const styles = {
   forgotLink: {
     color: "#7c5cbf",
     fontSize: "0.82rem",
-    cursor: "pointer",
-    fontWeight: 500,
-  },
-  checkboxLabel: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    fontSize: "0.85rem",
-    color: "#555",
-    cursor: "pointer",
-  },
-  checkbox: {
-    accentColor: "#7c5cbf",
-    width: "16px",
-    height: "16px",
-    cursor: "pointer",
-  },
-  link: {
-    color: "#7c5cbf",
-    textDecoration: "underline",
     cursor: "pointer",
     fontWeight: 500,
   },
