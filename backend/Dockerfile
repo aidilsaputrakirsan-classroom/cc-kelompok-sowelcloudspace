@@ -26,9 +26,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 6.5. Copy dan set permission untuk startup script
-#      Script ini akan menunggu PostgreSQL siap sebelum start uvicorn
+#      Normalisasi line ending menghindari error shebang `/bin/sh^M`
 COPY scripts/wait-for-db.sh /app/scripts/wait-for-db.sh
-RUN chmod +x /app/scripts/wait-for-db.sh
+RUN sed -i 's/\r$//' /app/scripts/wait-for-db.sh && chmod +x /app/scripts/wait-for-db.sh
 
 # 7. Buat non-root user untuk security best practice
 RUN useradd -m appuser && \

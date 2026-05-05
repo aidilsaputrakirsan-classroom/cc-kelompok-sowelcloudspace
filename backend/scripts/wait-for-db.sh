@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # ============================================================
 # wait-for-db.sh
 # Startup script yang menunggu PostgreSQL siap sebelum

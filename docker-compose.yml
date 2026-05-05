@@ -17,8 +17,8 @@ services:
     restart: unless-stopped                                         # Restart otomatis kecuali dihentikan manual
     environment:
       POSTGRES_USER: postgres                                       # Username database
-      POSTGRES_PASSWORD: arya123                                    # Password database
-      POSTGRES_DB: cloudapp                                         # Nama database
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: cloudapp
     ports:
       - "5433:5432"                                                 # Map port lokal 5433 → port PostgreSQL 5432 di container
     volumes:
