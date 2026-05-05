@@ -216,18 +216,6 @@ function App() {
   }
 
   const handleSubmit = async (taskData, editId, folderId) => {
-  const handleLogout = () => {
-    clearToken()
-    setIsAuthenticated(false)
-    setCurrentPage("home")
-    setTasks([])
-    setEditingTask(null)
-    setSearchQuery("")
-    setPriorityFilter("all")
-    setToast({ message: "Logout berhasil", type: "success" })
-  }
-
-  const handleSubmit = async (taskData, editId) => {
     setLoading(true)
     try {
       if (editId) {
@@ -448,57 +436,6 @@ function App() {
         onSubmit={folderModalMode === "edit" ? handleUpdateFolder : handleCreateFolder}
       />
 
-    <div style={appStyles.app}>
-      <div style={appStyles.container}>
-        {currentPage === "about" ? (
-          <AboutPage onBack={() => setCurrentPage("home")} />
-        ) : (
-          <>
-            <Header
-              totalTasks={tasks.length}
-              completedTasks={tasks.filter((task) => task.status === "done").length}
-              isConnected={isConnected}
-              onLogout={handleLogout}
-              onOpenAbout={() => setCurrentPage("about")}
-            />
-            <TaskForm
-              onSubmit={handleSubmit}
-              editingTask={editingTask}
-              onCancelEdit={() => setEditingTask(null)}
-            />
-            <SearchBar
-              totalTasks={tasks.length}
-              filteredTasks={filteredTasks.length}
-              searchQuery={searchQuery}
-              priorityFilter={priorityFilter}
-              onSearchChange={setSearchQuery}
-              onPriorityChange={setPriorityFilter}
-            />
-            {loading && (
-              <div style={{ textAlign: "center", margin: "2rem" }}>
-                <div style={{
-                  border: "3px solid #e5e7eb",
-                  borderTop: "3px solid #7c5cbf",
-                  borderRadius: "50%",
-                  width: "36px", height: "36px",
-                  animation: "spin 0.8s linear infinite",
-                  margin: "0 auto",
-                }} />
-                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-              </div>
-            )}
-            <TaskList
-              tasks={filteredTasks}
-              searchQuery={searchQuery}
-              priorityFilter={priorityFilter}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onComplete={handleComplete}
-              loading={loading}
-            />
-          </>
-        )}
-      </div>
       <Toast
         message={toast.message}
         type={toast.type}
