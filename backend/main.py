@@ -1,4 +1,4 @@
-import os
+import logging
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,27 +6,41 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from jose import jwt, JWTError
-from dotenv import load_dotenv
 
+from config import (
+    APP_TITLE,
+    APP_VERSION,
+    DEBUG,
+    SECRET_KEY,
+    ALGORITHM,
+    ALLOWED_ORIGINS,
+    DOCS_ENABLED,
+    ENV,
+)
 from database import engine, Base, get_db
 import crud
 from schemas import TaskCreate, TaskUpdate, TaskResponse, UserCreate, LoginRequest
 from auth import create_token
 
-load_dotenv()
+logger = logging.getLogger("sowel-api")
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Sowel Task API")
+# ==================== APP INIT ====================
+app = FastAPI(
+    title=APP_TITLE,
+    version=APP_VERSION,
+    debug=DEBUG,
+    docs_url="/docs" if DOCS_ENABLED else None,
+    redoc_url="/redoc" if DOCS_ENABLED else None,
+)
 
-# ==================== CONFIG ====================
-SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey123")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
+logger.info("Starting %s v%s [env=%s, debug=%s]", APP_TITLE, APP_VERSION, ENV, DEBUG)
 
 # ==================== CORS ====================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(","),
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
