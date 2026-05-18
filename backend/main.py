@@ -144,7 +144,28 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         raise HTTPException(401, "Username atau password salah")
 
     token = create_token(user.id)
-    return {"access_token": token, "token_type": "bearer"}
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+        },
+    }
+
+
+@app.get("/auth/me")
+def get_me(db: Session = Depends(get_db), user_id=Depends(get_current_user)):
+    """Ambil profil user yang sedang login berdasarkan token."""
+    user = crud.get_user_by_id(db, int(user_id))
+    if not user:
+        raise HTTPException(404, "User not found")
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+    }
 
 
 # ==================== TASK (PROTECTED) ====================

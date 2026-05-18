@@ -52,6 +52,10 @@ def test_login_success(client):
     data = response.json()
     assert "access_token" in data
     assert data["token_type"] == "bearer"
+    # Verify user data is returned
+    assert "user" in data
+    assert data["user"]["name"] == "Login User"
+    assert data["user"]["email"] == "login@example.com"
 
 
 def test_login_wrong_password(client):
