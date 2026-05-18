@@ -54,9 +54,9 @@ def test_register_empty_body(client):
 # ==================== EDGE CASE: LOGIN ====================
 
 def test_login_nonexistent_user(client):
-    """Test login dengan email yang belum terdaftar → 401."""
+    """Test login dengan username yang belum terdaftar → 401."""
     response = client.post("/auth/login", data={
-        "username": "nobody@example.com",
+        "username": "Nobody User",
         "password": "SomePassword123"
     })
     assert response.status_code == 401
@@ -65,7 +65,7 @@ def test_login_nonexistent_user(client):
 def test_login_empty_password(client):
     """Test login dengan password kosong → 422."""
     response = client.post("/auth/login", data={
-        "username": "test@example.com",
+        "username": "Test User",
         "password": ""
     })
     # FastAPI OAuth2 form requires password field
