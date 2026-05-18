@@ -244,11 +244,7 @@ function App() {
   const handleRegister = async (userData) => {
     try {
       await register(userData)
-<<<<<<< HEAD
       await handleLogin(userData.name, userData.password)
-=======
-      await handleLogin(userData.email, userData.password)
->>>>>>> c6ed4766d199de2a2b0983e43212db80a794ae3e
       setToast({ message: "Registrasi berhasil!", type: "success" })
     } catch (err) {
       if (!shouldEscalateApiError(err)) {
