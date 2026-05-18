@@ -66,6 +66,16 @@ export function normalizeApiUrl(rawValue) {
 export const API_URL = normalizeApiUrl(import.meta.env.VITE_API_URL)
 
 let authToken = localStorage.getItem("sowel_token") || null
+let storedUser = (() => {
+  try {
+    const raw = localStorage.getItem("sowel_user")
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === "object" ? parsed : null
+  } catch {
+    return null
+  }
+})()
 
 export function setToken(token) {
   authToken = token
@@ -76,9 +86,20 @@ export function getToken() {
   return authToken
 }
 
+export function setStoredUser(user) {
+  storedUser = user
+  localStorage.setItem("sowel_user", JSON.stringify(user))
+}
+
+export function getStoredUser() {
+  return storedUser
+}
+
 export function clearToken() {
   authToken = null
+  storedUser = null
   localStorage.removeItem("sowel_token")
+  localStorage.removeItem("sowel_user")
 }
 
 function authHeaders(isForm = false) {
@@ -173,6 +194,21 @@ export async function login(username, password) {
   }
 
   setToken(data.access_token)
+  if (data.user) {
+    setStoredUser(data.user)
+  }
+  return data
+}
+
+export async function fetchCurrentUser() {
+  const data = await request("/auth/me", {
+    headers: authHeaders(),
+  })
+
+  if (data && typeof data === "object") {
+    setStoredUser(data)
+  }
+
   return data
 }
 
