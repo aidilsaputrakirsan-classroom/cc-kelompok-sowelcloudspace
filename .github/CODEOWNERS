@@ -1,0 +1,21 @@
+# =============================================
+# CODEOWNERS — Cloud Team cc-kelompok-sowelcloudspace
+# =============================================
+# Setiap baris: pola file → username GitHub reviewer
+# Reviewer otomatis ditambahkan saat PR mengubah file terkait
+
+# Backend — Lead Backend
+/backend/                @AnjasGeofny
+
+# Frontend — Lead Frontend
+/frontend/               @cantikaade
+
+# Docker & Infrastructure — Lead DevOps
+docker-compose.yml       @AryaRya9
+/backend/Dockerfile      @AryaRya9
+/frontend/Dockerfile     @AryaRya9
+Makefile                 @AryaRya9
+
+# Documentation — Lead QA & Docs
+README.md                @Meiskee
+/docs/                   @Meiskee

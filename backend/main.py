@@ -1,8 +1,10 @@
 import os
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from jose import jwt, JWTError
 from dotenv import load_dotenv
 
@@ -52,8 +54,24 @@ def root():
 
 
 @app.get("/health")
-def health():
-    return {"status": "healthy"}
+def health_check(db: Session = Depends(get_db)):
+    """Health check endpoint — cek status semua komponen."""
+    health = {
+        "status": "healthy",
+        "service": "backend",
+        "version": "1.0.0",
+    }
+
+    # Cek database connection
+    try:
+        db.execute(text("SELECT 1"))
+        health["database"] = "connected"
+    except Exception as e:
+        health["status"] = "unhealthy"
+        health["database"] = f"error: {str(e)}"
+
+    status_code = 200 if health["status"] == "healthy" else 503
+    return JSONResponse(content=health, status_code=status_code)
 
 
 @app.get("/team")
@@ -125,8 +143,21 @@ def create(task: TaskCreate, db: Session = Depends(get_db), user=Depends(get_cur
 
 # READ ALL
 @app.get("/tasks")
-def read_all(db: Session = Depends(get_db), user=Depends(get_current_user)):
-    return crud.get_tasks(db)
+def read_all(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    return crud.get_tasks(db, skip=skip, limit=limit)
+
+
+# STATS
+@app.get("/tasks/stats")
+def stats(db: Session = Depends(get_db), user=Depends(get_current_user)):
+    tasks = crud.get_tasks(db)
+    total = len(tasks)
+    done = len([t for t in tasks if t.status == "done"])
+    return {
+        "total": total,
+        "completed": done,
+        "pending": total - done,
+    }
 
 
 # READ ONE
@@ -161,17 +192,3 @@ def complete(task_id: int, db: Session = Depends(get_db), user=Depends(get_curre
     task = crud.update_task(db, task_id, TaskUpdate(status="done"))
     return task
 
-
-# STATS — harus di atas route {task_id} agar tidak konflik,
-# tapi FastAPI match berdasarkan urutan, jadi letakkan di bawah tidak masalah
-# selama path-nya unik (/tasks/stats vs /tasks/{task_id})
-@app.get("/tasks/stats")
-def stats(db: Session = Depends(get_db), user=Depends(get_current_user)):
-    tasks = crud.get_tasks(db)
-    total = len(tasks)
-    done = len([t for t in tasks if t.status == "done"])
-    return {
-        "total": total,
-        "completed": done,
-        "pending": total - done,
-    }
