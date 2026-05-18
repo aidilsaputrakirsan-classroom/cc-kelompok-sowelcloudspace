@@ -1,17 +1,63 @@
-# Python
-__pycache__/
-*.pyc
-venv/
+# ===== ENVIRONMENT & SECRETS =====
 .env
+.env.*
+!.env.example
+!.env.production
 
-# Node
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+ENV/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ===== Node =====
 node_modules/
 dist/
+build/
+.npm
+*.tsbuildinfo
 
-# Docker
+# ===== Docker =====
 *.log
-.env.docker
 
-# IDE
+# ===== IDE & Editors =====
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+.env.local
+.env.*.local
+
+# ===== Build & Cache =====
+.cache/
+.parcel-cache/
+.eslintcache

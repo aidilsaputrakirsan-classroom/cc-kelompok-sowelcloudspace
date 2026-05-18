@@ -1,25 +1,61 @@
-# Logs
+# ===== ENVIRONMENT & SECRETS =====
+.env
+.env.*
+!.env.example
+!.env.production
+
+# ===== Dependencies =====
+node_modules
+package-lock.json.lock
+
+# ===== Build Output =====
+dist
+dist-ssr
+build
+.vite
+
+# ===== Development & Cache =====
+*.local
+.eslintcache
+.cache/
+.parcel-cache/
+
+# ===== Logs =====
 logs
 *.log
 npm-debug.log*
+npm-error.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# ===== Editor & IDE =====
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
+*.swp
+*.swo
+*~
 .DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# ===== VS Code Extensions & Settings =====
+.vscode-test
+.vscode_test
+*.code-workspace
+
+# ===== OS-specific Files =====
+.DS_Store
+Thumbs.db
+ehthumbs.db
+.Spotlight-V100
+.Trashes
+
+# ===== IDE Files =====
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-.env
