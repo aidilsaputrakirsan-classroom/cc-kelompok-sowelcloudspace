@@ -50,11 +50,7 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
         })
       } else {
         if (!formData.username.trim()) {
-<<<<<<< HEAD
           setError("Username wajib diisi")
-=======
-          setError("Email wajib diisi")
->>>>>>> c6ed4766d199de2a2b0983e43212db80a794ae3e
           setLoading(false)
           return
         }
@@ -122,23 +118,15 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
             {!isRegister && (
               <div style={styles.fieldGroup}>
                 <input
-<<<<<<< HEAD
                   type="text"
-=======
-                  type="email"
->>>>>>> c6ed4766d199de2a2b0983e43212db80a794ae3e
                   name="username"
                   id="login-username"
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder="Email"
+                  placeholder="username"
                   style={styles.input}
-<<<<<<< HEAD
                   autoComplete="username"
                   inputMode="text"
-=======
-                  autoComplete="email"
->>>>>>> c6ed4766d199de2a2b0983e43212db80a794ae3e
                 />
               </div>
             )}
