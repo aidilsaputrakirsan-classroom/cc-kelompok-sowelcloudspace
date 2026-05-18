@@ -1,4 +1,69 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000"
+const FALLBACK_API_URL = "http://localhost:8000"
+
+export class ApiError extends Error {
+  constructor(
+    message,
+    { code = "API_ERROR", status = null, userMessage = message, isFatal = false, cause = null } = {},
+  ) {
+    super(message)
+    this.name = "ApiError"
+    this.code = code
+    this.status = status
+    this.userMessage = userMessage
+    this.isFatal = isFatal
+    this.cause = cause
+  }
+}
+
+function createApiError(message, options) {
+  return new ApiError(message, options)
+}
+
+export function isApiError(error) {
+  return error instanceof ApiError
+}
+
+export function shouldEscalateApiError(error) {
+  return isApiError(error) && error.isFatal
+}
+
+export function getUserFriendlyErrorMessage(error, fallbackMessage = "Terjadi kendala saat menghubungi server.") {
+  if (isApiError(error)) {
+    return error.userMessage || error.message || fallbackMessage
+  }
+  if (error instanceof Error) {
+    return error.message || fallbackMessage
+  }
+  return fallbackMessage
+}
+
+export function normalizeApiUrl(rawValue) {
+  const value = rawValue?.trim()
+  if (!value) {
+    return FALLBACK_API_URL
+  }
+
+  if (value.includes("xxx") || value.includes("your-") || value.includes("__")) {
+    throw createApiError("VITE_API_URL masih menggunakan placeholder.", {
+      code: "INVALID_API_URL",
+      userMessage: "Aplikasi belum terhubung ke backend production. Periksa kembali konfigurasi VITE_API_URL.",
+      isFatal: true,
+    })
+  }
+
+  try {
+    const url = new URL(value)
+    return url.toString().replace(/\/$/, "")
+  } catch {
+    throw createApiError("VITE_API_URL bukan URL yang valid.", {
+      code: "INVALID_API_URL",
+      userMessage: "Konfigurasi API production tidak valid. Periksa format VITE_API_URL.",
+      isFatal: true,
+    })
+  }
+}
+
+export const API_URL = normalizeApiUrl(import.meta.env.VITE_API_URL)
 
 let authToken = localStorage.getItem("sowel_token") || null
 
@@ -22,115 +87,146 @@ function authHeaders(isForm = false) {
     headers["Content-Type"] = "application/json"
   }
   if (authToken) {
-    headers["Authorization"] = `Bearer ${authToken}`
+    headers.Authorization = `Bearer ${authToken}`
   }
   return headers
+}
+
+async function parseErrorResponse(response) {
+  const errorBody = await response.json().catch(() => null)
+  return errorBody?.detail || errorBody?.message || null
 }
 
 async function handleResponse(response) {
   if (response.status === 401) {
     clearToken()
-    throw new Error("UNAUTHORIZED")
+    throw createApiError("UNAUTHORIZED", {
+      code: "UNAUTHORIZED",
+      status: 401,
+      userMessage: "Sesi kamu sudah berakhir. Silakan login kembali.",
+    })
   }
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.detail || `Request gagal (${response.status})`)
+    const detail = await parseErrorResponse(response)
+    const message = detail || `Request gagal (${response.status})`
+    const isServerError = response.status >= 500
+
+    throw createApiError(message, {
+      code: isServerError ? "SERVER_ERROR" : "REQUEST_FAILED",
+      status: response.status,
+      userMessage: isServerError
+        ? "Server sedang bermasalah. Coba beberapa saat lagi."
+        : message,
+      isFatal: isServerError,
+    })
   }
+
   if (response.status === 204) return null
   return response.json()
 }
 
-// ==================== AUTH ====================
+async function request(path, options = {}) {
+  try {
+    const response = await fetch(`${API_URL}${path}`, options)
+    return await handleResponse(response)
+  } catch (error) {
+    if (isApiError(error)) {
+      throw error
+    }
+
+    throw createApiError("Tidak dapat terhubung ke server.", {
+      code: "NETWORK_ERROR",
+      userMessage: "Kami tidak bisa menghubungi server saat ini. Periksa koneksi atau backend production kamu.",
+      isFatal: true,
+      cause: error,
+    })
+  }
+}
 
 export async function register(userData) {
-  const response = await fetch(`${API_URL}/auth/register`, {
+  return request("/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(userData),
   })
-  return handleResponse(response)
 }
 
-export async function login(email, password) {
-  // OAuth2PasswordRequestForm expects form-urlencoded with "username" field
+export async function login(username, password) {
   const formData = new URLSearchParams()
-  formData.append("username", email)
+  // Backend FastAPI menggunakan OAuth2PasswordRequestForm,
+  // jadi identifier login harus dikirim lewat field "username".
+  formData.append("username", username)
   formData.append("password", password)
 
-  const response = await fetch(`${API_URL}/auth/login`, {
+  const data = await request("/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: formData.toString(),
   })
-  const data = await handleResponse(response)
+
   if (!data.access_token) {
-    throw new Error(data.detail || "Email atau password salah")
+    throw createApiError(data.detail || "Email atau password salah", {
+      code: "INVALID_AUTH_RESPONSE",
+      userMessage: "Respons login dari server tidak lengkap. Coba lagi.",
+    })
   }
+
   setToken(data.access_token)
   return data
 }
 
-// ==================== TASKS ====================
-
 export async function fetchTasks() {
-  const response = await fetch(`${API_URL}/tasks`, {
+  return request("/tasks", {
     headers: authHeaders(),
   })
-  return handleResponse(response)
 }
 
 export async function fetchTask(id) {
-  const response = await fetch(`${API_URL}/tasks/${id}`, {
+  return request(`/tasks/${id}`, {
     headers: authHeaders(),
   })
-  return handleResponse(response)
 }
 
 export async function createTask(taskData) {
-  const response = await fetch(`${API_URL}/tasks`, {
+  return request("/tasks", {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(taskData),
   })
-  return handleResponse(response)
 }
 
 export async function updateTask(id, taskData) {
-  const response = await fetch(`${API_URL}/tasks/${id}`, {
+  return request(`/tasks/${id}`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify(taskData),
   })
-  return handleResponse(response)
 }
 
 export async function completeTask(id) {
-  const response = await fetch(`${API_URL}/tasks/${id}/complete`, {
+  return request(`/tasks/${id}/complete`, {
     method: "PUT",
     headers: authHeaders(),
   })
-  return handleResponse(response)
 }
 
 export async function deleteTask(id) {
-  const response = await fetch(`${API_URL}/tasks/${id}`, {
+  return request(`/tasks/${id}`, {
     method: "DELETE",
     headers: authHeaders(),
   })
-  return handleResponse(response)
 }
 
 export async function fetchStats() {
-  const response = await fetch(`${API_URL}/tasks/stats`, {
+  return request("/tasks/stats", {
     headers: authHeaders(),
   })
-  return handleResponse(response)
 }
 
 export async function checkHealth() {
   try {
-    const response = await fetch(`${API_URL}/health`)
-    const data = await response.json()
+    const data = await request("/health")
     return data.status === "healthy"
   } catch {
     return false
