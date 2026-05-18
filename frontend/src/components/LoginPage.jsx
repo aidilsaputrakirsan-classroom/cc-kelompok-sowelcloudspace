@@ -50,7 +50,10 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
         })
       } else {
         if (!formData.username.trim()) {
+HEAD
           setError("Username wajib diisi")
+
+          
           setLoading(false)
           return
         }
@@ -118,15 +121,21 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
             {!isRegister && (
               <div style={styles.fieldGroup}>
                 <input
+ HEAD
                   type="text"
+                  
                   name="username"
                   id="login-username"
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="username"
                   style={styles.input}
+HEAD
                   autoComplete="username"
                   inputMode="text"
+
+                  autoComplete="username"
+
                 />
               </div>
             )}
