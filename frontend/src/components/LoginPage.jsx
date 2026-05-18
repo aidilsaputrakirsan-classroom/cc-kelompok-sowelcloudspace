@@ -50,7 +50,7 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
         })
       } else {
         if (!formData.username.trim()) {
-          setError("Email wajib diisi")
+          setError("Username wajib diisi")
           setLoading(false)
           return
         }
@@ -118,14 +118,15 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
             {!isRegister && (
               <div style={styles.fieldGroup}>
                 <input
-                  type="email"
+                  type="text"
                   name="username"
                   id="login-username"
                   value={formData.username}
                   onChange={handleChange}
-                  placeholder="Email"
+                  placeholder="username"
                   style={styles.input}
-                  autoComplete="email"
+                  autoComplete="username"
+                  inputMode="text"
                 />
               </div>
             )}
