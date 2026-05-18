@@ -166,7 +166,11 @@ export async function login(username, password) {
   })
 
   if (!data.access_token) {
+<<<<<<< HEAD
     throw createApiError(data.detail || "Username atau password salah", {
+=======
+    throw createApiError(data.detail || "Email atau password salah", {
+>>>>>>> c6ed4766d199de2a2b0983e43212db80a794ae3e
       code: "INVALID_AUTH_RESPONSE",
       userMessage: "Respons login dari server tidak lengkap. Coba lagi.",
     })
