@@ -43,9 +43,9 @@ def test_login_success(client):
         "password": "MyPassword123",
         "name": "Login User"
     })
-    # Login — menggunakan form data (OAuth2PasswordRequestForm)
+    # Login — menggunakan form data (OAuth2PasswordRequestForm), username = name
     response = client.post("/auth/login", data={
-        "username": "login@example.com",
+        "username": "Login User",
         "password": "MyPassword123"
     })
     assert response.status_code == 200
@@ -62,9 +62,9 @@ def test_login_wrong_password(client):
         "password": "CorrectPass123",
         "name": "User"
     })
-    # Login dengan password salah
+    # Login dengan password salah (username = name)
     response = client.post("/auth/login", data={
-        "username": "wrongpass@example.com",
+        "username": "User",
         "password": "WrongPassword"
     })
     assert response.status_code == 401

@@ -61,9 +61,9 @@ def auth_headers(client):
         "password": "TestPassword123",
         "name": "Test User"
     })
-    # Login — endpoint menggunakan OAuth2PasswordRequestForm (form data, field: username)
+    # Login — endpoint menggunakan OAuth2PasswordRequestForm (form data, field: username = name)
     response = client.post("/auth/login", data={
-        "username": "test@example.com",
+        "username": "Test User",
         "password": "TestPassword123"
     })
     token = response.json()["access_token"]
