@@ -2,6 +2,7 @@ function DashboardHome({
   folders,
   allFolders,
   tasks,
+  currentUser,
   dashboardQuery,
   onSearchChange,
   onAddFolder,
@@ -23,13 +24,14 @@ function DashboardHome({
 
   const completionRate = tasks.length ? Math.round((progressSummary.done / tasks.length) * 100) : 0
   const sharedFolders = allFolders.filter((folder) => folder.type === "group").length
+  const greetingName = currentUser?.name?.trim() || "Teman"
 
   return (
     <section className="dashboard-page">
       <div className="dashboard-page__header">
         <div>
           <p className="eyebrow">Main Dashboard</p>
-          <h1>Halo, Cantika!</h1>
+          <h1>{`Halo, ${greetingName}!`}</h1>
           <p className="dashboard-page__subtitle">
             {today.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </p>

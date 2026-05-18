@@ -6,7 +6,7 @@ import SidebarNav from "./components/SidebarNav"
 import FolderModal from "./components/FolderModal"
 import {
   fetchTasks, createTask, updateTask, deleteTask, completeTask,
-  checkHealth, login, register, clearToken, getToken,
+  checkHealth, login, register, clearToken, getToken, getStoredUser, fetchCurrentUser,
   getUserFriendlyErrorMessage, shouldEscalateApiError,
 } from "./services/api"
 
@@ -98,6 +98,7 @@ function PageLoader() {
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!getToken())
+  const [currentUser, setCurrentUser] = useState(getStoredUser)
   const [currentPage, setCurrentPage] = useState("home")
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(false)
@@ -117,6 +118,7 @@ function App() {
 
   const handleLogout = useCallback(() => {
     clearToken()
+    setCurrentUser(null)
     setFatalError(null)
     setIsAuthenticated(false)
     setCurrentPage("home")
@@ -217,6 +219,31 @@ function App() {
     }
   }, [isAuthenticated, loadTasks])
 
+  useEffect(() => {
+    if (!isAuthenticated || !getToken()) return
+
+    let isMounted = true
+
+    fetchCurrentUser()
+      .then((user) => {
+        if (!isMounted) return
+        setCurrentUser(user && typeof user === "object" ? user : null)
+      })
+      .catch((err) => {
+        if (!isMounted) return
+        if (err.message === "UNAUTHORIZED") {
+          handleLogout()
+          return
+        }
+        if (!shouldEscalateApiError(err)) return
+        setFatalError(err)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [handleLogout, isAuthenticated])
+
   const updateTaskFolder = useCallback((taskId, folderId) => {
     setTaskFolderMap((prev) => {
       const next = { ...prev }
@@ -230,6 +257,7 @@ function App() {
     try {
       const data = await login(username, password)
       setFatalError(null)
+      setCurrentUser(data?.user ?? getStoredUser())
       setIsAuthenticated(true)
       setToast({ message: "Login berhasil!", type: "success" })
       return data
@@ -405,6 +433,7 @@ function App() {
               folders={visibleFolders}
               allFolders={folders}
               tasks={enhancedTasks}
+              currentUser={currentUser}
               dashboardQuery={dashboardQuery}
               onSearchChange={setDashboardQuery}
               onAddFolder={handleOpenCreateFolderModal}
