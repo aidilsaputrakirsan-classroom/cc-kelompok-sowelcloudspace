@@ -3,9 +3,10 @@ import { useState } from "react"
 function LoginPage({ onLogin, onRegister, onOpenAbout }) {
   const [isRegister, setIsRegister] = useState(false)
   const [formData, setFormData] = useState({
-    email: "",
+    username: "",
     password: "",
-    name: "",
+    email: "",
+    registerUsername: "",
   })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
@@ -32,7 +33,7 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
           setLoading(false)
           return
         }
-        if (!formData.name.trim()) {
+        if (!formData.registerUsername.trim()) {
           setError("Username wajib diisi")
           setLoading(false)
           return
@@ -42,14 +43,18 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
           setLoading(false)
           return
         }
-        await onRegister(formData)
+        await onRegister({
+          email: formData.email.trim(),
+          name: formData.registerUsername.trim(),
+          password: formData.password,
+        })
       } else {
-        if (!formData.email.trim()) {
-          setError("Username / Email wajib diisi")
+        if (!formData.username.trim()) {
+          setError("Email wajib diisi")
           setLoading(false)
           return
         }
-        await onLogin(formData.email, formData.password)
+        await onLogin(formData.username.trim(), formData.password)
       }
     } catch (err) {
       setError(err.message)
@@ -99,9 +104,9 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
               <div style={styles.fieldGroup}>
                 <input
                   type="text"
-                  name="name"
+                  name="registerUsername"
                   id="register-username"
-                  value={formData.name}
+                  value={formData.registerUsername}
                   onChange={handleChange}
                   placeholder="Username"
                   style={styles.input}
@@ -113,14 +118,14 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
             {!isRegister && (
               <div style={styles.fieldGroup}>
                 <input
-                  type="text"
-                  name="email"
+                  type="email"
+                  name="username"
                   id="login-username"
-                  value={formData.email}
+                  value={formData.username}
                   onChange={handleChange}
-                  placeholder="Username"
+                  placeholder="Email"
                   style={styles.input}
-                  autoComplete="username"
+                  autoComplete="email"
                 />
               </div>
             )}
