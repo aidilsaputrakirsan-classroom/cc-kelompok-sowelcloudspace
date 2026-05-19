@@ -131,7 +131,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
                 accept="image/*"
                 onChange={handleImageChange}
               />
-              <small>Pilih foto asli untuk avatar folder. File akan disimpan lokal di browser.</small>
+              <small>Pilih foto asli untuk avatar folder</small>
             </div>
             <div className="upload-preview">
               {formData.imageData ? (
@@ -140,15 +140,6 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
                 <div className="upload-preview__fallback">
                   {(formData.name || "FD").slice(0, 2).toUpperCase()}
                 </div>
-              )}
-              {formData.imageData && (
-                <button
-                  type="button"
-                  className="ghost-button upload-remove"
-                  onClick={() => setFormData((prev) => ({ ...prev, imageData: "" }))}
-                >
-                  Hapus foto
-                </button>
               )}
             </div>
           </label>
