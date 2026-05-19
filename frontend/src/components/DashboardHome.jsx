@@ -146,7 +146,7 @@ function DashboardHome({
             {folders.length === 0 ? (
               <div className="panel folder-empty">
                 <h3>Belum ada folder yang cocok</h3>
-                <p>Coba kata kunci lain atau buat folder reminder baru lewat tombol `Add New+`.</p>
+                <p>Coba kata kunci lain atau buat folder reminder baru lewat tombol `Add New`.</p>
               </div>
             ) : (
               folders.map((folder) => {
