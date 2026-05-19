@@ -463,6 +463,41 @@
   gap: 14px;
   margin-top: 10px;
   color: rgba(255, 255, 255, 0.8);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.folder-card__action {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 4px 10px;
+  border-radius: 10px;
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+}
+
+.folder-card__action:hover {
+  transform: scale(1.05);
+}
+
+.folder-card__action--edit {
+  color: #d4c8ff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.folder-card__action--edit:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.folder-card__action--delete {
+  color: #ffb3b3;
+  background: rgba(255, 80, 80, 0.14);
+}
+
+.folder-card__action--delete:hover {
+  color: #ffffff;
+  background: rgba(220, 50, 50, 0.4);
 }
 
 .folder-card__members {

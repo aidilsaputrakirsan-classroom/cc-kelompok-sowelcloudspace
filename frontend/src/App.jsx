@@ -387,6 +387,23 @@ function App() {
     setToast({ message: `Folder "${folderData.name}" berhasil diperbarui`, type: "success" })
   }
 
+  const handleDeleteFolder = (folderId) => {
+    const folder = folders.find((item) => item.id === folderId)
+    if (!folder) return
+    if (!window.confirm(`Yakin ingin menghapus folder "${folder.name}"? Semua reminder di folder ini akan kehilangan folder-nya.`)) return
+
+    setFolders((prev) => prev.filter((item) => item.id !== folderId))
+    setTaskFolderMap((prev) => {
+      const next = { ...prev }
+      for (const [taskId, mappedFolderId] of Object.entries(next)) {
+        if (mappedFolderId === folderId) delete next[taskId]
+      }
+      return next
+    })
+    if (selectedFolderId === folderId) setSelectedFolderId(null)
+    setToast({ message: `Folder "${folder.name}" berhasil dihapus`, type: "success" })
+  }
+
   if (fatalError) {
     throw fatalError
   }
@@ -435,6 +452,7 @@ function App() {
               onAddFolder={handleOpenCreateFolderModal}
               onOpenFolder={handleOpenFolder}
               onEditFolder={handleOpenEditFolderModal}
+              onDeleteFolder={handleDeleteFolder}
             />
           )}
 
