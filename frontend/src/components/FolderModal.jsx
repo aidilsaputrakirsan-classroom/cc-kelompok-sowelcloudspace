@@ -131,16 +131,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
                 accept="image/*"
                 onChange={handleImageChange}
               />
-              <small>Pilih foto asli untuk avatar folder</small>
-            </div>
-            <div className="upload-preview">
-              {formData.imageData ? (
-                <img src={formData.imageData} alt={`Preview ${formData.name || "folder"}`} />
-              ) : (
-                <div className="upload-preview__fallback">
-                  {(formData.name || "FD").slice(0, 2).toUpperCase()}
-                </div>
-              )}
+              <small>Pilih foto untuk avatar folder.</small>
             </div>
           </label>
 
