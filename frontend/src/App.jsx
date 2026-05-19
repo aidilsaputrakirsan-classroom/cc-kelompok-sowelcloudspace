@@ -1,19 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react"
 import TaskForm from "./components/TaskForm"
 import SearchBar from "./components/SearchBar"
 import TaskList from "./components/TaskList"
-import LoginPage from "./components/LoginPage"
-import AboutPage from "./components/AboutPage"
 import SidebarNav from "./components/SidebarNav"
-import DashboardHome from "./components/DashboardHome"
-import ReminderPage from "./components/ReminderPage"
-import YearCalendarPage from "./components/YearCalendarPage"
 import FolderModal from "./components/FolderModal"
-import WorkspacePage from "./components/WorkspacePage"
 import {
   fetchTasks, createTask, updateTask, deleteTask, completeTask,
-  checkHealth, login, register, clearToken, getToken,
+  checkHealth, login, register, clearToken, getToken, getStoredUser, fetchCurrentUser,
+  getUserFriendlyErrorMessage, shouldEscalateApiError,
 } from "./services/api"
+
+const LoginPage = lazy(() => import("./components/LoginPage"))
+const AboutPage = lazy(() => import("./components/AboutPage"))
+const DashboardHome = lazy(() => import("./components/DashboardHome"))
+const ReminderPage = lazy(() => import("./components/ReminderPage"))
+const YearCalendarPage = lazy(() => import("./components/YearCalendarPage"))
+const WorkspacePage = lazy(() => import("./components/WorkspacePage"))
 
 const FOLDER_STORAGE_KEY = "sowel_folders"
 const TASK_FOLDER_STORAGE_KEY = "sowel_task_folder_map"
@@ -86,8 +88,17 @@ function Toast({ message, type, onClose }) {
   )
 }
 
+function PageLoader() {
+  return (
+    <div className="loading-state loading-state--page">
+      <div className="loading-spinner" />
+    </div>
+  )
+}
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!getToken())
+  const [currentUser, setCurrentUser] = useState(getStoredUser)
   const [currentPage, setCurrentPage] = useState("home")
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(false)
@@ -103,9 +114,12 @@ function App() {
   const [folders, setFolders] = useState(loadStoredFolders)
   const [taskFolderMap, setTaskFolderMap] = useState(loadStoredTaskFolderMap)
   const [selectedFolderId, setSelectedFolderId] = useState(null)
+  const [fatalError, setFatalError] = useState(null)
 
   const handleLogout = useCallback(() => {
     clearToken()
+    setCurrentUser(null)
+    setFatalError(null)
     setIsAuthenticated(false)
     setCurrentPage("home")
     setTasks([])
@@ -115,6 +129,15 @@ function App() {
     setDashboardQuery("")
     setSelectedFolderId(null)
     setToast({ message: "Logout berhasil", type: "success" })
+  }, [])
+
+  const escalateApiError = useCallback((error, fallbackMessage) => {
+    if (shouldEscalateApiError(error)) {
+      setFatalError(error)
+      return true
+    }
+
+    return false
   }, [])
 
   useEffect(() => {
@@ -171,17 +194,20 @@ function App() {
     setLoading(true)
     try {
       const data = await fetchTasks()
+      setFatalError(null)
       setTasks(Array.isArray(data) ? data : [])
     } catch (err) {
       if (err.message === "UNAUTHORIZED") {
         handleLogout()
         return
       }
-      setToast({ message: "Gagal memuat data", type: "error" })
+      if (!escalateApiError(err, "Gagal memuat data reminder.")) {
+        setToast({ message: getUserFriendlyErrorMessage(err, "Gagal memuat data reminder."), type: "error" })
+      }
     } finally {
       setLoading(false)
     }
-  }, [handleLogout])
+  }, [escalateApiError, handleLogout])
 
   useEffect(() => {
     checkHealth().then(setIsConnected)
@@ -193,6 +219,31 @@ function App() {
     }
   }, [isAuthenticated, loadTasks])
 
+  useEffect(() => {
+    if (!isAuthenticated || !getToken()) return
+
+    let isMounted = true
+
+    fetchCurrentUser()
+      .then((user) => {
+        if (!isMounted) return
+        setCurrentUser(user && typeof user === "object" ? user : null)
+      })
+      .catch((err) => {
+        if (!isMounted) return
+        if (err.message === "UNAUTHORIZED") {
+          handleLogout()
+          return
+        }
+        if (!shouldEscalateApiError(err)) return
+        setFatalError(err)
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [handleLogout, isAuthenticated])
+
   const updateTaskFolder = useCallback((taskId, folderId) => {
     setTaskFolderMap((prev) => {
       const next = { ...prev }
@@ -202,17 +253,33 @@ function App() {
     })
   }, [])
 
-  const handleLogin = async (email, password) => {
-    const data = await login(email, password)
-    setIsAuthenticated(true)
-    setToast({ message: "Login berhasil!", type: "success" })
-    return data
+  const handleLogin = async (username, password) => {
+    try {
+      const data = await login(username, password)
+      setFatalError(null)
+      setCurrentUser(data?.user ?? getStoredUser())
+      setIsAuthenticated(true)
+      setToast({ message: "Login berhasil!", type: "success" })
+      return data
+    } catch (err) {
+      if (!escalateApiError(err, "Login gagal. Coba lagi.")) {
+        throw err
+      }
+      throw err
+    }
   }
 
   const handleRegister = async (userData) => {
-    await register(userData)
-    await handleLogin(userData.email, userData.password)
-    setToast({ message: "Registrasi berhasil!", type: "success" })
+    try {
+      await register(userData)
+      await handleLogin(userData.name, userData.password)
+      setToast({ message: "Registrasi berhasil!", type: "success" })
+    } catch (err) {
+      if (!shouldEscalateApiError(err)) {
+        throw err
+      }
+      throw err
+    }
   }
 
   const handleSubmit = async (taskData, editId, folderId) => {
@@ -231,7 +298,9 @@ function App() {
       await loadTasks()
     } catch (err) {
       if (err.message === "UNAUTHORIZED") handleLogout()
-      else setToast({ message: `Gagal menyimpan: ${err.message}`, type: "error" })
+      else if (!escalateApiError(err, "Gagal menyimpan reminder.")) {
+        setToast({ message: `Gagal menyimpan: ${getUserFriendlyErrorMessage(err)}`, type: "error" })
+      }
     } finally {
       setLoading(false)
     }
@@ -255,7 +324,9 @@ function App() {
       setToast({ message: "Reminder berhasil dihapus", type: "success" })
     } catch (err) {
       if (err.message === "UNAUTHORIZED") handleLogout()
-      else setToast({ message: `Gagal menghapus: ${err.message}`, type: "error" })
+      else if (!escalateApiError(err, "Gagal menghapus reminder.")) {
+        setToast({ message: `Gagal menghapus: ${getUserFriendlyErrorMessage(err)}`, type: "error" })
+      }
     } finally {
       setLoading(false)
     }
@@ -268,7 +339,9 @@ function App() {
       setToast({ message: "Reminder ditandai selesai", type: "success" })
     } catch (err) {
       if (err.message === "UNAUTHORIZED") handleLogout()
-      else setToast({ message: `Gagal memperbarui: ${err.message}`, type: "error" })
+      else if (!escalateApiError(err, "Gagal memperbarui reminder.")) {
+        setToast({ message: `Gagal memperbarui: ${getUserFriendlyErrorMessage(err)}`, type: "error" })
+      }
     }
   }
 
@@ -318,130 +391,139 @@ function App() {
     setToast({ message: `Folder "${folderData.name}" berhasil diperbarui`, type: "success" })
   }
 
+  if (fatalError) {
+    throw fatalError
+  }
+
   if (!isAuthenticated) {
     return (
-      <>
-        {currentPage === "about" ? (
-          <AboutPage onBack={() => setCurrentPage("home")} />
-        ) : (
-          <LoginPage
-            onLogin={handleLogin}
-            onRegister={handleRegister}
-            onOpenAbout={() => setCurrentPage("about")}
+      <Suspense fallback={<PageLoader />}>
+        <>
+          {currentPage === "about" ? (
+            <AboutPage onBack={() => setCurrentPage("home")} />
+          ) : (
+            <LoginPage
+              onLogin={handleLogin}
+              onRegister={handleRegister}
+              onOpenAbout={() => setCurrentPage("about")}
+            />
+          )}
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast({ message: "", type: "" })}
           />
-        )}
+        </>
+      </Suspense>
+    )
+  }
+
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <div className="app-shell">
+        <SidebarNav
+          currentPage={currentPage}
+          onNavigate={setCurrentPage}
+          onLogout={handleLogout}
+        />
+
+        <main className="app-main">
+          {currentPage === "home" && (
+            <DashboardHome
+              folders={visibleFolders}
+              allFolders={folders}
+              tasks={enhancedTasks}
+              currentUser={currentUser}
+              dashboardQuery={dashboardQuery}
+              onSearchChange={setDashboardQuery}
+              onAddFolder={handleOpenCreateFolderModal}
+              onOpenFolder={handleOpenFolder}
+              onEditFolder={handleOpenEditFolderModal}
+            />
+          )}
+
+          {currentPage === "reminders" && (
+            <ReminderPage
+              tasks={enhancedTasks}
+              onOpenFolder={handleOpenFolder}
+              onEditTask={handleEdit}
+            />
+          )}
+
+          {currentPage === "calendar" && (
+            <YearCalendarPage
+              tasks={enhancedTasks}
+              year={new Date().getFullYear()}
+              onOpenFolder={handleOpenFolder}
+            />
+          )}
+
+          {currentPage === "workspace" && (
+            <WorkspacePage
+              selectedFolder={selectedFolder}
+              folders={folders}
+              totalTasks={enhancedTasks.length}
+              filteredTasks={filteredTasks.length}
+              completedTasks={enhancedTasks.filter((task) => task.status === "done").length}
+              isConnected={isConnected}
+              onAddFolder={handleOpenCreateFolderModal}
+              onClearFolder={() => setSelectedFolderId(null)}
+              onSelectFolder={setSelectedFolderId}
+              onEditFolder={handleOpenEditFolderModal}
+            >
+              <TaskForm
+                onSubmit={handleSubmit}
+                editingTask={editingTask}
+                onCancelEdit={() => setEditingTask(null)}
+                folderOptions={folders}
+                selectedFolderId={selectedFolderId}
+              />
+              <SearchBar
+                totalTasks={enhancedTasks.length}
+                filteredTasks={filteredTasks.length}
+                searchQuery={searchQuery}
+                priorityFilter={priorityFilter}
+                onSearchChange={setSearchQuery}
+                onPriorityChange={setPriorityFilter}
+              />
+              {loading && (
+                <div className="loading-state">
+                  <div className="loading-spinner" />
+                </div>
+              )}
+              <TaskList
+                tasks={filteredTasks}
+                searchQuery={searchQuery}
+                priorityFilter={priorityFilter}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onComplete={handleComplete}
+                loading={loading}
+              />
+            </WorkspacePage>
+          )}
+
+          {currentPage === "about" && <AboutPage onBack={() => setCurrentPage("home")} />}
+        </main>
+
+        <FolderModal
+          isOpen={isFolderModalOpen}
+          mode={folderModalMode}
+          initialData={editingFolder}
+          onClose={() => {
+            setIsFolderModalOpen(false)
+            setFolderEditingId(null)
+          }}
+          onSubmit={folderModalMode === "edit" ? handleUpdateFolder : handleCreateFolder}
+        />
+
         <Toast
           message={toast.message}
           type={toast.type}
           onClose={() => setToast({ message: "", type: "" })}
         />
-      </>
-    )
-  }
-
-  return (
-    <div className="app-shell">
-      <SidebarNav
-        currentPage={currentPage}
-        onNavigate={setCurrentPage}
-        onLogout={handleLogout}
-      />
-
-      <main className="app-main">
-        {currentPage === "home" && (
-          <DashboardHome
-            folders={visibleFolders}
-            allFolders={folders}
-            tasks={enhancedTasks}
-            dashboardQuery={dashboardQuery}
-            onSearchChange={setDashboardQuery}
-            onAddFolder={handleOpenCreateFolderModal}
-            onOpenFolder={handleOpenFolder}
-            onEditFolder={handleOpenEditFolderModal}
-          />
-        )}
-
-        {currentPage === "reminders" && (
-          <ReminderPage
-            tasks={enhancedTasks}
-            onOpenFolder={handleOpenFolder}
-            onEditTask={handleEdit}
-          />
-        )}
-
-        {currentPage === "calendar" && (
-          <YearCalendarPage
-            tasks={enhancedTasks}
-            year={new Date().getFullYear()}
-            onOpenFolder={handleOpenFolder}
-          />
-        )}
-
-        {currentPage === "workspace" && (
-          <WorkspacePage
-            selectedFolder={selectedFolder}
-            folders={folders}
-            totalTasks={enhancedTasks.length}
-            filteredTasks={filteredTasks.length}
-            completedTasks={enhancedTasks.filter((task) => task.status === "done").length}
-            isConnected={isConnected}
-            onAddFolder={handleOpenCreateFolderModal}
-            onClearFolder={() => setSelectedFolderId(null)}
-            onSelectFolder={setSelectedFolderId}
-            onEditFolder={handleOpenEditFolderModal}
-          >
-            <TaskForm
-              onSubmit={handleSubmit}
-              editingTask={editingTask}
-              onCancelEdit={() => setEditingTask(null)}
-              folderOptions={folders}
-              selectedFolderId={selectedFolderId}
-            />
-            <SearchBar
-              totalTasks={enhancedTasks.length}
-              filteredTasks={filteredTasks.length}
-              searchQuery={searchQuery}
-              priorityFilter={priorityFilter}
-              onSearchChange={setSearchQuery}
-              onPriorityChange={setPriorityFilter}
-            />
-            {loading && (
-              <div className="loading-state">
-                <div className="loading-spinner" />
-              </div>
-            )}
-            <TaskList
-              tasks={filteredTasks}
-              searchQuery={searchQuery}
-              priorityFilter={priorityFilter}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onComplete={handleComplete}
-              loading={loading}
-            />
-          </WorkspacePage>
-        )}
-
-        {currentPage === "about" && <AboutPage onBack={() => setCurrentPage("home")} />}
-      </main>
-
-      <FolderModal
-        isOpen={isFolderModalOpen}
-        mode={folderModalMode}
-        initialData={editingFolder}
-        onClose={() => {
-          setIsFolderModalOpen(false)
-          setFolderEditingId(null)
-        }}
-        onSubmit={folderModalMode === "edit" ? handleUpdateFolder : handleCreateFolder}
-      />
-
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        onClose={() => setToast({ message: "", type: "" })}
-      />
-    </div>
+      </div>
+    </Suspense>
   )
 }
 

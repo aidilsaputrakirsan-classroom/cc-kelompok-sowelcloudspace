@@ -8,9 +8,12 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # ==================== USER CRUD ====================
 
 def create_user(db: Session, data):
-    """Membuat user baru. Return None jika email sudah terdaftar."""
-    existing = db.query(User).filter(User.email == data.email).first()
-    if existing:
+    """Membuat user baru. Return None jika email atau name sudah terdaftar."""
+    existing_email = db.query(User).filter(User.email == data.email).first()
+    if existing_email:
+        return None
+    existing_name = db.query(User).filter(User.name == data.name).first()
+    if existing_name:
         return None
     user = User(
         email=data.email,
@@ -23,14 +26,19 @@ def create_user(db: Session, data):
     return user
 
 
-def authenticate_user(db: Session, email: str, password: str):
-    """Autentikasi user. Return user jika valid, None jika tidak."""
-    user = db.query(User).filter(User.email == email).first()
+def authenticate_user(db: Session, username: str, password: str):
+    """Autentikasi user berdasarkan name (username). Return user jika valid, None jika tidak."""
+    user = db.query(User).filter(User.name == username).first()
     if not user:
         return None
     if not pwd_context.verify(password[:72], user.hashed_password):
         return None
     return user
+
+
+def get_user_by_id(db: Session, user_id: int):
+    """Ambil user berdasarkan ID."""
+    return db.query(User).filter(User.id == user_id).first()
 
 
 # ==================== TASK CRUD ====================

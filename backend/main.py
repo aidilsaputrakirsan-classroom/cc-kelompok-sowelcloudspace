@@ -135,16 +135,37 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """
     Login menggunakan OAuth2 password flow.
-    - username: isi dengan email
+    - username: isi dengan name/username user (bukan email)
     - password: isi dengan password
     Swagger UI Authorize button akan otomatis menggunakan form ini.
     """
     user = crud.authenticate_user(db, form_data.username, form_data.password)
     if not user:
-        raise HTTPException(401, "Email atau password salah")
+        raise HTTPException(401, "Username atau password salah")
 
     token = create_token(user.id)
-    return {"access_token": token, "token_type": "bearer"}
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+        },
+    }
+
+
+@app.get("/auth/me")
+def get_me(db: Session = Depends(get_db), user_id=Depends(get_current_user)):
+    """Ambil profil user yang sedang login berdasarkan token."""
+    user = crud.get_user_by_id(db, int(user_id))
+    if not user:
+        raise HTTPException(404, "User not found")
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+    }
 
 
 # ==================== TASK (PROTECTED) ====================

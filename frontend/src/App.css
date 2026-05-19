@@ -856,6 +856,10 @@
   padding: 18px;
 }
 
+.loading-state--page {
+  min-height: 100vh;
+}
+
 .loading-spinner {
   width: 38px;
   height: 38px;
@@ -863,6 +867,50 @@
   border: 3px solid #eadff7;
   border-top-color: #7c5cbf;
   animation: spin 0.75s linear infinite;
+}
+
+.error-boundary {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.92), transparent 28%),
+    linear-gradient(135deg, #f6effd 0%, #efe7fb 48%, #f5f0fb 100%);
+}
+
+.error-boundary__card {
+  width: min(100%, 520px);
+  padding: 32px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(218, 207, 238, 0.95);
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+
+.error-boundary__eyebrow {
+  margin: 0 0 10px;
+  color: var(--text-soft);
+  font: 800 0.78rem "Plus Jakarta Sans", sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.error-boundary__card h1 {
+  margin: 0;
+  font: 800 clamp(2rem, 4vw, 2.8rem) "Baloo 2", cursive;
+  line-height: 0.95;
+}
+
+.error-boundary__card p {
+  margin: 14px 0 0;
+  color: var(--text-soft);
+  font: 500 0.96rem/1.7 "Plus Jakarta Sans", sans-serif;
+}
+
+.error-boundary__action {
+  margin-top: 24px;
 }
 
 @keyframes spin {

@@ -1,4 +1,7 @@
 # 📦 Cloud App - Sowel Task
+![CI](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-sowelcloudspace/actions/workflows/ci.yml/badge.svg)
+
+
 
 ## Deskripsi Proyek
 Aplikasi Sowel Task adalah To-Do List Kolaboratif berbasis cloud adalah sebuah platform produktivitas yang dirancang untuk membantu individu maupun kelompok mengatur dan menyelesaikan tugas secara lebih terstruktur. Aplikasi ini memungkinkan pengguna membuat daftar tugas harian atau proyek, menyimpannya di cloud agar dapat diakses dari berbagai perangkat, serta membagikannya kepada anggota tim atau keluarga. Dengan fitur kolaborasi real-time, setiap perubahan yang dilakukan oleh satu anggota seperti menandai tugas selesai atau menambahkan catatan akan langsung terlihat oleh semua anggota lain, sehingga transparansi progres kerja terjaga.
