@@ -2,7 +2,6 @@ const NAV_ITEMS = [
   { id: "home", label: "Home", icon: "HM" },
   { id: "reminders", label: "Reminder", icon: "RM" },
   { id: "calendar", label: "Calendar", icon: "CL" },
-  { id: "workspace", label: "Workspace", icon: "WS" },
   { id: "about", label: "About", icon: "AB" },
 ]
 

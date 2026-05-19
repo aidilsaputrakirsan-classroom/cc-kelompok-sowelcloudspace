@@ -8,6 +8,7 @@ function DashboardHome({
   onAddFolder,
   onOpenFolder,
   onEditFolder,
+  onDeleteFolder,
 }) {
   const today = new Date()
   const weekDays = Array.from({ length: 7 }, (_, index) => {
@@ -179,13 +180,22 @@ function DashboardHome({
                         <span>{folder.members.length} member</span>
                         <span>{folderTasks.length} reminder</span>
                         <span
-                          className="linkish"
+                          className="folder-card__action folder-card__action--edit"
                           onClick={(event) => {
                             event.stopPropagation()
                             onEditFolder(folder.id)
                           }}
                         >
-                          Edit foto
+                          ✏️ Edit Folder
+                        </span>
+                        <span
+                          className="folder-card__action folder-card__action--delete"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            onDeleteFolder(folder.id)
+                          }}
+                        >
+                          🗑️ Hapus Folder
                         </span>
                       </div>
                       <div className="folder-card__members">
