@@ -486,47 +486,6 @@
   text-align: center;
 }
 
-.folder-card__actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 14px;
-}
-
-.folder-action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  font: 700 0.8rem "Plus Jakarta Sans", sans-serif;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
-}
-
-.folder-action-btn:hover {
-  transform: translateY(-1px);
-}
-
-.folder-action-btn--edit {
-  background: rgba(255, 255, 255, 0.22);
-  color: white;
-}
-
-.folder-action-btn--edit:hover {
-  background: rgba(255, 255, 255, 0.35);
-}
-
-.folder-action-btn--delete {
-  background: rgba(255, 80, 100, 0.18);
-  color: rgba(255, 220, 225, 0.95);
-}
-
-.folder-action-btn--delete:hover {
-  background: rgba(255, 80, 100, 0.35);
-  color: white;
-}
-
 .workspace-hero__stats,
 .workspace-toolbar,
 .folder-chip-row,
