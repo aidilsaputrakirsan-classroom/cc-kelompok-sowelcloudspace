@@ -63,16 +63,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
     })
   }
 
-  const handleImageChange = (event) => {
-    const file = event.target.files?.[0]
-    if (!file) return
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      setFormData((prev) => ({ ...prev, imageData: String(reader.result || "") }))
-    }
-    reader.readAsDataURL(file)
-  }
 
   const handleMemberKeyDown = (event) => {
     if (event.key === "Enter") {
@@ -123,26 +114,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
             />
           </label>
 
-          <label>
-            <span>Foto folder</span>
-            <div className="upload-field">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-              />
-              <small>Pilih foto asli untuk avatar folder</small>
-            </div>
-            <div className="upload-preview">
-              {formData.imageData ? (
-                <img src={formData.imageData} alt={`Preview ${formData.name || "folder"}`} />
-              ) : (
-                <div className="upload-preview__fallback">
-                  {(formData.name || "FD").slice(0, 2).toUpperCase()}
-                </div>
-              )}
-            </div>
-          </label>
+
 
           <label>
             <span>Jenis folder</span>
