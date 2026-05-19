@@ -8,6 +8,7 @@ function DashboardHome({
   onAddFolder,
   onOpenFolder,
   onEditFolder,
+  onDeleteFolder,
 }) {
   const today = new Date()
   const weekDays = Array.from({ length: 7 }, (_, index) => {
@@ -178,15 +179,6 @@ function DashboardHome({
                       <div className="folder-card__meta">
                         <span>{folder.members.length} member</span>
                         <span>{folderTasks.length} reminder</span>
-                        <span
-                          className="linkish"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            onEditFolder(folder.id)
-                          }}
-                        >
-                          Edit foto
-                        </span>
                       </div>
                       <div className="folder-card__members">
                         {folder.members.map((member) => (
@@ -194,6 +186,26 @@ function DashboardHome({
                             {member}
                           </span>
                         ))}
+                      </div>
+                      <div className="folder-card__actions">
+                        <span
+                          className="folder-action-btn folder-action-btn--edit"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            onEditFolder(folder.id)
+                          }}
+                        >
+                          ✏️ Edit Folder
+                        </span>
+                        <span
+                          className="folder-action-btn folder-action-btn--delete"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            onDeleteFolder(folder.id)
+                          }}
+                        >
+                          🗑️ Hapus Folder
+                        </span>
                       </div>
                     </div>
                   </button>
