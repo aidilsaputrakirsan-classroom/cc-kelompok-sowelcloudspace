@@ -49,3 +49,37 @@ class UserCreate(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+
+# ================= FOLDER =================
+
+class FolderCreate(BaseModel):
+    name: str
+    type: str = "personal"
+    description: str = ""
+    members: list[str] = []
+    color: str = "sunset"
+    image_data: str = ""           # base64 data-URL string
+
+class FolderUpdate(BaseModel):
+    name: Optional[str] = None
+    type: Optional[str] = None
+    description: Optional[str] = None
+    members: Optional[list[str]] = None
+    color: Optional[str] = None
+    image_data: Optional[str] = None
+
+class FolderResponse(BaseModel):
+    id: int
+    name: str
+    type: str
+    description: str
+    members: list[str]
+    color: str
+    image_data: str
+    owner_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
