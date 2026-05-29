@@ -5,6 +5,7 @@ import {
   fetchTasks, createTask, updateTask, deleteTask, completeTask,
   checkHealth, login, register, clearToken, getToken, getStoredUser, fetchCurrentUser,
   getUserFriendlyErrorMessage, shouldEscalateApiError,
+  fetchFolders, createFolder, updateFolder, deleteFolder,
 } from "./services/api"
 
 const LoginPage = lazy(() => import("./components/LoginPage"))
@@ -13,47 +14,7 @@ const DashboardHome = lazy(() => import("./components/DashboardHome"))
 const ReminderPage = lazy(() => import("./components/ReminderPage"))
 const YearCalendarPage = lazy(() => import("./components/YearCalendarPage"))
 
-
-const FOLDER_STORAGE_KEY = "sowel_folders"
 const TASK_FOLDER_STORAGE_KEY = "sowel_task_folder_map"
-
-const DEFAULT_FOLDERS = [
-  {
-    id: "folder-harahetta",
-    name: "harahetta",
-    type: "personal",
-    members: ["Cantika"],
-    color: "sunset",
-    description: "Folder pribadi untuk reminder harian dan target cepat.",
-  },
-  {
-    id: "folder-furab",
-    name: "furab",
-    type: "group",
-    members: ["Cantika", "Furab Team"],
-    color: "indigo",
-    description: "Folder kolaborasi kecil untuk checklist dan progress mingguan.",
-  },
-  {
-    id: "folder-sowelcloudspace",
-    name: "sowelcloudspace",
-    type: "group",
-    members: ["Cantika", "Anjas", "Arya", "Meiske"],
-    color: "pink",
-    description: "Folder tim utama untuk reminder project dan deadline bersama.",
-  },
-]
-
-function loadStoredFolders() {
-  try {
-    const raw = localStorage.getItem(FOLDER_STORAGE_KEY)
-    if (!raw) return DEFAULT_FOLDERS
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_FOLDERS
-  } catch {
-    return DEFAULT_FOLDERS
-  }
-}
 
 function loadStoredTaskFolderMap() {
   try {
@@ -108,7 +69,7 @@ function App() {
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false)
   const [folderModalMode, setFolderModalMode] = useState("create")
   const [folderEditingId, setFolderEditingId] = useState(null)
-  const [folders, setFolders] = useState(loadStoredFolders)
+  const [folders, setFolders] = useState([])
   const [taskFolderMap, setTaskFolderMap] = useState(loadStoredTaskFolderMap)
   const [selectedFolderId, setSelectedFolderId] = useState(null)
   const [fatalError, setFatalError] = useState(null)
@@ -125,6 +86,7 @@ function App() {
     setPriorityFilter("all")
     setDashboardQuery("")
     setSelectedFolderId(null)
+    setFolders([])
     setToast({ message: "Logout berhasil", type: "success" })
   }, [])
 
@@ -136,10 +98,6 @@ function App() {
 
     return false
   }, [])
-
-  useEffect(() => {
-    localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(folders))
-  }, [folders])
 
   useEffect(() => {
     localStorage.setItem(TASK_FOLDER_STORAGE_KEY, JSON.stringify(taskFolderMap))
@@ -206,6 +164,22 @@ function App() {
     }
   }, [escalateApiError, handleLogout])
 
+  const loadFolders = useCallback(async () => {
+    try {
+      const data = await fetchFolders()
+      setFatalError(null)
+      setFolders(Array.isArray(data) ? data : [])
+    } catch (err) {
+      if (err.message === "UNAUTHORIZED") {
+        handleLogout()
+        return
+      }
+      if (!escalateApiError(err, "Gagal memuat folder.")) {
+        setToast({ message: getUserFriendlyErrorMessage(err, "Gagal memuat folder."), type: "error" })
+      }
+    }
+  }, [escalateApiError, handleLogout])
+
   useEffect(() => {
     checkHealth().then(setIsConnected)
   }, [])
@@ -213,8 +187,9 @@ function App() {
   useEffect(() => {
     if (isAuthenticated) {
       loadTasks()
+      loadFolders()
     }
-  }, [isAuthenticated, loadTasks])
+  }, [isAuthenticated, loadFolders, loadTasks])
 
   useEffect(() => {
     if (!isAuthenticated || !getToken()) return
@@ -359,49 +334,73 @@ function App() {
     setIsFolderModalOpen(true)
   }
 
-  const handleCreateFolder = (folderData) => {
-    const colorCycle = ["sunset", "indigo", "pink", "mint"]
-    const nextFolder = {
-      id: `folder-${Date.now()}`,
-      color: colorCycle[folders.length % colorCycle.length],
-      ...folderData,
+  const handleCreateFolder = async (folderData) => {
+    setLoading(true)
+    try {
+      const nextFolder = await createFolder(folderData)
+      setFolders((prev) => [nextFolder, ...prev])
+      setSelectedFolderId(nextFolder.id)
+      setCurrentPage("home")
+      setEditingTask(null)
+      setIsFolderModalOpen(false)
+      setToast({ message: `Folder "${nextFolder.name}" berhasil dibuat`, type: "success" })
+    } catch (err) {
+      if (err.message === "UNAUTHORIZED") handleLogout()
+      else if (!escalateApiError(err, "Gagal membuat folder.")) {
+        setToast({ message: getUserFriendlyErrorMessage(err, "Gagal membuat folder."), type: "error" })
+      }
+    } finally {
+      setLoading(false)
     }
-
-    setFolders((prev) => [nextFolder, ...prev])
-    setSelectedFolderId(nextFolder.id)
-    setCurrentPage("home")
-    setEditingTask(null)
-    setIsFolderModalOpen(false)
-    setToast({ message: `Folder "${nextFolder.name}" berhasil dibuat`, type: "success" })
   }
 
-  const handleUpdateFolder = (folderData) => {
+  const handleUpdateFolder = async (folderData) => {
     if (!folderEditingId) return
 
-    setFolders((prev) => prev.map((folder) => (
-      folder.id === folderEditingId
-        ? { ...folder, ...folderData }
-        : folder
-    )))
-    setIsFolderModalOpen(false)
-    setToast({ message: `Folder "${folderData.name}" berhasil diperbarui`, type: "success" })
+    setLoading(true)
+    try {
+      const updatedFolder = await updateFolder(folderEditingId, folderData)
+      setFolders((prev) => prev.map((folder) => (
+        folder.id === folderEditingId ? updatedFolder : folder
+      )))
+      setIsFolderModalOpen(false)
+      setToast({ message: `Folder "${updatedFolder.name}" berhasil diperbarui`, type: "success" })
+    } catch (err) {
+      if (err.message === "UNAUTHORIZED") handleLogout()
+      else if (!escalateApiError(err, "Gagal memperbarui folder.")) {
+        setToast({ message: getUserFriendlyErrorMessage(err, "Gagal memperbarui folder."), type: "error" })
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleDeleteFolder = (folderId) => {
+  const handleDeleteFolder = async (folderId) => {
     const folder = folders.find((item) => item.id === folderId)
     if (!folder) return
     if (!window.confirm(`Yakin ingin menghapus folder "${folder.name}"? Semua reminder di folder ini akan kehilangan folder-nya.`)) return
 
-    setFolders((prev) => prev.filter((item) => item.id !== folderId))
-    setTaskFolderMap((prev) => {
-      const next = { ...prev }
-      for (const [taskId, mappedFolderId] of Object.entries(next)) {
-        if (mappedFolderId === folderId) delete next[taskId]
+    setLoading(true)
+    try {
+      await deleteFolder(folderId)
+      setFolders((prev) => prev.filter((item) => item.id !== folderId))
+      setTaskFolderMap((prev) => {
+        const next = { ...prev }
+        for (const [taskId, mappedFolderId] of Object.entries(next)) {
+          if (mappedFolderId === folderId) delete next[taskId]
+        }
+        return next
+      })
+      if (selectedFolderId === folderId) setSelectedFolderId(null)
+      setToast({ message: `Folder "${folder.name}" berhasil dihapus`, type: "success" })
+    } catch (err) {
+      if (err.message === "UNAUTHORIZED") handleLogout()
+      else if (!escalateApiError(err, "Gagal menghapus folder.")) {
+        setToast({ message: getUserFriendlyErrorMessage(err, "Gagal menghapus folder."), type: "error" })
       }
-      return next
-    })
-    if (selectedFolderId === folderId) setSelectedFolderId(null)
-    setToast({ message: `Folder "${folder.name}" berhasil dihapus`, type: "success" })
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (fatalError) {
