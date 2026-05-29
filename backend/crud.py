@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from models import Task, User, Folder
 from passlib.context import CryptContext
 import json
@@ -40,6 +41,11 @@ def authenticate_user(db: Session, username: str, password: str):
 def get_user_by_id(db: Session, user_id: int):
     """Ambil user berdasarkan ID."""
     return db.query(User).filter(User.id == user_id).first()
+
+
+def get_user_by_name(db: Session, username: str):
+    """Cari user berdasarkan name (username) secara case-insensitive."""
+    return db.query(User).filter(func.lower(User.name) == username.lower()).first()
 
 
 # ==================== TASK CRUD ====================
