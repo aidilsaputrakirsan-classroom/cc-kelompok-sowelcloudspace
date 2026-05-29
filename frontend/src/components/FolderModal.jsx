@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
 
+import { API_URL, getToken, getUserFriendlyErrorMessage, isApiError } from "../services/api"
+
 const DEFAULT_FORM = {
   name: "",
   type: "personal",
@@ -11,10 +13,14 @@ const DEFAULT_FORM = {
 
 function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onSubmit }) {
   const [formData, setFormData] = useState(DEFAULT_FORM)
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [memberError, setMemberError] = useState("")
 
   useEffect(() => {
     if (!isOpen) {
       setFormData(DEFAULT_FORM)
+      setIsVerifying(false)
+      setMemberError("")
       return
     }
 
@@ -27,30 +33,88 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
         memberInput: "",
         imageData: initialData.imageData || "",
       })
+      setIsVerifying(false)
+      setMemberError("")
       return
     }
 
     setFormData(DEFAULT_FORM)
+    setIsVerifying(false)
+    setMemberError("")
   }, [initialData, isOpen, mode])
 
   if (!isOpen) return null
 
-  const addMember = (rawName) => {
+  const addMember = async (rawName) => {
     const normalizedName = rawName.trim()
-    if (!normalizedName) return
+    if (!normalizedName) {
+      setMemberError("")
+      return { ok: false, members: formData.members }
+    }
 
-    setFormData((prev) => {
-      const exists = prev.members.some((member) => member.toLowerCase() === normalizedName.toLowerCase())
-      if (exists) {
-        return { ...prev, memberInput: "" }
+    const duplicateMember = formData.members.find((member) => member.toLowerCase() === normalizedName.toLowerCase())
+    if (duplicateMember) {
+      setMemberError("")
+      setFormData((prev) => ({ ...prev, memberInput: "" }))
+      return { ok: true, members: formData.members }
+    }
+
+    setIsVerifying(true)
+    setMemberError("")
+
+    try {
+      const token = getToken()
+      const response = await fetch(`${API_URL}/users/verify/${encodeURIComponent(normalizedName)}`, {
+        method: "GET",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(`Username '${normalizedName}' tidak terdaftar!`)
+        }
+
+        let detail = ""
+        try {
+          const errorBody = await response.json()
+          detail = errorBody?.detail || errorBody?.message || ""
+        } catch {
+          detail = ""
+        }
+
+        throw new Error(detail || `Validasi username gagal (${response.status}).`)
       }
 
-      return {
-        ...prev,
-        members: [...prev.members, normalizedName],
-        memberInput: "",
-      }
-    })
+      let nextMembers = formData.members
+
+      setFormData((prev) => {
+        const exists = prev.members.some((member) => member.toLowerCase() === normalizedName.toLowerCase())
+        if (exists) {
+          nextMembers = prev.members
+          return { ...prev, memberInput: "" }
+        }
+
+        nextMembers = [...prev.members, normalizedName]
+        return {
+          ...prev,
+          members: nextMembers,
+          memberInput: "",
+        }
+      })
+
+      return { ok: true, members: nextMembers }
+    } catch (error) {
+      const message = isApiError(error)
+        ? getUserFriendlyErrorMessage(error, "Tidak dapat memverifikasi username.")
+        : error instanceof Error
+          ? error.message
+          : `Username '${normalizedName}' tidak terdaftar!`
+
+      setMemberError(message)
+      return { ok: false, members: formData.members }
+    } finally {
+      setIsVerifying(false)
+    }
   }
 
   const removeMember = (memberToRemove) => {
@@ -74,24 +138,30 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
     reader.readAsDataURL(file)
   }
 
-  const handleMemberKeyDown = (event) => {
+  const handleMemberKeyDown = async (event) => {
     if (event.key === "Enter") {
       event.preventDefault()
-      addMember(formData.memberInput)
+      await addMember(formData.memberInput)
     }
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
-    const pendingInput = formData.memberInput.trim()
-    const nextMembers = pendingInput
-      ? [...formData.members, pendingInput].filter((member, index, all) => (
-        all.findIndex((item) => item.toLowerCase() === member.toLowerCase()) === index
-      ))
-      : formData.members
+    if (isVerifying) return
 
-    onSubmit({
+    const pendingInput = formData.memberInput.trim()
+    let nextMembers = formData.members
+
+    if (pendingInput) {
+      const result = await addMember(pendingInput)
+      if (!result.ok) {
+        return
+      }
+      nextMembers = result.members
+    }
+
+    await onSubmit({
       name: formData.name.trim(),
       type: formData.type,
       description: formData.description.trim() || "Folder reminder baru.",
@@ -178,17 +248,33 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
               <input
                 type="text"
                 value={formData.memberInput}
-                onChange={(event) => setFormData((prev) => ({ ...prev, memberInput: event.target.value }))}
+                onChange={(event) => {
+                  const nextValue = event.target.value
+                  setFormData((prev) => ({ ...prev, memberInput: nextValue }))
+                  if (memberError) {
+                    setMemberError("")
+                  }
+                }}
                 onKeyDown={handleMemberKeyDown}
                 placeholder="Tulis nama member lalu tekan Enter"
+                disabled={isVerifying}
               />
-              <small>Setiap tekan `Enter`, nama akan masuk ke daftar member dan kamu bisa lanjut tambah nama lain.</small>
+              <button
+                type="button"
+                className="ghost-button"
+                onClick={() => addMember(formData.memberInput)}
+                disabled={isVerifying || !formData.memberInput.trim()}
+              >
+                {isVerifying ? "Memverifikasi..." : "Tambah member"}
+              </button>
+              {memberError ? <small className="form-error">{memberError}</small> : null}
+              <small>Setiap tekan `Enter`, username akan diverifikasi dulu sebelum masuk ke daftar member.</small>
             </div>
           </label>
 
           <div className="modal-form__actions">
-            <button type="button" className="ghost-button" onClick={onClose}>Cancel</button>
-            <button type="submit" className="primary-button">
+            <button type="button" className="ghost-button" onClick={onClose} disabled={isVerifying}>Cancel</button>
+            <button type="submit" className="primary-button" disabled={isVerifying}>
               {mode === "edit" ? "Save changes" : "Create folder"}
             </button>
           </div>

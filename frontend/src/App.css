@@ -792,6 +792,10 @@
   font: 500 0.78rem/1.5 "Plus Jakarta Sans", sans-serif;
 }
 
+.member-builder .form-error {
+  color: #c0392b;
+}
+
 .upload-field {
   display: grid;
   gap: 8px;
