@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
-from models import Task, User
+from models import Task, User, Folder
 from passlib.context import CryptContext
+import json
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -72,5 +73,95 @@ def delete_task(db: Session, task_id: int):
     if not task:
         return False
     db.delete(task)
+    db.commit()
+    return True
+
+
+# ==================== FOLDER CRUD ====================
+
+
+def _parse_members(raw: str) -> list[str]:
+    """Parse JSON string members ke list. Fallback ke list kosong jika invalid."""
+    try:
+        parsed = json.loads(raw or "[]")
+        return parsed if isinstance(parsed, list) else []
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+
+def _folder_to_dict(folder: Folder) -> dict:
+    """Konversi Folder model ke dict dengan members sebagai list (bukan JSON string)."""
+    return {
+        "id": folder.id,
+        "name": folder.name,
+        "type": folder.type,
+        "description": folder.description or "",
+        "members": _parse_members(folder.members),
+        "color": folder.color or "sunset",
+        "image_data": folder.image_data or "",
+        "owner_id": folder.owner_id,
+        "created_at": folder.created_at,
+        "updated_at": folder.updated_at,
+    }
+
+
+def create_folder(db: Session, data, owner_id: int):
+    """Buat folder baru milik user tertentu."""
+    folder = Folder(
+        name=data.name,
+        type=data.type,
+        description=data.description or "",
+        members=json.dumps(data.members if data.members else []),
+        color=data.color or "sunset",
+        image_data=data.image_data or "",
+        owner_id=owner_id,
+    )
+    db.add(folder)
+    db.commit()
+    db.refresh(folder)
+    return _folder_to_dict(folder)
+
+
+def get_folders_by_owner(db: Session, owner_id: int):
+    """Ambil semua folder milik user tertentu."""
+    folders = db.query(Folder).filter(Folder.owner_id == owner_id).all()
+    return [_folder_to_dict(f) for f in folders]
+
+
+def get_folder(db: Session, folder_id: int):
+    """Ambil satu folder berdasarkan ID."""
+    folder = db.query(Folder).filter(Folder.id == folder_id).first()
+    if not folder:
+        return None
+    return _folder_to_dict(folder)
+
+
+def update_folder(db: Session, folder_id: int, data, owner_id: int):
+    """Update folder. Hanya owner yang boleh update."""
+    folder = db.query(Folder).filter(Folder.id == folder_id, Folder.owner_id == owner_id).first()
+    if not folder:
+        return None
+
+    update_data = data.model_dump(exclude_unset=True)
+
+    # Serialize members ke JSON string jika ada
+    if "members" in update_data and update_data["members"] is not None:
+        update_data["members"] = json.dumps(update_data["members"])
+
+    # Rename image_data → image_data (field name sama di model dan schema)
+    for key, value in update_data.items():
+        setattr(folder, key, value)
+
+    db.commit()
+    db.refresh(folder)
+    return _folder_to_dict(folder)
+
+
+def delete_folder(db: Session, folder_id: int, owner_id: int):
+    """Hapus folder. Hanya owner yang boleh hapus."""
+    folder = db.query(Folder).filter(Folder.id == folder_id, Folder.owner_id == owner_id).first()
+    if not folder:
+        return False
+    db.delete(folder)
     db.commit()
     return True

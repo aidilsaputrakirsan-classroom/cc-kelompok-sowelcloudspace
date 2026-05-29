@@ -1,7 +1,4 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react"
-import TaskForm from "./components/TaskForm"
-import SearchBar from "./components/SearchBar"
-import TaskList from "./components/TaskList"
 import SidebarNav from "./components/SidebarNav"
 import FolderModal from "./components/FolderModal"
 import {
@@ -15,7 +12,7 @@ const AboutPage = lazy(() => import("./components/AboutPage"))
 const DashboardHome = lazy(() => import("./components/DashboardHome"))
 const ReminderPage = lazy(() => import("./components/ReminderPage"))
 const YearCalendarPage = lazy(() => import("./components/YearCalendarPage"))
-const WorkspacePage = lazy(() => import("./components/WorkspacePage"))
+
 
 const FOLDER_STORAGE_KEY = "sowel_folders"
 const TASK_FOLDER_STORAGE_KEY = "sowel_task_folder_map"
@@ -309,7 +306,7 @@ function App() {
   const handleEdit = (task) => {
     setSelectedFolderId(task.folderId || null)
     setEditingTask(task)
-    setCurrentPage("workspace")
+    setCurrentPage("reminders")
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
@@ -347,7 +344,6 @@ function App() {
 
   const handleOpenFolder = (folderId) => {
     setSelectedFolderId(folderId)
-    setCurrentPage("workspace")
     setEditingTask(null)
   }
 
@@ -373,7 +369,7 @@ function App() {
 
     setFolders((prev) => [nextFolder, ...prev])
     setSelectedFolderId(nextFolder.id)
-    setCurrentPage("workspace")
+    setCurrentPage("home")
     setEditingTask(null)
     setIsFolderModalOpen(false)
     setToast({ message: `Folder "${nextFolder.name}" berhasil dibuat`, type: "success" })
@@ -389,6 +385,23 @@ function App() {
     )))
     setIsFolderModalOpen(false)
     setToast({ message: `Folder "${folderData.name}" berhasil diperbarui`, type: "success" })
+  }
+
+  const handleDeleteFolder = (folderId) => {
+    const folder = folders.find((item) => item.id === folderId)
+    if (!folder) return
+    if (!window.confirm(`Yakin ingin menghapus folder "${folder.name}"? Semua reminder di folder ini akan kehilangan folder-nya.`)) return
+
+    setFolders((prev) => prev.filter((item) => item.id !== folderId))
+    setTaskFolderMap((prev) => {
+      const next = { ...prev }
+      for (const [taskId, mappedFolderId] of Object.entries(next)) {
+        if (mappedFolderId === folderId) delete next[taskId]
+      }
+      return next
+    })
+    if (selectedFolderId === folderId) setSelectedFolderId(null)
+    setToast({ message: `Folder "${folder.name}" berhasil dihapus`, type: "success" })
   }
 
   if (fatalError) {
@@ -439,6 +452,7 @@ function App() {
               onAddFolder={handleOpenCreateFolderModal}
               onOpenFolder={handleOpenFolder}
               onEditFolder={handleOpenEditFolderModal}
+              onDeleteFolder={handleDeleteFolder}
             />
           )}
 
@@ -458,50 +472,7 @@ function App() {
             />
           )}
 
-          {currentPage === "workspace" && (
-            <WorkspacePage
-              selectedFolder={selectedFolder}
-              folders={folders}
-              totalTasks={enhancedTasks.length}
-              filteredTasks={filteredTasks.length}
-              completedTasks={enhancedTasks.filter((task) => task.status === "done").length}
-              isConnected={isConnected}
-              onAddFolder={handleOpenCreateFolderModal}
-              onClearFolder={() => setSelectedFolderId(null)}
-              onSelectFolder={setSelectedFolderId}
-              onEditFolder={handleOpenEditFolderModal}
-            >
-              <TaskForm
-                onSubmit={handleSubmit}
-                editingTask={editingTask}
-                onCancelEdit={() => setEditingTask(null)}
-                folderOptions={folders}
-                selectedFolderId={selectedFolderId}
-              />
-              <SearchBar
-                totalTasks={enhancedTasks.length}
-                filteredTasks={filteredTasks.length}
-                searchQuery={searchQuery}
-                priorityFilter={priorityFilter}
-                onSearchChange={setSearchQuery}
-                onPriorityChange={setPriorityFilter}
-              />
-              {loading && (
-                <div className="loading-state">
-                  <div className="loading-spinner" />
-                </div>
-              )}
-              <TaskList
-                tasks={filteredTasks}
-                searchQuery={searchQuery}
-                priorityFilter={priorityFilter}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onComplete={handleComplete}
-                loading={loading}
-              />
-            </WorkspacePage>
-          )}
+
 
           {currentPage === "about" && <AboutPage onBack={() => setCurrentPage("home")} />}
         </main>

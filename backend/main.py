@@ -19,7 +19,11 @@ from config import (
 )
 from database import engine, Base, get_db
 import crud
-from schemas import TaskCreate, TaskUpdate, TaskResponse, UserCreate, LoginRequest
+from schemas import (
+    TaskCreate, TaskUpdate, TaskResponse,
+    UserCreate, LoginRequest,
+    FolderCreate, FolderUpdate, FolderResponse,
+)
 from auth import create_token
 
 logger = logging.getLogger("sowel-api")
@@ -226,4 +230,65 @@ def delete(task_id: int, db: Session = Depends(get_db), user=Depends(get_current
 def complete(task_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
     task = crud.update_task(db, task_id, TaskUpdate(status="done"))
     return task
+
+
+# ==================== FOLDER (PROTECTED) ====================
+
+@app.post("/api/folders", response_model=FolderResponse)
+def create_folder(
+    data: FolderCreate,
+    db: Session = Depends(get_db),
+    user_id=Depends(get_current_user),
+):
+    """Buat folder baru. imageData (base64) disimpan langsung ke database."""
+    result = crud.create_folder(db, data, int(user_id))
+    return result
+
+
+@app.get("/api/folders", response_model=list[FolderResponse])
+def get_folders(
+    db: Session = Depends(get_db),
+    user_id=Depends(get_current_user),
+):
+    """Ambil semua folder milik user yang sedang login."""
+    return crud.get_folders_by_owner(db, int(user_id))
+
+
+@app.get("/api/folders/{folder_id}", response_model=FolderResponse)
+def get_folder(
+    folder_id: int,
+    db: Session = Depends(get_db),
+    user_id=Depends(get_current_user),
+):
+    """Ambil detail satu folder."""
+    folder = crud.get_folder(db, folder_id)
+    if not folder:
+        raise HTTPException(404, "Folder not found")
+    return folder
+
+
+@app.put("/api/folders/{folder_id}", response_model=FolderResponse)
+def update_folder(
+    folder_id: int,
+    data: FolderUpdate,
+    db: Session = Depends(get_db),
+    user_id=Depends(get_current_user),
+):
+    """Update folder — termasuk imageData jika ada perubahan foto."""
+    folder = crud.update_folder(db, folder_id, data, int(user_id))
+    if not folder:
+        raise HTTPException(404, "Folder not found")
+    return folder
+
+
+@app.delete("/api/folders/{folder_id}")
+def delete_folder(
+    folder_id: int,
+    db: Session = Depends(get_db),
+    user_id=Depends(get_current_user),
+):
+    """Hapus folder. Hanya owner yang boleh hapus."""
+    if not crud.delete_folder(db, folder_id, int(user_id)):
+        raise HTTPException(404, "Folder not found")
+    return {"message": "Folder deleted"}
 
