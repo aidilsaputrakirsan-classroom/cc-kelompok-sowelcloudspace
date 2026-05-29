@@ -218,6 +218,85 @@ export async function fetchTasks() {
   })
 }
 
+function inferFolderColor(folderId) {
+  const colorCycle = ["sunset", "indigo", "pink", "mint"]
+  const numericId = Number(folderId)
+
+  if (Number.isFinite(numericId) && numericId > 0) {
+    return colorCycle[(numericId - 1) % colorCycle.length]
+  }
+
+  return colorCycle[0]
+}
+
+function normalizeFolder(folder) {
+  if (!folder || typeof folder !== "object") return folder
+
+  return {
+    ...folder,
+    id: folder.id,
+    name: folder.name || "",
+    type: folder.type || "personal",
+    description: folder.description || "",
+    members: Array.isArray(folder.members) ? folder.members : [],
+    imageData: folder.image_data || "",
+    color: folder.color || inferFolderColor(folder.id),
+  }
+}
+
+function serializeFolder(folderData) {
+  return {
+    name: folderData.name,
+    type: folderData.type,
+    description: folderData.description,
+    members: Array.isArray(folderData.members) ? folderData.members : [],
+    image_data: folderData.imageData || "",
+  }
+}
+
+export async function fetchFolders() {
+  const data = await request("/api/folders", {
+    headers: authHeaders(),
+  })
+
+  return Array.isArray(data) ? data.map(normalizeFolder) : []
+}
+
+export async function fetchFolder(id) {
+  const data = await request(`/api/folders/${id}`, {
+    headers: authHeaders(),
+  })
+
+  return normalizeFolder(data)
+}
+
+export async function createFolder(folderData) {
+  const data = await request("/api/folders", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(serializeFolder(folderData)),
+  })
+
+  return normalizeFolder(data)
+}
+
+export async function updateFolder(id, folderData) {
+  const data = await request(`/api/folders/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(serializeFolder(folderData)),
+  })
+
+  return normalizeFolder(data)
+}
+
+export async function deleteFolder(id) {
+  return request(`/api/folders/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  })
+}
+
 export async function fetchTask(id) {
   return request(`/tasks/${id}`, {
     headers: authHeaders(),
