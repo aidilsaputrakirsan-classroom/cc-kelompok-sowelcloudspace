@@ -6,7 +6,7 @@ const DEFAULT_FORM = {
   name: "",
   type: "personal",
   description: "",
-  members: ["Cantika"],
+  members: [],
   memberInput: "",
   imageData: "",
 }
@@ -29,7 +29,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
         name: initialData.name || "",
         type: initialData.type || "personal",
         description: initialData.description || "",
-        members: Array.isArray(initialData.members) && initialData.members.length > 0 ? initialData.members : ["Cantika"],
+        members: Array.isArray(initialData.members) ? initialData.members : [],
         memberInput: "",
         imageData: initialData.imageData || "",
       })
@@ -122,7 +122,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
       const nextMembers = prev.members.filter((member) => member !== memberToRemove)
       return {
         ...prev,
-        members: nextMembers.length > 0 ? nextMembers : ["Cantika"],
+        members: nextMembers,
       }
     })
   }
@@ -164,7 +164,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
     await onSubmit({
       name: formData.name.trim(),
       type: formData.type,
-      description: formData.description.trim() || "Folder reminder baru.",
+      description: formData.description.trim(),
       members: nextMembers.filter(Boolean),
       imageData: formData.imageData || "",
     })
