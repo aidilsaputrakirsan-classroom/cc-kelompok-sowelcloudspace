@@ -172,6 +172,27 @@ def get_me(db: Session = Depends(get_db), user_id=Depends(get_current_user)):
     }
 
 
+# ==================== USER VERIFY ====================
+
+@app.get("/users/verify/{username}")
+def verify_username(username: str, db: Session = Depends(get_db)):
+    """
+    Verifikasi apakah username terdaftar di database (case-insensitive).
+    Endpoint ini bersifat publik agar frontend bisa memvalidasi member folder
+    sebelum menambahkannya.
+    """
+    user = crud.get_user_by_name(db, username)
+    if not user:
+        raise HTTPException(404, "Username tidak ditemukan")
+    return {
+        "exists": True,
+        "user": {
+            "id": user.id,
+            "name": user.name,
+        },
+    }
+
+
 # ==================== TASK (PROTECTED) ====================
 
 # CREATE
