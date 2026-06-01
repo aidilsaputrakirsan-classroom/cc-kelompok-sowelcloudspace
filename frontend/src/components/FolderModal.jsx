@@ -6,7 +6,7 @@ const DEFAULT_FORM = {
   name: "",
   type: "personal",
   description: "",
-  members: ["Cantika"],
+  members: [],
   memberInput: "",
   imageData: "",
 }
@@ -29,7 +29,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
         name: initialData.name || "",
         type: initialData.type || "personal",
         description: initialData.description || "",
-        members: Array.isArray(initialData.members) && initialData.members.length > 0 ? initialData.members : ["Cantika"],
+        members: Array.isArray(initialData.members) ? initialData.members : [],
         memberInput: "",
         imageData: initialData.imageData || "",
       })
@@ -122,7 +122,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
       const nextMembers = prev.members.filter((member) => member !== memberToRemove)
       return {
         ...prev,
-        members: nextMembers.length > 0 ? nextMembers : ["Cantika"],
+        members: nextMembers,
       }
     })
   }
@@ -151,9 +151,9 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
     if (isVerifying) return
 
     const pendingInput = formData.memberInput.trim()
-    let nextMembers = formData.members
+    let nextMembers = formData.type === "group" ? formData.members : []
 
-    if (pendingInput) {
+    if (formData.type === "group" && pendingInput) {
       const result = await addMember(pendingInput)
       if (!result.ok) {
         return
@@ -165,7 +165,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
       name: formData.name.trim(),
       type: formData.type,
       description: formData.description.trim() || "Folder reminder baru.",
-      members: nextMembers.filter(Boolean),
+      members: formData.type === "group" ? nextMembers.filter(Boolean) : [],
       imageData: formData.imageData || "",
     })
   }
@@ -209,7 +209,17 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
             <span>Jenis folder</span>
             <select
               value={formData.type}
-              onChange={(event) => setFormData((prev) => ({ ...prev, type: event.target.value }))}
+              onChange={(event) => {
+                const nextType = event.target.value
+                setFormData((prev) => ({
+                  ...prev,
+                  type: nextType,
+                  memberInput: nextType === "group" ? prev.memberInput : "",
+                }))
+                if (nextType !== "group") {
+                  setMemberError("")
+                }
+              }}
             >
               <option value="personal">Personal</option>
               <option value="group">Group</option>
@@ -226,51 +236,53 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
             />
           </label>
 
-          <label>
-            <span>Member</span>
-            <div className="member-builder">
-              <div className="member-builder__chips">
-                {formData.members.map((member) => (
-                  <span key={member} className="member-chip">
-                    {member}
-                    <button
-                      type="button"
-                      className="member-chip__remove"
-                      onClick={() => removeMember(member)}
-                      aria-label={`Hapus ${member}`}
-                    >
-                      x
-                    </button>
-                  </span>
-                ))}
-              </div>
+          {formData.type === "group" ? (
+            <label>
+              <span>Member</span>
+              <div className="member-builder">
+                <div className="member-builder__chips">
+                  {formData.members.map((member) => (
+                    <span key={member} className="member-chip">
+                      {member}
+                      <button
+                        type="button"
+                        className="member-chip__remove"
+                        onClick={() => removeMember(member)}
+                        aria-label={`Hapus ${member}`}
+                      >
+                        x
+                      </button>
+                    </span>
+                  ))}
+                </div>
 
-              <input
-                type="text"
-                value={formData.memberInput}
-                onChange={(event) => {
-                  const nextValue = event.target.value
-                  setFormData((prev) => ({ ...prev, memberInput: nextValue }))
-                  if (memberError) {
-                    setMemberError("")
-                  }
-                }}
-                onKeyDown={handleMemberKeyDown}
-                placeholder="Tulis nama member lalu tekan Enter"
-                disabled={isVerifying}
-              />
-              <button
-                type="button"
-                className="ghost-button"
-                onClick={() => addMember(formData.memberInput)}
-                disabled={isVerifying || !formData.memberInput.trim()}
-              >
-                {isVerifying ? "Memverifikasi..." : "Tambah member"}
-              </button>
-              {memberError ? <small className="form-error">{memberError}</small> : null}
-              <small>Setiap tekan `Enter`, username akan diverifikasi dulu sebelum masuk ke daftar member.</small>
-            </div>
-          </label>
+                <input
+                  type="text"
+                  value={formData.memberInput}
+                  onChange={(event) => {
+                    const nextValue = event.target.value
+                    setFormData((prev) => ({ ...prev, memberInput: nextValue }))
+                    if (memberError) {
+                      setMemberError("")
+                    }
+                  }}
+                  onKeyDown={handleMemberKeyDown}
+                  placeholder="Tulis username member lalu tekan Enter"
+                  disabled={isVerifying}
+                />
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={() => addMember(formData.memberInput)}
+                  disabled={isVerifying || !formData.memberInput.trim()}
+                >
+                  {isVerifying ? "Memverifikasi..." : "Tambah member"}
+                </button>
+                {memberError ? <small className="form-error">{memberError}</small> : null}
+                <small>Setiap tekan `Enter`, username akan diverifikasi dulu sebelum masuk ke daftar member.</small>
+              </div>
+            </label>
+          ) : null}
 
           <div className="modal-form__actions">
             <button type="button" className="ghost-button" onClick={onClose} disabled={isVerifying}>Cancel</button>
