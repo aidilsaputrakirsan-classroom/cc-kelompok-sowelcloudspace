@@ -152,9 +152,9 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
     if (isVerifying) return
 
     const pendingInput = formData.memberInput.trim()
-    let nextMembers = isGroupFolder ? formData.members : []
+    let nextMembers = formData.type === "group" ? formData.members : []
 
-    if (isGroupFolder && pendingInput) {
+    if (formData.type === "group" && pendingInput) {
       const result = await addMember(pendingInput)
       if (!result.ok) {
         return
@@ -165,8 +165,8 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
     await onSubmit({
       name: formData.name.trim(),
       type: formData.type,
-      description: formData.description.trim(),
-      members: isGroupFolder ? nextMembers.filter(Boolean) : [],
+      description: formData.description.trim() || "Folder reminder baru.",
+      members: formData.type === "group" ? nextMembers.filter(Boolean) : [],
       imageData: formData.imageData || "",
     })
   }
@@ -215,10 +215,11 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
                 setFormData((prev) => ({
                   ...prev,
                   type: nextType,
-                  members: nextType === "group" ? prev.members : [],
                   memberInput: nextType === "group" ? prev.memberInput : "",
                 }))
-                setMemberError("")
+                if (nextType !== "group") {
+                  setMemberError("")
+                }
               }}
             >
               <option value="personal">Personal</option>
@@ -236,7 +237,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
             />
           </label>
 
-          {isGroupFolder && (
+          {formData.type === "group" ? (
             <label>
               <span>Member</span>
               <div className="member-builder">
@@ -279,10 +280,10 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
                   {isVerifying ? "Memverifikasi..." : "Tambah member"}
                 </button>
                 {memberError ? <small className="form-error">{memberError}</small> : null}
-                <small>Nama member baru akan tampil setelah username berhasil diverifikasi dan ditambahkan.</small>
+                <small>Setiap tekan `Enter`, username akan diverifikasi dulu sebelum masuk ke daftar member.</small>
               </div>
             </label>
-          )}
+          ) : null}
 
           <div className="modal-form__actions">
             <button type="button" className="ghost-button" onClick={onClose} disabled={isVerifying}>Cancel</button>
