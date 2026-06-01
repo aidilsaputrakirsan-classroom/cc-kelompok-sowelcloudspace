@@ -34,7 +34,7 @@ Berikut adalah fitur yang telah tersedia pada aplikasi:
 |---------|-----|
 | Frontend | https://frontend-production-93f7a.up.railway.app/              |
 | Backend API | https://backend-production-b026.up.railway.app/             |
-| API Docs (Swagger) | https://backend-production-b026.up.railway.app/docs  | 
+| API Docs (Swagger) | https://backend-production-b026.up.railway.app/docs  |
 
 ---
 
@@ -93,5 +93,3 @@ Fitur yang berhasil diuji:
 * Search Item
 
 Seluruh pengujian memperoleh status **Pass (100%)** baik pada environment development maupun production sehingga deployment Milestone 2 dinyatakan berhasil.
-
-
