@@ -26,7 +26,6 @@ Berikut adalah fitur yang telah tersedia pada aplikasi:
 | 14 | Workspace         | Personal Space             | Ruang kerja pribadi untuk mengelola tugas pengguna                    |
 | 15 | Monitoring        | Health Check               | Memeriksa status backend melalui endpoint `/health`                   |
 
-
 ---
 
 ## 2. URL Production
@@ -94,4 +93,3 @@ Fitur yang berhasil diuji:
 * Search Item
 
 Seluruh pengujian memperoleh status **Pass (100%)** baik pada environment development maupun production sehingga deployment Milestone 2 dinyatakan berhasil.
-
