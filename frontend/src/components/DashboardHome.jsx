@@ -151,6 +151,7 @@ function DashboardHome({
             ) : (
               folders.map((folder) => {
                 const folderTasks = tasks.filter((task) => task.folderId === folder.id)
+                const hasMembers = folder.type === "group" && folder.members.length > 0
 
                 return (
                   <button
@@ -177,7 +178,7 @@ function DashboardHome({
                       </div>
                       <p>{folder.description}</p>
                       <div className="folder-card__meta">
-                        <span>{folder.members.length} member</span>
+                        <span>{folder.type === "group" ? `${folder.members.length} member` : "Personal folder"}</span>
                         <span>{folderTasks.length} reminder</span>
                         <span
                           className="folder-card__action folder-card__action--edit"
@@ -198,13 +199,15 @@ function DashboardHome({
                           🗑️ Hapus Folder
                         </span>
                       </div>
-                      <div className="folder-card__members">
-                        {folder.members.map((member) => (
-                          <span key={member} className="folder-card__member-chip">
-                            {member}
-                          </span>
-                        ))}
-                      </div>
+                      {hasMembers && (
+                        <div className="folder-card__members">
+                          {folder.members.map((member) => (
+                            <span key={member} className="folder-card__member-chip">
+                              {member}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </button>
                 )
