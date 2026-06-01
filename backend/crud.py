@@ -51,15 +51,17 @@ def get_user_by_name(db: Session, username: str):
 # ==================== TASK CRUD ====================
 
 
-def create_task(db: Session, data):
-    task = Task(**data.model_dump())
+def create_task(db: Session, data, owner_id: int):
+    """Buat task baru milik user tertentu."""
+    task = Task(**data.model_dump(), owner_id=owner_id)
     db.add(task)
     db.commit()
     db.refresh(task)
     return task
 
-def get_tasks(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Task).offset(skip).limit(limit).all()
+def get_tasks(db: Session, owner_id: int, skip: int = 0, limit: int = 100):
+    """Ambil semua task milik user tertentu."""
+    return db.query(Task).filter(Task.owner_id == owner_id).offset(skip).limit(limit).all()
 
 def get_task(db: Session, task_id: int):
     return db.query(Task).filter(Task.id == task_id).first()
