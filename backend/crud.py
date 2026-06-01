@@ -129,9 +129,33 @@ def create_folder(db: Session, data, owner_id: int):
 
 
 def get_folders_by_owner(db: Session, owner_id: int):
-    """Ambil semua folder milik user tertentu."""
-    folders = db.query(Folder).filter(Folder.owner_id == owner_id).all()
-    return [_folder_to_dict(f) for f in folders]
+    """Ambil semua folder milik user DAN folder dimana user terdaftar sebagai member."""
+    # 1) Folder yang dimiliki (owner)
+    owned_folders = db.query(Folder).filter(Folder.owner_id == owner_id).all()
+
+    # 2) Folder group dimana user adalah member (berdasarkan nama)
+    user = db.query(User).filter(User.id == owner_id).first()
+    member_folders = []
+    if user:
+        group_folders = db.query(Folder).filter(
+            Folder.type == "group",
+            Folder.owner_id != owner_id,
+        ).all()
+        for f in group_folders:
+            members = _parse_members(f.members)
+            # Case-insensitive matching agar tidak rentan typo huruf besar/kecil
+            if any(m.lower() == user.name.lower() for m in members):
+                member_folders.append(f)
+
+    # 3) Gabungkan dan deduplikasi berdasarkan id
+    seen_ids = set()
+    combined = []
+    for f in owned_folders + member_folders:
+        if f.id not in seen_ids:
+            seen_ids.add(f.id)
+            combined.append(f)
+
+    return [_folder_to_dict(f) for f in combined]
 
 
 def get_folder(db: Session, folder_id: int):
