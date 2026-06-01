@@ -25,7 +25,6 @@ Berikut adalah fitur yang telah tersedia pada aplikasi:
 | 13 | Collaboration     | Shared Folder              | Berbagi tugas dan dokumen dengan pengguna lain                        |
 | 14 | Workspace         | Personal Space             | Ruang kerja pribadi untuk mengelola tugas pengguna                    |
 | 15 | Monitoring        | Health Check               | Memeriksa status backend melalui endpoint `/health`                   |
-
 ---
 
 ## 2. URL Production
@@ -35,7 +34,6 @@ Berikut adalah fitur yang telah tersedia pada aplikasi:
 | Frontend | https://frontend-production-93f7a.up.railway.app/              |
 | Backend API | https://backend-production-b026.up.railway.app/             |
 | API Docs (Swagger) | https://backend-production-b026.up.railway.app/docs  |
-
 ---
 
 ## 3. Tech Stack
