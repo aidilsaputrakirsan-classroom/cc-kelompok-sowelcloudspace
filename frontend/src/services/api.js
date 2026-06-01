@@ -235,13 +235,17 @@ function normalizeFolder(folder) {
   return {
     ...folder,
     id: folder.id,
-    name: folder.name || "",
+    name: typeof folder.name === "string" ? folder.name.trim() : "",
     type: folder.type || "personal",
-    description: folder.description || "",
+    description: typeof folder.description === "string" ? folder.description.trim() : "",
     members: Array.isArray(folder.members) ? folder.members : [],
     imageData: folder.image_data || "",
     color: folder.color || inferFolderColor(folder.id),
   }
+}
+
+function isDisplayableFolder(folder) {
+  return Boolean(folder && folder.id != null && folder.name)
 }
 
 function serializeFolder(folderData) {
@@ -259,7 +263,7 @@ export async function fetchFolders() {
     headers: authHeaders(),
   })
 
-  return Array.isArray(data) ? data.map(normalizeFolder) : []
+  return Array.isArray(data) ? data.map(normalizeFolder).filter(isDisplayableFolder) : []
 }
 
 export async function fetchFolder(id) {
@@ -267,7 +271,8 @@ export async function fetchFolder(id) {
     headers: authHeaders(),
   })
 
-  return normalizeFolder(data)
+  const folder = normalizeFolder(data)
+  return isDisplayableFolder(folder) ? folder : null
 }
 
 export async function createFolder(folderData) {
