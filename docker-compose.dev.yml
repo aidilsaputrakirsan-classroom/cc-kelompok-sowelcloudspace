@@ -1,0 +1,49 @@
+version: '3.9'
+
+# ============================================================
+# Docker Compose Override — Development Mode
+# Digunakan untuk hot-reload development
+# ============================================================
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# ============================================================
+
+services:
+  # ==================== BACKEND (HOT-RELOAD) ====================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app                    # Mount seluruh backend folder untuk hot-reload
+      - /app/__pycache__                  # Exclude __pycache__ untuk performa
+    command: >
+      uvicorn main:app 
+      --host 0.0.0.0 
+      --port 8000 
+      --reload                            # Hot-reload saat file berubah
+      --reload-dirs /app
+    environment:
+      - ENV=development
+      - DEBUG=True
+
+  # ==================== FRONTEND (HOT-RELOAD) ====================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000  # URL backend untuk development
+    volumes:
+      - ./frontend/src:/app/src           # Mount source folder
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.js:/app/vite.config.js
+      - ./frontend/package.json:/app/package.json
+      - ./frontend/eslint.config.js:/app/eslint.config.js
+      - /app/node_modules                 # Exclude node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    command: npm run dev                  # Jalankan Vite dev server (auto hot-reload)
+    ports:
+      - "5173:5173"                       # Vite dev server port
