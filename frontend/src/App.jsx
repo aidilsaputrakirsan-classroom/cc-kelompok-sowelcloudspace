@@ -319,7 +319,7 @@ function App() {
   const handleEdit = (task) => {
     setSelectedFolderId(task.folderId || null)
     setEditingTask(task)
-    setCurrentPage("reminders")
+    setCurrentPage(task.folderId ? "folder" : "reminders")
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
@@ -532,6 +532,9 @@ function App() {
               onEditTask={handleEdit}
               onDeleteTask={handleDelete}
               onCompleteTask={handleComplete}
+              onSubmitTask={handleSubmit}
+              editingTask={editingTask}
+              onCancelTaskEdit={() => setEditingTask(null)}
             />
           )}
 
