@@ -9,6 +9,7 @@ const DEFAULT_FORM = {
   members: [],
   memberInput: "",
   imageData: "",
+  color: "indigo",
 }
 
 function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onSubmit }) {
@@ -33,6 +34,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
         members: Array.isArray(initialData.members) ? initialData.members : [],
         memberInput: "",
         imageData: initialData.imageData || "",
+        color: initialData.color || "indigo",
       })
       setIsVerifying(false)
       setMemberError("")
@@ -168,6 +170,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
       description: formData.description.trim() || "Folder reminder baru.",
       members: formData.type === "group" ? nextMembers.filter(Boolean) : [],
       imageData: formData.imageData || "",
+      color: formData.color || "indigo",
     })
   }
 

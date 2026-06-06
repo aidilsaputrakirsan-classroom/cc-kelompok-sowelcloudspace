@@ -5,7 +5,7 @@ import {
   fetchTasks, createTask, updateTask, deleteTask, completeTask,
   checkHealth, login, register, clearToken, getToken, getStoredUser, fetchCurrentUser,
   getUserFriendlyErrorMessage, shouldEscalateApiError,
-  fetchFolders, createFolder, updateFolder, deleteFolder,
+  fetchFolders, fetchFolder, createFolder, updateFolder, deleteFolder,
 } from "./services/api"
 
 const LoginPage = lazy(() => import("./components/LoginPage"))
@@ -13,6 +13,7 @@ const AboutPage = lazy(() => import("./components/AboutPage"))
 const DashboardHome = lazy(() => import("./components/DashboardHome"))
 const ReminderPage = lazy(() => import("./components/ReminderPage"))
 const YearCalendarPage = lazy(() => import("./components/YearCalendarPage"))
+const FolderDetailPage = lazy(() => import("./components/FolderDetailPage"))
 
 const TASK_FOLDER_STORAGE_KEY = "sowel_task_folder_map"
 
@@ -72,6 +73,7 @@ function App() {
   const [folders, setFolders] = useState([])
   const [taskFolderMap, setTaskFolderMap] = useState(loadStoredTaskFolderMap)
   const [selectedFolderId, setSelectedFolderId] = useState(null)
+  const [isFolderDetailLoading, setIsFolderDetailLoading] = useState(false)
   const [fatalError, setFatalError] = useState(null)
 
   const handleLogout = useCallback(() => {
@@ -216,6 +218,42 @@ function App() {
     }
   }, [handleLogout, isAuthenticated])
 
+  useEffect(() => {
+    if (!isAuthenticated || !selectedFolderId || currentPage !== "folder") return
+
+    let isMounted = true
+    setIsFolderDetailLoading(true)
+
+    fetchFolder(selectedFolderId)
+      .then((folder) => {
+        if (!isMounted || !folder) return
+        setFolders((prev) => {
+          const exists = prev.some((item) => item.id === folder.id)
+          if (!exists) return [folder, ...prev]
+          return prev.map((item) => (item.id === folder.id ? folder : item))
+        })
+      })
+      .catch((err) => {
+        if (!isMounted) return
+        if (err.message === "UNAUTHORIZED") {
+          handleLogout()
+          return
+        }
+        if (!escalateApiError(err, "Gagal memuat detail folder.")) {
+          setToast({ message: getUserFriendlyErrorMessage(err, "Gagal memuat detail folder."), type: "error" })
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsFolderDetailLoading(false)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [currentPage, escalateApiError, handleLogout, isAuthenticated, selectedFolderId])
+
   const updateTaskFolder = useCallback((taskId, folderId) => {
     setTaskFolderMap((prev) => {
       const next = { ...prev }
@@ -320,6 +358,7 @@ function App() {
   const handleOpenFolder = (folderId) => {
     setSelectedFolderId(folderId)
     setEditingTask(null)
+    setCurrentPage("folder")
   }
 
   const handleOpenCreateFolderModal = () => {
@@ -340,7 +379,7 @@ function App() {
       const nextFolder = await createFolder(folderData)
       setFolders((prev) => [nextFolder, ...prev])
       setSelectedFolderId(nextFolder.id)
-      setCurrentPage("home")
+      setCurrentPage("folder")
       setEditingTask(null)
       setIsFolderModalOpen(false)
       setToast({ message: `Folder "${nextFolder.name}" berhasil dibuat`, type: "success" })
@@ -391,7 +430,10 @@ function App() {
         }
         return next
       })
-      if (selectedFolderId === folderId) setSelectedFolderId(null)
+      if (selectedFolderId === folderId) {
+        setSelectedFolderId(null)
+        setCurrentPage("home")
+      }
       setToast({ message: `Folder "${folder.name}" berhasil dihapus`, type: "success" })
     } catch (err) {
       if (err.message === "UNAUTHORIZED") handleLogout()
@@ -468,6 +510,28 @@ function App() {
               tasks={enhancedTasks}
               year={new Date().getFullYear()}
               onOpenFolder={handleOpenFolder}
+            />
+          )}
+
+          {currentPage === "folder" && (
+            <FolderDetailPage
+              selectedFolder={selectedFolder}
+              folders={folders}
+              tasks={filteredTasks}
+              isConnected={isConnected}
+              loading={loading || isFolderDetailLoading}
+              onAddFolder={handleOpenCreateFolderModal}
+              onClearFolder={() => {
+                setSelectedFolderId(null)
+                setCurrentPage("home")
+              }}
+              onSelectFolder={handleOpenFolder}
+              onEditFolder={handleOpenEditFolderModal}
+              onDeleteFolder={handleDeleteFolder}
+              onBackHome={() => setCurrentPage("home")}
+              onEditTask={handleEdit}
+              onDeleteTask={handleDelete}
+              onCompleteTask={handleComplete}
             />
           )}
 
