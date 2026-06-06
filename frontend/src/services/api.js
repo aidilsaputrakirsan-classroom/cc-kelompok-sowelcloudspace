@@ -1,4 +1,5 @@
 const FALLBACK_API_URL = "http://localhost:8000"
+const USER_STORAGE_KEY = "sowel_user"
 
 export class ApiError extends Error {
   constructor(
@@ -66,16 +67,53 @@ export function normalizeApiUrl(rawValue) {
 export const API_URL = normalizeApiUrl(import.meta.env.VITE_API_URL)
 
 let authToken = localStorage.getItem("sowel_token") || null
-let storedUser = (() => {
+
+function normalizeFolder(folder) {
+  if (!folder || typeof folder !== "object") return null
+
+  return {
+    id: folder.id,
+    name: folder.name || "",
+    type: folder.type || "personal",
+    description: folder.description || "",
+    members: Array.isArray(folder.members) ? folder.members : [],
+    color: folder.color || "indigo",
+    imageData: folder.imageData || folder.image_data || "",
+    ownerId: folder.ownerId ?? folder.owner_id ?? null,
+    createdAt: folder.createdAt || folder.created_at || null,
+    updatedAt: folder.updatedAt || folder.updated_at || null,
+  }
+}
+
+function serializeFolderPayload(folderData = {}) {
+  return {
+    name: folderData.name?.trim() || "",
+    type: folderData.type || "personal",
+    description: folderData.description?.trim() || "",
+    members: Array.isArray(folderData.members) ? folderData.members : [],
+    color: folderData.color || "indigo",
+    image_data: folderData.imageData || folderData.image_data || "",
+  }
+}
+
+function storeUser(user) {
+  if (!user) {
+    localStorage.removeItem(USER_STORAGE_KEY)
+    return
+  }
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
+}
+
+export function getStoredUser() {
   try {
-    const raw = localStorage.getItem("sowel_user")
+    const raw = localStorage.getItem(USER_STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
     return parsed && typeof parsed === "object" ? parsed : null
   } catch {
     return null
   }
-})()
+}
 
 export function setToken(token) {
   authToken = token
@@ -86,20 +124,10 @@ export function getToken() {
   return authToken
 }
 
-export function setStoredUser(user) {
-  storedUser = user
-  localStorage.setItem("sowel_user", JSON.stringify(user))
-}
-
-export function getStoredUser() {
-  return storedUser
-}
-
 export function clearToken() {
   authToken = null
-  storedUser = null
   localStorage.removeItem("sowel_token")
-  localStorage.removeItem("sowel_user")
+  localStorage.removeItem(USER_STORAGE_KEY)
 }
 
 function authHeaders(isForm = false) {
@@ -175,8 +203,6 @@ export async function register(userData) {
 
 export async function login(username, password) {
   const formData = new URLSearchParams()
-  // Backend FastAPI menggunakan OAuth2PasswordRequestForm,
-  // jadi identifier login harus dikirim lewat field "username".
   formData.append("username", username)
   formData.append("password", password)
 
@@ -194,110 +220,20 @@ export async function login(username, password) {
   }
 
   setToken(data.access_token)
-  if (data.user) {
-    setStoredUser(data.user)
-  }
+  storeUser(data.user ?? null)
   return data
 }
 
 export async function fetchCurrentUser() {
-  const data = await request("/auth/me", {
+  const user = await request("/auth/me", {
     headers: authHeaders(),
   })
-
-  if (data && typeof data === "object") {
-    setStoredUser(data)
-  }
-
-  return data
+  storeUser(user)
+  return user
 }
 
 export async function fetchTasks() {
   return request("/tasks", {
-    headers: authHeaders(),
-  })
-}
-
-function inferFolderColor(folderId) {
-  const colorCycle = ["sunset", "indigo", "pink", "mint"]
-  const numericId = Number(folderId)
-
-  if (Number.isFinite(numericId) && numericId > 0) {
-    return colorCycle[(numericId - 1) % colorCycle.length]
-  }
-
-  return colorCycle[0]
-}
-
-function normalizeFolder(folder) {
-  if (!folder || typeof folder !== "object") return folder
-
-  return {
-    ...folder,
-    id: folder.id,
-    name: typeof folder.name === "string" ? folder.name.trim() : "",
-    type: folder.type || "personal",
-    description: typeof folder.description === "string" ? folder.description.trim() : "",
-    members: Array.isArray(folder.members) ? folder.members : [],
-    imageData: folder.image_data || "",
-    color: folder.color || inferFolderColor(folder.id),
-  }
-}
-
-function isDisplayableFolder(folder) {
-  return Boolean(folder && folder.id != null && folder.name)
-}
-
-function serializeFolder(folderData) {
-  return {
-    name: folderData.name,
-    type: folderData.type,
-    description: folderData.description,
-    members: Array.isArray(folderData.members) ? folderData.members : [],
-    image_data: folderData.imageData || "",
-  }
-}
-
-export async function fetchFolders() {
-  const data = await request("/api/folders", {
-    headers: authHeaders(),
-  })
-
-  return Array.isArray(data) ? data.map(normalizeFolder).filter(isDisplayableFolder) : []
-}
-
-export async function fetchFolder(id) {
-  const data = await request(`/api/folders/${id}`, {
-    headers: authHeaders(),
-  })
-
-  const folder = normalizeFolder(data)
-  return isDisplayableFolder(folder) ? folder : null
-}
-
-export async function createFolder(folderData) {
-  const data = await request("/api/folders", {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(serializeFolder(folderData)),
-  })
-
-  return normalizeFolder(data)
-}
-
-export async function updateFolder(id, folderData) {
-  const data = await request(`/api/folders/${id}`, {
-    method: "PUT",
-    headers: authHeaders(),
-    body: JSON.stringify(serializeFolder(folderData)),
-  })
-
-  return normalizeFolder(data)
-}
-
-export async function deleteFolder(id) {
-  return request(`/api/folders/${id}`, {
-    method: "DELETE",
     headers: authHeaders(),
   })
 }
@@ -340,6 +276,45 @@ export async function deleteTask(id) {
 
 export async function fetchStats() {
   return request("/tasks/stats", {
+    headers: authHeaders(),
+  })
+}
+
+export async function fetchFolders() {
+  const data = await request("/api/folders", {
+    headers: authHeaders(),
+  })
+  return Array.isArray(data) ? data.map(normalizeFolder).filter(Boolean) : []
+}
+
+export async function fetchFolder(id) {
+  const data = await request(`/api/folders/${id}`, {
+    headers: authHeaders(),
+  })
+  return normalizeFolder(data)
+}
+
+export async function createFolder(folderData) {
+  const data = await request("/api/folders", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(serializeFolderPayload(folderData)),
+  })
+  return normalizeFolder(data)
+}
+
+export async function updateFolder(id, folderData) {
+  const data = await request(`/api/folders/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(serializeFolderPayload(folderData)),
+  })
+  return normalizeFolder(data)
+}
+
+export async function deleteFolder(id) {
+  return request(`/api/folders/${id}`, {
+    method: "DELETE",
     headers: authHeaders(),
   })
 }
