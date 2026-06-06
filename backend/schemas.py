@@ -25,6 +25,7 @@ class TaskUpdate(BaseModel):
 class TaskResponse(TaskBase):
     id: int
     status: str
+    owner_id: Optional[int] = None
     created_at: datetime
 
     class Config:

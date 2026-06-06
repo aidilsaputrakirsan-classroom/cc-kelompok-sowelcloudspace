@@ -15,6 +15,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
   const [formData, setFormData] = useState(DEFAULT_FORM)
   const [isVerifying, setIsVerifying] = useState(false)
   const [memberError, setMemberError] = useState("")
+  const isGroupFolder = formData.type === "group"
 
   useEffect(() => {
     if (!isOpen) {

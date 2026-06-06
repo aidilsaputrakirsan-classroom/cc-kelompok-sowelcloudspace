@@ -51,15 +51,17 @@ def get_user_by_name(db: Session, username: str):
 # ==================== TASK CRUD ====================
 
 
-def create_task(db: Session, data):
-    task = Task(**data.model_dump())
+def create_task(db: Session, data, owner_id: int):
+    """Buat task baru milik user tertentu."""
+    task = Task(**data.model_dump(), owner_id=owner_id)
     db.add(task)
     db.commit()
     db.refresh(task)
     return task
 
-def get_tasks(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Task).offset(skip).limit(limit).all()
+def get_tasks(db: Session, owner_id: int, skip: int = 0, limit: int = 100):
+    """Ambil semua task milik user tertentu."""
+    return db.query(Task).filter(Task.owner_id == owner_id).offset(skip).limit(limit).all()
 
 def get_task(db: Session, task_id: int):
     return db.query(Task).filter(Task.id == task_id).first()
@@ -129,9 +131,33 @@ def create_folder(db: Session, data, owner_id: int):
 
 
 def get_folders_by_owner(db: Session, owner_id: int):
-    """Ambil semua folder milik user tertentu."""
-    folders = db.query(Folder).filter(Folder.owner_id == owner_id).all()
-    return [_folder_to_dict(f) for f in folders]
+    """Ambil semua folder milik user DAN folder dimana user terdaftar sebagai member."""
+    # 1) Folder yang dimiliki (owner)
+    owned_folders = db.query(Folder).filter(Folder.owner_id == owner_id).all()
+
+    # 2) Folder group dimana user adalah member (berdasarkan nama)
+    user = db.query(User).filter(User.id == owner_id).first()
+    member_folders = []
+    if user:
+        group_folders = db.query(Folder).filter(
+            Folder.type == "group",
+            Folder.owner_id != owner_id,
+        ).all()
+        for f in group_folders:
+            members = _parse_members(f.members)
+            # Case-insensitive matching agar tidak rentan typo huruf besar/kecil
+            if any(m.lower() == user.name.lower() for m in members):
+                member_folders.append(f)
+
+    # 3) Gabungkan dan deduplikasi berdasarkan id
+    seen_ids = set()
+    combined = []
+    for f in owned_folders + member_folders:
+        if f.id not in seen_ids:
+            seen_ids.add(f.id)
+            combined.append(f)
+
+    return [_folder_to_dict(f) for f in combined]
 
 
 def get_folder(db: Session, folder_id: int):

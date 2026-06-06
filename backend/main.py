@@ -197,20 +197,20 @@ def verify_username(username: str, db: Session = Depends(get_db)):
 
 # CREATE
 @app.post("/tasks", response_model=TaskResponse)
-def create(task: TaskCreate, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    return crud.create_task(db, task)
+def create(task: TaskCreate, db: Session = Depends(get_db), user_id=Depends(get_current_user)):
+    return crud.create_task(db, task, int(user_id))
 
 
 # READ ALL
 @app.get("/tasks")
-def read_all(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    return crud.get_tasks(db, skip=skip, limit=limit)
+def read_all(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), user_id=Depends(get_current_user)):
+    return crud.get_tasks(db, int(user_id), skip=skip, limit=limit)
 
 
 # STATS
 @app.get("/tasks/stats")
-def stats(db: Session = Depends(get_db), user=Depends(get_current_user)):
-    tasks = crud.get_tasks(db)
+def stats(db: Session = Depends(get_db), user_id=Depends(get_current_user)):
+    tasks = crud.get_tasks(db, int(user_id))
     total = len(tasks)
     done = len([t for t in tasks if t.status == "done"])
     return {
@@ -222,33 +222,47 @@ def stats(db: Session = Depends(get_db), user=Depends(get_current_user)):
 
 # READ ONE
 @app.get("/tasks/{task_id}", response_model=TaskResponse)
-def read_one(task_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def read_one(task_id: int, db: Session = Depends(get_db), user_id=Depends(get_current_user)):
     task = crud.get_task(db, task_id)
     if not task:
         raise HTTPException(404, "Task not found")
+    if task.owner_id is not None and task.owner_id != int(user_id):
+        raise HTTPException(403, "Tidak punya akses ke task ini")
     return task
 
 
 # UPDATE
 @app.put("/tasks/{task_id}", response_model=TaskResponse)
-def update(task_id: int, data: TaskUpdate, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    task = crud.update_task(db, task_id, data)
-    if not task:
+def update(task_id: int, data: TaskUpdate, db: Session = Depends(get_db), user_id=Depends(get_current_user)):
+    existing = crud.get_task(db, task_id)
+    if not existing:
         raise HTTPException(404, "Task not found")
+    if existing.owner_id is not None and existing.owner_id != int(user_id):
+        raise HTTPException(403, "Tidak punya akses ke task ini")
+    task = crud.update_task(db, task_id, data)
     return task
 
 
 # DELETE
 @app.delete("/tasks/{task_id}")
-def delete(task_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
-    if not crud.delete_task(db, task_id):
+def delete(task_id: int, db: Session = Depends(get_db), user_id=Depends(get_current_user)):
+    existing = crud.get_task(db, task_id)
+    if not existing:
         raise HTTPException(404, "Task not found")
+    if existing.owner_id is not None and existing.owner_id != int(user_id):
+        raise HTTPException(403, "Tidak punya akses ke task ini")
+    crud.delete_task(db, task_id)
     return {"message": "Deleted"}
 
 
 # COMPLETE TASK
 @app.put("/tasks/{task_id}/complete")
-def complete(task_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)):
+def complete(task_id: int, db: Session = Depends(get_db), user_id=Depends(get_current_user)):
+    existing = crud.get_task(db, task_id)
+    if not existing:
+        raise HTTPException(404, "Task not found")
+    if existing.owner_id is not None and existing.owner_id != int(user_id):
+        raise HTTPException(403, "Tidak punya akses ke task ini")
     task = crud.update_task(db, task_id, TaskUpdate(status="done"))
     return task
 
