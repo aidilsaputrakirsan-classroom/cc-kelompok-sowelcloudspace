@@ -1,4 +1,5 @@
 import WorkspacePage from "./WorkspacePage"
+import TaskForm from "./TaskForm"
 import TaskList from "./TaskList"
 
 function formatDate(value) {
@@ -27,6 +28,9 @@ function FolderDetailPage({
   onEditTask,
   onDeleteTask,
   onCompleteTask,
+  onSubmitTask,
+  editingTask,
+  onCancelTaskEdit,
 }) {
   const completedTasks = tasks.filter((task) => task.status === "done").length
   const overdueTasks = tasks.filter((task) => (
@@ -156,10 +160,23 @@ function FolderDetailPage({
           <div className="panel__head">
             <div>
               <h2>Reminder di Folder Ini</h2>
-              <p>Semua task yang terhubung ke folder ini ditampilkan di bawah.</p>
+              <p>
+                {selectedFolder.type === "group"
+                  ? "Folder group ini bisa dipakai kolaborasi oleh member yang sudah terhubung ke folder."
+                  : "Semua task yang terhubung ke folder ini ditampilkan dan bisa dikelola di sini."}
+              </p>
             </div>
             {loading ? <span>Memuat...</span> : <span>{tasks.length} item</span>}
           </div>
+
+          <TaskForm
+            onSubmit={onSubmitTask}
+            editingTask={editingTask}
+            onCancelEdit={onCancelTaskEdit}
+            folderOptions={[selectedFolder]}
+            selectedFolderId={selectedFolder.id}
+            lockFolderSelection
+          />
 
           <TaskList
             tasks={tasks}
