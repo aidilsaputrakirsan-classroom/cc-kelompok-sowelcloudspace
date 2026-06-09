@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react"
 
-function TaskForm({ onSubmit, editingTask, onCancelEdit, folderOptions = [], selectedFolderId = null }) {
+function TaskForm({
+  onSubmit,
+  editingTask,
+  onCancelEdit,
+  folderOptions = [],
+  selectedFolderId = null,
+  lockFolderSelection = false,
+}) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -77,6 +84,8 @@ function TaskForm({ onSubmit, editingTask, onCancelEdit, folderOptions = [], sel
     high: { bg: "#fee2e2", color: "#dc2626", border: "#fca5a5" },
   }
 
+  const selectedFolder = folderOptions.find((folder) => String(folder.id) === String(formData.folderId))
+
   return (
     <div style={styles.container}>
       <h2 style={styles.title}>
@@ -140,19 +149,25 @@ function TaskForm({ onSubmit, editingTask, onCancelEdit, folderOptions = [], sel
         <div style={styles.row}>
           <div style={styles.field}>
             <label style={styles.label}>Folder Reminder</label>
-            <select
-              name="folderId"
-              value={formData.folderId}
-              onChange={handleChange}
-              style={styles.input}
-            >
-              <option value="">Tanpa folder</option>
-              {folderOptions.map((folder) => (
-                <option key={folder.id} value={folder.id}>
-                  {folder.name} ({folder.type})
-                </option>
-              ))}
-            </select>
+            {lockFolderSelection ? (
+              <div style={styles.lockedField}>
+                {selectedFolder ? `${selectedFolder.name} (${selectedFolder.type})` : "Folder aktif"}
+              </div>
+            ) : (
+              <select
+                name="folderId"
+                value={formData.folderId}
+                onChange={handleChange}
+                style={styles.input}
+              >
+                <option value="">Tanpa folder</option>
+                {folderOptions.map((folder) => (
+                  <option key={folder.id} value={folder.id}>
+                    {folder.name} ({folder.type})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <div style={styles.field}>
             <label style={styles.label}>Deadline</label>
@@ -241,6 +256,16 @@ const styles = {
     transition: "border-color 0.2s",
     fontFamily: "'Inter', sans-serif",
     background: "white",
+  },
+  lockedField: {
+    padding: "0.75rem 0.85rem",
+    border: "2px solid #e5e7eb",
+    borderRadius: "8px",
+    fontSize: "0.92rem",
+    color: "#4b5563",
+    background: "#f8fafc",
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: 600,
   },
   priorityGroup: {
     display: "flex",
