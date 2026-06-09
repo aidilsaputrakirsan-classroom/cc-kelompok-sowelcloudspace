@@ -85,6 +85,26 @@ function normalizeFolder(folder) {
   }
 }
 
+function normalizeTask(task) {
+  if (!task || typeof task !== "object") return null
+
+  const folderId = task.folderId ?? task.folder_id ?? null
+  const createdAt = task.createdAt || task.created_at || null
+  const updatedAt = task.updatedAt || task.updated_at || null
+  const folder = normalizeFolder(task.folder)
+
+  return {
+    ...task,
+    folderId,
+    folder_id: folderId,
+    folder,
+    createdAt,
+    created_at: createdAt,
+    updatedAt,
+    updated_at: updatedAt,
+  }
+}
+
 function serializeFolderPayload(folderData = {}) {
   return {
     name: folderData.name?.trim() || "",
@@ -233,38 +253,43 @@ export async function fetchCurrentUser() {
 }
 
 export async function fetchTasks() {
-  return request("/tasks", {
+  const data = await request("/tasks", {
     headers: authHeaders(),
   })
+  return Array.isArray(data) ? data.map(normalizeTask).filter(Boolean) : []
 }
 
 export async function fetchTask(id) {
-  return request(`/tasks/${id}`, {
+  const data = await request(`/tasks/${id}`, {
     headers: authHeaders(),
   })
+  return normalizeTask(data)
 }
 
 export async function createTask(taskData) {
-  return request("/tasks", {
+  const data = await request("/tasks", {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(taskData),
   })
+  return normalizeTask(data)
 }
 
 export async function updateTask(id, taskData) {
-  return request(`/tasks/${id}`, {
+  const data = await request(`/tasks/${id}`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify(taskData),
   })
+  return normalizeTask(data)
 }
 
 export async function completeTask(id) {
-  return request(`/tasks/${id}/complete`, {
+  const data = await request(`/tasks/${id}/complete`, {
     method: "PUT",
     headers: authHeaders(),
   })
+  return normalizeTask(data)
 }
 
 export async function deleteTask(id) {

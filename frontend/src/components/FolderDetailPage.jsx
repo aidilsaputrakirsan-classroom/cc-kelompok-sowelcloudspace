@@ -28,8 +28,12 @@ function FolderDetailPage({
   onDeleteTask,
   onCompleteTask,
 }) {
-  const completedTasks = tasks.filter((task) => task.status === "done").length
-  const overdueTasks = tasks.filter((task) => (
+  const folderTasks = selectedFolder
+    ? tasks.filter((task) => String(task.folderId ?? task.folder_id ?? "") === String(selectedFolder.id))
+    : []
+
+  const completedTasks = folderTasks.filter((task) => task.status === "done").length
+  const overdueTasks = folderTasks.filter((task) => (
     task.status !== "done" && task.deadline && new Date(task.deadline) < new Date()
   )).length
 
@@ -58,11 +62,11 @@ function FolderDetailPage({
   return (
     <WorkspacePage
       selectedFolder={selectedFolder}
-      folders={folders}
-      totalTasks={tasks.length}
-      filteredTasks={tasks.length}
-      completedTasks={completedTasks}
-      isConnected={isConnected}
+        folders={folders}
+        totalTasks={folderTasks.length}
+        filteredTasks={folderTasks.length}
+        completedTasks={completedTasks}
+        isConnected={isConnected}
       onAddFolder={onAddFolder}
       onClearFolder={onClearFolder}
       onSelectFolder={onSelectFolder}
@@ -96,7 +100,7 @@ function FolderDetailPage({
           <span className="folder-detail-pill">
             {selectedFolder.type === "group" ? "Group folder" : "Personal folder"}
           </span>
-          <span className="folder-detail-pill">{tasks.length} reminder</span>
+          <span className="folder-detail-pill">{folderTasks.length} reminder</span>
           <span className="folder-detail-pill">{completedTasks} selesai</span>
           <span className="folder-detail-pill">{overdueTasks} overdue</span>
         </div>
@@ -158,11 +162,11 @@ function FolderDetailPage({
               <h2>Reminder di Folder Ini</h2>
               <p>Semua task yang terhubung ke folder ini ditampilkan di bawah.</p>
             </div>
-            {loading ? <span>Memuat...</span> : <span>{tasks.length} item</span>}
+            {loading ? <span>Memuat...</span> : <span>{folderTasks.length} item</span>}
           </div>
 
           <TaskList
-            tasks={tasks}
+            tasks={folderTasks}
             searchQuery=""
             priorityFilter="all"
             onEdit={onEditTask}
