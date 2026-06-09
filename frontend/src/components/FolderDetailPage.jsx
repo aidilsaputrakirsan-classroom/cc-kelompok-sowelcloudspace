@@ -82,7 +82,7 @@ function FolderDetailPage({
               )}
             </div>
 
-            <div>
+            <div className="folder-detail-hero__copy">
               <p className="eyebrow">Folder Detail</p>
               <h2>{selectedFolder.name}</h2>
               <p className="folder-detail-hero__description">
