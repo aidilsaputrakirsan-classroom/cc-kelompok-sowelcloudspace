@@ -54,8 +54,23 @@ export function normalizeApiUrl(rawValue) {
 
   try {
     const url = new URL(value)
+    const hostname = url.hostname.toLowerCase()
+    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1"
+
+    if (url.protocol !== "https:" && !isLocalhost) {
+      throw createApiError("VITE_API_URL harus menggunakan HTTPS.", {
+        code: "INSECURE_API_URL",
+        userMessage: "Backend production harus memakai URL HTTPS penuh agar tidak terkena Mixed Content di Railway.",
+        isFatal: true,
+      })
+    }
+
     return url.toString().replace(/\/$/, "")
-  } catch {
+  } catch (error) {
+    if (isApiError(error)) {
+      throw error
+    }
+
     throw createApiError("VITE_API_URL bukan URL yang valid.", {
       code: "INVALID_API_URL",
       userMessage: "Konfigurasi API production tidak valid. Periksa format VITE_API_URL.",
