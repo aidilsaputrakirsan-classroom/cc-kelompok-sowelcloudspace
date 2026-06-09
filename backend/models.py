@@ -13,6 +13,7 @@ class Task(Base):
     deadline = Column(DateTime, nullable=True)
     assigned_to = Column(String, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    folder_id = Column(Integer, ForeignKey("folders.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class User(Base):

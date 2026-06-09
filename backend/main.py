@@ -203,8 +203,14 @@ def create(task: TaskCreate, db: Session = Depends(get_db), user_id=Depends(get_
 
 # READ ALL
 @app.get("/tasks")
-def read_all(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), user_id=Depends(get_current_user)):
-    return crud.get_tasks(db, int(user_id), skip=skip, limit=limit)
+def read_all(
+    skip: int = 0,
+    limit: int = 100,
+    folder_id: int | None = None,
+    db: Session = Depends(get_db),
+    user_id=Depends(get_current_user),
+):
+    return crud.get_tasks(db, int(user_id), skip=skip, limit=limit, folder_id=folder_id)
 
 
 # STATS
