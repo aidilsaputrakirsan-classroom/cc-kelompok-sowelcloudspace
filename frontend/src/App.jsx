@@ -532,9 +532,6 @@ function App() {
               onEditTask={handleEdit}
               onDeleteTask={handleDelete}
               onCompleteTask={handleComplete}
-              onSubmitTask={handleSubmit}
-              editingTask={editingTask}
-              onCancelTaskEdit={() => setEditingTask(null)}
             />
           )}
 
