@@ -10,6 +10,7 @@ class TaskBase(BaseModel):
     priority: str = "medium"
     deadline: Optional[datetime] = None
     assigned_to: Optional[str] = None
+    folder_id: Optional[int] = None
 
 class TaskCreate(TaskBase):
     pass
@@ -21,11 +22,13 @@ class TaskUpdate(BaseModel):
     priority: Optional[str] = None
     deadline: Optional[datetime] = None
     assigned_to: Optional[str] = None
+    folder_id: Optional[int] = None
 
 class TaskResponse(TaskBase):
     id: int
     status: str
     owner_id: Optional[int] = None
+    folder_id: Optional[int] = None
     created_at: datetime
 
     class Config:
