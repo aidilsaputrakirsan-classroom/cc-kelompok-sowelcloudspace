@@ -42,6 +42,15 @@ app = FastAPI(
 logger.info("Starting %s v%s [env=%s, debug=%s]", APP_TITLE, APP_VERSION, ENV, DEBUG)
 
 # ==================== CORS ====================
+if not ALLOWED_ORIGINS:
+    logger.warning("CORS: ALLOWED_ORIGINS is empty. All cross-origin requests from frontend will be BLOCKED by browsers.")
+elif "*" in ALLOWED_ORIGINS:
+    logger.warning(
+        "CORS WARNING: ALLOWED_ORIGINS contains '*' while allow_credentials=True is enabled. "
+        "Browsers will block requests with credentials! "
+        "Please specify your exact frontend URL (e.g., https://your-frontend.up.railway.app) in Railway environment variables."
+    )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -49,6 +58,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # ==================== AUTH ====================
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
