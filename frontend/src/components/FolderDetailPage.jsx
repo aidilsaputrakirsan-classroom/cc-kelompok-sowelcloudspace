@@ -25,6 +25,7 @@ function FolderDetailPage({
   onDeleteFolder,
   onBackHome,
   onEditTask,
+  onOpenCreateTaskModal,
   onDeleteTask,
   onCompleteTask,
 }) {
@@ -163,6 +164,16 @@ function FolderDetailPage({
               <p>Semua task yang terhubung ke folder ini ditampilkan di bawah.</p>
             </div>
             {loading ? <span>Memuat...</span> : <span>{folderTasks.length} item</span>}
+          </div>
+
+          <div style={{ marginBottom: "1rem" }}>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => onOpenCreateTaskModal(selectedFolder.id)}
+            >
+              Tambah Task Baru
+            </button>
           </div>
 
           <TaskList
