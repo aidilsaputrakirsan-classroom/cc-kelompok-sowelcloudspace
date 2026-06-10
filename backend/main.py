@@ -205,9 +205,63 @@ def verify_username(username: str, db: Session = Depends(get_db)):
 
 # ==================== TASK (PROTECTED) ====================
 
+def check_task_permission(task, user_id: int, db: Session, required_level: str = "read_write"):
+    # 1. User is the task owner
+    if task.owner_id == user_id:
+        return
+
+    # 2. Check folder-based access
+    if task.folder_id is not None:
+        from models import Folder, User
+        import json
+        folder = db.query(Folder).filter(Folder.id == task.folder_id).first()
+        if folder:
+            is_folder_owner = folder.owner_id == user_id
+            
+            is_folder_member = False
+            if folder.type == "group":
+                user = db.query(User).filter(User.id == user_id).first()
+                if user:
+                    try:
+                        members = json.loads(folder.members or "[]")
+                    except Exception:
+                        members = []
+                    is_folder_member = any(m.lower() == user.name.lower() for m in members)
+
+            if is_folder_owner or is_folder_member:
+                if required_level == "read_write":
+                    return
+                # Hanya pemilik task atau pemilik folder yang boleh menghapus
+                if required_level == "admin" and is_folder_owner:
+                    return
+
+    raise HTTPException(status_code=403, detail="Tidak punya akses ke task ini")
+
+
 # CREATE
 @app.post("/tasks", response_model=TaskResponse)
 def create(task: TaskCreate, db: Session = Depends(get_db), user_id=Depends(get_current_user)):
+    if task.folder_id is not None:
+        from models import Folder, User
+        import json
+        folder = db.query(Folder).filter(Folder.id == task.folder_id).first()
+        if not folder:
+            raise HTTPException(status_code=404, detail="Folder tidak ditemukan")
+        
+        is_owner = folder.owner_id == int(user_id)
+        is_member = False
+        if folder.type == "group":
+            user = db.query(User).filter(User.id == int(user_id)).first()
+            if user:
+                try:
+                    members = json.loads(folder.members or "[]")
+                except Exception:
+                    members = []
+                is_member = any(m.lower() == user.name.lower() for m in members)
+
+        if not (is_owner or is_member):
+            raise HTTPException(status_code=403, detail="Tidak memiliki akses ke folder ini")
+
     return crud.create_task(db, task, int(user_id))
 
 
@@ -242,8 +296,7 @@ def read_one(task_id: int, db: Session = Depends(get_db), user_id=Depends(get_cu
     task = crud.get_task(db, task_id)
     if not task:
         raise HTTPException(404, "Task not found")
-    if task.owner_id is not None and task.owner_id != int(user_id):
-        raise HTTPException(403, "Tidak punya akses ke task ini")
+    check_task_permission(task, int(user_id), db, "read_write")
     return task
 
 
@@ -253,8 +306,7 @@ def update(task_id: int, data: TaskUpdate, db: Session = Depends(get_db), user_i
     existing = crud.get_task(db, task_id)
     if not existing:
         raise HTTPException(404, "Task not found")
-    if existing.owner_id is not None and existing.owner_id != int(user_id):
-        raise HTTPException(403, "Tidak punya akses ke task ini")
+    check_task_permission(existing, int(user_id), db, "read_write")
     task = crud.update_task(db, task_id, data)
     return task
 
@@ -265,8 +317,7 @@ def delete(task_id: int, db: Session = Depends(get_db), user_id=Depends(get_curr
     existing = crud.get_task(db, task_id)
     if not existing:
         raise HTTPException(404, "Task not found")
-    if existing.owner_id is not None and existing.owner_id != int(user_id):
-        raise HTTPException(403, "Tidak punya akses ke task ini")
+    check_task_permission(existing, int(user_id), db, "admin")
     crud.delete_task(db, task_id)
     return {"message": "Deleted"}
 
@@ -277,8 +328,7 @@ def complete(task_id: int, db: Session = Depends(get_db), user_id=Depends(get_cu
     existing = crud.get_task(db, task_id)
     if not existing:
         raise HTTPException(404, "Task not found")
-    if existing.owner_id is not None and existing.owner_id != int(user_id):
-        raise HTTPException(403, "Tidak punya akses ke task ini")
+    check_task_permission(existing, int(user_id), db, "read_write")
     task = crud.update_task(db, task_id, TaskUpdate(status="done"))
     return task
 
