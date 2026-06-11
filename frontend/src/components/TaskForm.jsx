@@ -7,6 +7,7 @@ function TaskForm({
   folderOptions = [],
   selectedFolderId = null,
   lockFolderSelection = false,
+  isModal = false,
 }) {
   const [formData, setFormData] = useState({
     title: "",
@@ -105,10 +106,12 @@ function TaskForm({
   }
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>
-        {editingTask ? "Edit Reminder" : "Tambah Reminder Baru"}
-      </h2>
+    <div style={isModal ? styles.modalContainer : styles.container}>
+      {!isModal && (
+        <h2 style={styles.title}>
+          {editingTask ? "Edit Reminder" : "Tambah Reminder Baru"}
+        </h2>
+      )}
 
       {error && <div style={styles.error}>{error}</div>}
 
@@ -235,7 +238,7 @@ function TaskForm({
           <button type="submit" style={styles.btnSubmit} id="task-submit">
             {editingTask ? "Update Reminder" : "Tambah Reminder"}
           </button>
-          {editingTask && (
+          {(editingTask || isModal) && (
             <button type="button" onClick={onCancelEdit} style={styles.btnCancel}>
               Batal
             </button>
@@ -254,6 +257,16 @@ const styles = {
     border: "1px solid #e5e7eb",
     marginBottom: "1.5rem",
     boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+    fontFamily: "'Inter', sans-serif",
+    minWidth: 0,
+  },
+  modalContainer: {
+    background: "transparent",
+    padding: 0,
+    borderRadius: 0,
+    border: "none",
+    marginBottom: 0,
+    boxShadow: "none",
     fontFamily: "'Inter', sans-serif",
     minWidth: 0,
   },
