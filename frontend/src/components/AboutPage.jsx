@@ -27,24 +27,26 @@ function AboutPage({ onBack }) {
       </ul>
 
       <h2 style={styles.sectionTitle}>Tim</h2>
-      <table style={styles.table}>
-        <thead>
-          <tr>
-            <th style={styles.tableHead}>Nama</th>
-            <th style={styles.tableHead}>NIM</th>
-            <th style={styles.tableHead}>Peran</th>
-          </tr>
-        </thead>
-        <tbody>
-          {team.map((member) => (
-            <tr key={member.nim}>
-              <td style={styles.tableCell}>{member.name}</td>
-              <td style={styles.tableCell}>{member.nim}</td>
-              <td style={styles.tableCell}>{member.role}</td>
+      <div style={styles.tableWrap}>
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.tableHead}>Nama</th>
+              <th style={styles.tableHead}>NIM</th>
+              <th style={styles.tableHead}>Peran</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {team.map((member) => (
+              <tr key={member.nim}>
+                <td style={styles.tableCell}>{member.name}</td>
+                <td style={styles.tableCell}>{member.nim}</td>
+                <td style={styles.tableCell}>{member.role}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
@@ -53,7 +55,7 @@ const styles = {
   wrapper: {
     maxWidth: "800px",
     margin: "0 auto",
-    padding: "2rem",
+    padding: "clamp(1rem, 4vw, 2rem)",
     background: "rgba(255,255,255,0.92)",
     borderRadius: "20px",
     boxShadow: "0 16px 40px rgba(76, 29, 149, 0.12)",
@@ -88,8 +90,14 @@ const styles = {
     paddingLeft: "1.2rem",
     marginBottom: "1.5rem",
   },
+  tableWrap: {
+    width: "100%",
+    overflowX: "auto",
+    WebkitOverflowScrolling: "touch",
+  },
   table: {
     width: "100%",
+    minWidth: "560px",
     borderCollapse: "collapse",
     background: "white",
     overflow: "hidden",

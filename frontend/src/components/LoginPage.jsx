@@ -64,15 +64,15 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
   }
 
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.leftPanel}>
+    <div className="login-wrapper" style={styles.wrapper}>
+      <div className="login-left" style={styles.leftPanel}>
         <div style={styles.brandContent}>
           <h1 style={styles.brandTitle}>sowel{"\n"}task</h1>
           <p style={styles.brandTagline}>Stay on track, every day with everyone.</p>
         </div>
       </div>
 
-      <div style={styles.rightPanel}>
+      <div className="login-right" style={styles.rightPanel}>
         <div style={styles.formContainer}>
           <h2 style={styles.welcomeTitle}>
             {isRegister ? "Create Account!" : "Welcome Back!"}
@@ -228,13 +228,28 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
         @media (max-width: 900px) {
           .login-wrapper {
             flex-direction: column !important;
+            min-height: 100dvh !important;
           }
           .login-left {
             display: none !important;
           }
           .login-right {
             border-radius: 0 !important;
-            min-height: 100vh !important;
+            min-height: 100dvh !important;
+            margin-left: 0 !important;
+            padding: 1.5rem !important;
+            width: 100% !important;
+            box-shadow: none !important;
+          }
+        }
+
+        @media (max-width: 420px) {
+          .login-right {
+            padding: 1rem !important;
+          }
+
+          .login-right h2 {
+            font-size: 1.6rem !important;
           }
         }
       `}</style>
@@ -248,6 +263,7 @@ const styles = {
     display: "flex",
     fontFamily: "'Inter', 'Segoe UI', sans-serif",
     background: "#f5f5f5",
+    overflowX: "hidden",
   },
   leftPanel: {
     flex: "0 0 42%",
@@ -299,6 +315,7 @@ const styles = {
     width: "100%",
     maxWidth: "420px",
     animation: "fadeInUp 0.6s ease-out",
+    minWidth: 0,
   },
   welcomeTitle: {
     textAlign: "center",

@@ -21,11 +21,23 @@
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), transparent 28%),
     linear-gradient(135deg, #f6effd 0%, #efe7fb 48%, #f5f0fb 100%);
   color: var(--text-main);
+  overflow-x: clip;
 }
 
 .app-main {
+  width: 100%;
   min-width: 0;
   padding: 20px;
+}
+
+.app-main > * {
+  width: min(100%, 1480px);
+  margin-inline: auto;
+}
+
+.mobile-menu-button,
+.sidebar-backdrop {
+  display: none;
 }
 
 .sidebar {
@@ -138,6 +150,7 @@
   padding: 22px 24px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(16px);
+  min-width: 0;
 }
 
 .eyebrow {
@@ -166,7 +179,7 @@
 }
 
 .dashboard-page__actions {
-  min-width: min(100%, 460px);
+  width: min(100%, 460px);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -193,6 +206,7 @@
 .modal-form input,
 .modal-form textarea,
 .modal-form select {
+  min-width: 0;
   border: 0;
   outline: 0;
   background: transparent;
@@ -206,6 +220,7 @@
   border-radius: 14px;
   padding: 12px 18px;
   font: 800 0.94rem "Plus Jakarta Sans", sans-serif;
+  min-height: 44px;
 }
 
 .primary-button {
@@ -420,12 +435,15 @@
   justify-content: space-between;
   gap: 12px;
   align-items: center;
+  min-width: 0;
 }
 
 .folder-card__title-row h3 {
   margin: 0;
   font: 800 clamp(1.35rem, 2.2vw, 1.85rem) "Baloo 2", cursive;
   line-height: 0.95;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .folder-card__type {
@@ -433,6 +451,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
   font: 700 0.8rem "Plus Jakarta Sans", sans-serif;
+  white-space: nowrap;
 }
 
 .folder-card__meta {
@@ -494,6 +513,8 @@
   background: rgba(255, 255, 255, 0.16);
   color: white;
   font: 700 0.72rem "Plus Jakarta Sans", sans-serif;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .folder-pagination {
@@ -674,7 +695,7 @@
 }
 
 .folder-detail-stat {
-  min-width: 180px;
+  flex: 1 1 160px;
   padding: 16px 18px;
   border-radius: 18px;
   background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(243,238,249,0.92));
@@ -785,6 +806,7 @@
   border-radius: 20px;
   padding: 18px;
   text-align: left;
+  min-width: 0;
 }
 
 .reminder-item__top,
@@ -799,6 +821,7 @@
 .reminder-item h3 {
   margin: 0;
   font: 800 1.35rem "Baloo 2", cursive;
+  overflow-wrap: anywhere;
 }
 
 .reminder-item p {
@@ -855,7 +878,7 @@
 }
 
 .month-card__cell {
-  min-height: 82px;
+  min-height: clamp(64px, 8vw, 82px);
   padding: 8px;
   border-radius: 14px;
   background: #f8f3fd;
@@ -880,6 +903,8 @@
   padding: 5px 8px;
   border-radius: 10px;
   font: 700 0.68rem/1.2 "Plus Jakarta Sans", sans-serif;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .calendar-pill {
@@ -906,7 +931,7 @@
 
 .modal-card {
   width: min(100%, 520px);
-  max-height: calc(100vh - 40px);
+  max-height: min(820px, calc(100dvh - 40px));
   background: white;
   border-radius: 28px;
   padding: 24px;
@@ -1042,6 +1067,7 @@
 .modal-form input,
 .modal-form textarea,
 .modal-form select {
+  width: 100%;
   padding: 14px 16px;
   border-radius: 16px;
   border: 1px solid #dacfee;
@@ -1155,7 +1181,7 @@
 
 @media (max-width: 1280px) {
   .app-shell {
-    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-columns: 280px minmax(0, 1fr);
   }
 
   .app-main {
@@ -1178,7 +1204,7 @@
   }
 
   .dashboard-page__actions {
-    min-width: min(100%, 400px);
+    width: min(100%, 400px);
   }
 
   .dashboard-grid {
@@ -1206,22 +1232,84 @@
     grid-template-columns: 1fr;
   }
 
+  .mobile-menu-button {
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 35;
+    display: inline-grid;
+    gap: 4px;
+    place-content: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #7b67b3, #5f497f);
+    box-shadow: 0 16px 28px rgba(91, 68, 133, 0.22);
+  }
+
+  .mobile-menu-button span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: white;
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: block;
+    pointer-events: none;
+    border: 0;
+    background: rgba(39, 24, 59, 0.36);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .sidebar-backdrop--visible {
+    pointer-events: auto;
+    opacity: 1;
+  }
+
   .sidebar {
-    flex-direction: row;
-    align-items: center;
-    padding: 18px;
-    overflow-x: auto;
-    overflow-y: visible;
-    height: auto;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    width: min(86vw, 320px);
+    height: 100dvh;
+    padding: 24px 18px;
+    transform: translateX(-105%);
+    transition: transform 0.22s ease;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .sidebar--open {
+    transform: translateX(0);
   }
 
   .sidebar__brand {
-    margin-bottom: 0;
-    min-width: max-content;
+    margin-bottom: 22px;
   }
 
   .sidebar__nav {
-    flex-direction: row;
+    flex-direction: column;
+  }
+
+  .app-main {
+    padding: 72px 18px 18px;
+  }
+
+  .dashboard-page__header,
+  .stack-page__header,
+  .workspace-hero {
+    flex-direction: column;
+  }
+
+  .dashboard-page__actions {
+    width: 100%;
   }
 
   .dashboard-grid,
@@ -1232,7 +1320,17 @@
 
 @media (max-width: 760px) {
   .app-main {
-    padding: 16px;
+    padding: 70px 12px 14px;
+  }
+
+  .dashboard-page,
+  .stack-page,
+  .dashboard-grid,
+  .dashboard-rail,
+  .dashboard-content,
+  .workspace-stack,
+  .reminder-sections {
+    gap: 12px;
   }
 
   .dashboard-page__header,
@@ -1240,6 +1338,53 @@
   .workspace-hero,
   .workspace-toolbar {
     flex-direction: column;
+    gap: 14px;
+    border-radius: 20px;
+    padding: 16px;
+  }
+
+  .dashboard-page h1,
+  .stack-page h1,
+  .workspace-hero h1 {
+    font-size: clamp(1.7rem, 12vw, 2.15rem);
+  }
+
+  .dashboard-page__subtitle,
+  .stack-page__lead,
+  .workspace-hero__lead {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .search-field {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 12px 14px;
+  }
+
+  .primary-button,
+  .ghost-button,
+  .folder-danger-button,
+  .workspace-toolbar__actions,
+  .workspace-toolbar__actions > *,
+  .modal-form__actions,
+  .modal-form__actions > * {
+    width: 100%;
+  }
+
+  .panel {
+    border-radius: 20px;
+    padding: 14px;
+  }
+
+  .panel__head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .panel__head h2,
+  .panel__head h3 {
+    font-size: 1.28rem;
   }
 
   .folder-detail-hero,
@@ -1270,18 +1415,122 @@
 
   .folder-summary {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .folder-summary__item {
+    padding: 14px;
   }
 
   .folder-card {
     grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 14px;
   }
 
   .folder-card__avatar {
-    width: 64px;
-    height: 64px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .folder-card__title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .folder-card__meta,
+  .folder-card__members {
+    gap: 8px;
+  }
+
+  .folder-pagination {
+    justify-content: center;
   }
 
   .week-strip {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .metric-card {
+    padding: 11px 12px;
+  }
+
+  .year-grid {
+    gap: 12px;
+  }
+
+  .month-card__weekdays,
+  .month-card__grid {
+    gap: 5px;
+  }
+
+  .month-card__cell {
+    min-height: 56px;
+    padding: 6px;
+    border-radius: 10px;
+  }
+
+  .calendar-pill {
+    justify-content: flex-start;
+    padding: 4px 6px;
+    font-size: 0.62rem;
+  }
+
+  .modal-backdrop {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .modal-card {
+    border-radius: 22px;
+    padding: 18px;
+    max-height: calc(100dvh - 24px);
+  }
+
+  .modal-card__header h2 {
+    font-size: 1.55rem;
+  }
+
+  .toast {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-main {
+    padding-inline: 10px;
+  }
+
+  .sidebar {
+    width: min(90vw, 300px);
+  }
+
+  .week-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .folder-chip-row,
+  .workspace-hero__stats {
+    width: 100%;
+  }
+
+  .folder-chip,
+  .workspace-hero__stats span,
+  .status-chip {
+    width: 100%;
+    text-align: center;
+  }
+
+  .month-card__cell {
+    min-height: 48px;
+  }
+
+  .calendar-pill,
+  .calendar-more {
+    display: none;
   }
 }
