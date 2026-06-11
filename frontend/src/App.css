@@ -662,6 +662,11 @@
   flex-wrap: wrap;
 }
 
+.folder-detail-task-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .folder-danger-button {
   border: 0;
   border-radius: 14px;
@@ -867,6 +872,10 @@
   padding: 24px;
   box-shadow: 0 28px 60px rgba(52, 33, 79, 0.28);
   overflow-y: auto;
+}
+
+.modal-card--task {
+  width: min(100%, 820px);
 }
 
 .modal-card__header {

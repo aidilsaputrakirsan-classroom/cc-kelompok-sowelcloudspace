@@ -1,6 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react"
 import SidebarNav from "./components/SidebarNav"
 import FolderModal from "./components/FolderModal"
+import TaskModal from "./components/TaskModal"
 import {
   fetchTasks, createTask, updateTask, deleteTask, completeTask,
   checkHealth, login, register, clearToken, getToken, getStoredUser, fetchCurrentUser,
@@ -70,6 +71,9 @@ function App() {
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false)
   const [folderModalMode, setFolderModalMode] = useState("create")
   const [folderEditingId, setFolderEditingId] = useState(null)
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [taskModalMode, setTaskModalMode] = useState("create")
+  const [taskModalFolderId, setTaskModalFolderId] = useState(null)
   const [folders, setFolders] = useState([])
   const [taskFolderMap, setTaskFolderMap] = useState(loadStoredTaskFolderMap)
   const [selectedFolderId, setSelectedFolderId] = useState(null)
@@ -88,6 +92,9 @@ function App() {
     setPriorityFilter("all")
     setDashboardQuery("")
     setSelectedFolderId(null)
+    setIsTaskModalOpen(false)
+    setTaskModalMode("create")
+    setTaskModalFolderId(null)
     setFolders([])
     setToast({ message: "Logout berhasil", type: "success" })
   }, [])
@@ -306,21 +313,33 @@ function App() {
         setToast({ message: "Reminder berhasil ditambahkan", type: "success" })
       }
       await loadTasks()
+      setIsTaskModalOpen(false)
+      setTaskModalMode("create")
+      setTaskModalFolderId(null)
+      setEditingTask(null)
     } catch (err) {
       if (err.message === "UNAUTHORIZED") handleLogout()
       else if (!escalateApiError(err, "Gagal menyimpan reminder.")) {
         setToast({ message: `Gagal menyimpan: ${getUserFriendlyErrorMessage(err)}`, type: "error" })
       }
+      throw err
     } finally {
       setLoading(false)
     }
   }
 
   const handleEdit = (task) => {
-    setSelectedFolderId(task.folderId || null)
+    setTaskModalMode("edit")
+    setTaskModalFolderId(task.folderId || null)
     setEditingTask(task)
-    setCurrentPage(task.folderId ? "folder" : "reminders")
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    setIsTaskModalOpen(true)
+  }
+
+  const handleOpenCreateTaskModal = (folderId = null) => {
+    setTaskModalMode("create")
+    setTaskModalFolderId(folderId)
+    setEditingTask(null)
+    setIsTaskModalOpen(true)
   }
 
   const handleDelete = async (id) => {
@@ -532,9 +551,7 @@ function App() {
               onEditTask={handleEdit}
               onDeleteTask={handleDelete}
               onCompleteTask={handleComplete}
-              onSubmitTask={handleSubmit}
-              editingTask={editingTask}
-              onCancelTaskEdit={() => setEditingTask(null)}
+              onAddTask={handleOpenCreateTaskModal}
             />
           )}
 
@@ -552,6 +569,21 @@ function App() {
             setFolderEditingId(null)
           }}
           onSubmit={folderModalMode === "edit" ? handleUpdateFolder : handleCreateFolder}
+        />
+
+        <TaskModal
+          isOpen={isTaskModalOpen}
+          mode={taskModalMode}
+          onClose={() => {
+            setIsTaskModalOpen(false)
+            setTaskModalMode("create")
+            setTaskModalFolderId(null)
+            setEditingTask(null)
+          }}
+          onSubmit={handleSubmit}
+          editingTask={taskModalMode === "edit" ? editingTask : null}
+          folderOptions={folders}
+          selectedFolderId={taskModalFolderId}
         />
 
         <Toast

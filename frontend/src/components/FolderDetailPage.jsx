@@ -1,5 +1,4 @@
 import WorkspacePage from "./WorkspacePage"
-import TaskForm from "./TaskForm"
 import TaskList from "./TaskList"
 
 function formatDate(value) {
@@ -28,9 +27,7 @@ function FolderDetailPage({
   onEditTask,
   onDeleteTask,
   onCompleteTask,
-  onSubmitTask,
-  editingTask,
-  onCancelTaskEdit,
+  onAddTask,
 }) {
   const completedTasks = tasks.filter((task) => task.status === "done").length
   const overdueTasks = tasks.filter((task) => (
@@ -169,14 +166,15 @@ function FolderDetailPage({
             {loading ? <span>Memuat...</span> : <span>{tasks.length} item</span>}
           </div>
 
-          <TaskForm
-            onSubmit={onSubmitTask}
-            editingTask={editingTask}
-            onCancelEdit={onCancelTaskEdit}
-            folderOptions={[selectedFolder]}
-            selectedFolderId={selectedFolder.id}
-            lockFolderSelection
-          />
+          <div className="folder-detail-task-actions">
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => onAddTask(selectedFolder.id)}
+            >
+              Tambah Task Baru
+            </button>
+          </div>
 
           <TaskList
             tasks={tasks}
