@@ -28,6 +28,7 @@ function FolderDetailPage({
   onOpenCreateTaskModal,
   onDeleteTask,
   onCompleteTask,
+  onAddTask,
 }) {
   const folderTasks = selectedFolder
     ? tasks.filter((task) => String(task.folderId ?? task.folder_id ?? "") === String(selectedFolder.id))
@@ -161,9 +162,23 @@ function FolderDetailPage({
           <div className="panel__head">
             <div>
               <h2>Reminder di Folder Ini</h2>
-              <p>Semua task yang terhubung ke folder ini ditampilkan di bawah.</p>
+              <p>
+                {selectedFolder.type === "group"
+                  ? "Folder group ini bisa dipakai kolaborasi oleh member yang sudah terhubung ke folder."
+                  : "Semua task yang terhubung ke folder ini ditampilkan dan bisa dikelola di sini."}
+              </p>
             </div>
             {loading ? <span>Memuat...</span> : <span>{folderTasks.length} item</span>}
+          </div>
+
+          <div className="folder-detail-task-actions">
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => onAddTask(selectedFolder.id)}
+            >
+              Tambah Task Baru
+            </button>
           </div>
 
           <TaskList
