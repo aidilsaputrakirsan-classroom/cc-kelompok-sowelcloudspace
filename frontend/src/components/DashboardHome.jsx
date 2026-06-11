@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 
-const FOLDERS_PER_PAGE = 6
+const FOLDERS_PER_PAGE = 5
 
 function DashboardHome({
   folders,
@@ -117,7 +117,6 @@ function DashboardHome({
               </div>
             </div>
           </div>
-
         </div>
 
         <div className="dashboard-content">
@@ -140,7 +139,7 @@ function DashboardHome({
             {folders.length === 0 ? (
               <div className="panel folder-empty">
                 <h3>Belum ada folder yang cocok</h3>
-                <p>Coba kata kunci lain atau buat folder reminder baru lewat tombol `Add New+`.</p>
+                <p>Coba kata kunci lain atau buat folder reminder baru lewat tombol Add New+.</p>
               </div>
             ) : (
               paginatedFolders.map((folder) => {
