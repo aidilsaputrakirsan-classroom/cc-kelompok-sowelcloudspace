@@ -63,11 +63,11 @@ function FolderDetailPage({
   return (
     <WorkspacePage
       selectedFolder={selectedFolder}
-        folders={folders}
-        totalTasks={folderTasks.length}
-        filteredTasks={folderTasks.length}
-        completedTasks={completedTasks}
-        isConnected={isConnected}
+      folders={folders}
+      totalTasks={folderTasks.length}
+      filteredTasks={folderTasks.length}
+      completedTasks={completedTasks}
+      isConnected={isConnected}
       onAddFolder={onAddFolder}
       onClearFolder={onClearFolder}
       onSelectFolder={onSelectFolder}
@@ -164,16 +164,6 @@ function FolderDetailPage({
               <p>Semua task yang terhubung ke folder ini ditampilkan di bawah.</p>
             </div>
             {loading ? <span>Memuat...</span> : <span>{folderTasks.length} item</span>}
-          </div>
-
-          <div style={{ marginBottom: "1rem" }}>
-            <button
-              type="button"
-              className="primary-button"
-              onClick={() => onOpenCreateTaskModal(selectedFolder.id)}
-            >
-              Tambah Task Baru
-            </button>
           </div>
 
           <TaskList
