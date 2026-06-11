@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 
-<<<<<<< HEAD
 const FOLDERS_PER_PAGE = 5
-=======
-const FOLDERS_PER_PAGE = 6
->>>>>>> 923ded4cc78cd85178c0f7b25af3a5de6193322b
 
 function DashboardHome({
   folders,
@@ -46,24 +42,6 @@ function DashboardHome({
 
   useEffect(() => {
     setFolderPage((currentPage) => Math.min(currentPage, totalFolderPages))
-  }, [totalFolderPages])
-
-  const [folderPage, setFolderPage] = useState(1)
-  const totalFolderPages = Math.max(1, Math.ceil(folders.length / FOLDERS_PER_PAGE))
-
-  const paginatedFolders = useMemo(() => {
-    const start = (folderPage - 1) * FOLDERS_PER_PAGE
-    return folders.slice(start, start + FOLDERS_PER_PAGE)
-  }, [folderPage, folders])
-
-  // Reset to page 1 when search query changes
-  useEffect(() => {
-    setFolderPage(1)
-  }, [dashboardQuery])
-
-  // Clamp page if folders shrink (e.g. after delete)
-  useEffect(() => {
-    setFolderPage((prev) => Math.min(prev, totalFolderPages))
   }, [totalFolderPages])
 
   return (
@@ -136,7 +114,6 @@ function DashboardHome({
               </div>
             </div>
           </div>
-
         </div>
 
         <div className="dashboard-content">
@@ -159,7 +136,7 @@ function DashboardHome({
             {folders.length === 0 ? (
               <div className="panel folder-empty">
                 <h3>Belum ada folder yang cocok</h3>
-                <p>Coba kata kunci lain atau buat folder reminder baru lewat tombol `Add New+`.</p>
+                <p>Coba kata kunci lain atau buat folder reminder baru lewat tombol Add New+.</p>
               </div>
             ) : (
               paginatedFolders.map((folder) => {
@@ -238,15 +215,6 @@ function DashboardHome({
           </div>
 
           {folders.length > FOLDERS_PER_PAGE && (
-<<<<<<< HEAD
-            <div className="folder-pagination">
-              <button
-                type="button"
-                disabled={folderPage === 1}
-                onClick={() => setFolderPage((p) => Math.max(1, p - 1))}
-              >
-                ← Prev
-=======
             <div className="folder-pagination" aria-label="Navigasi halaman folder">
               <button
                 type="button"
@@ -254,24 +222,16 @@ function DashboardHome({
                 disabled={folderPage === 1}
               >
                 Prev
->>>>>>> 923ded4cc78cd85178c0f7b25af3a5de6193322b
               </button>
               <span>
                 {folderPage} / {totalFolderPages}
               </span>
               <button
                 type="button"
-<<<<<<< HEAD
-                disabled={folderPage === totalFolderPages}
-                onClick={() => setFolderPage((p) => Math.min(totalFolderPages, p + 1))}
-              >
-                Next →
-=======
                 onClick={() => setFolderPage((currentPage) => Math.min(totalFolderPages, currentPage + 1))}
                 disabled={folderPage === totalFolderPages}
               >
                 Next
->>>>>>> 923ded4cc78cd85178c0f7b25af3a5de6193322b
               </button>
             </div>
           )}
@@ -282,4 +242,3 @@ function DashboardHome({
 }
 
 export default DashboardHome
-
