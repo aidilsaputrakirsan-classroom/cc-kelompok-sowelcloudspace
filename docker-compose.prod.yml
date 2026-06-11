@@ -1,0 +1,153 @@
+# ============================================================
+# Docker Compose — Production Environment
+# Komputasi Awan — SI ITK
+# ============================================================
+# Production overrides untuk docker-compose.yml
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ============================================================
+
+services:
+  # ==================== DATABASE ====================
+  db:
+    # No port exposure in production
+    ports: !reset []
+    # Add resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    # Production restart policy
+    restart: always
+    environment:
+      # Override dengan production password
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres123}
+      SERVICE_NAME: database
+      ENVIRONMENT: production
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        labels: "service=database,environment=production"
+
+  # ==================== AUTH SERVICE ====================
+  auth-service:
+    # No port exposure - only internal communication
+    ports: !reset []
+    # Add resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '1'
+          memory: 512M
+    # Production restart policy
+    restart: always
+    # Override environment dengan production settings
+    environment:
+      LOG_LEVEL: WARNING
+      SERVICE_NAME: auth-service
+      ENVIRONMENT: production
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        labels: "service=auth-service,environment=production"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ==================== TASK SERVICE ====================
+  task-service:
+    # No port exposure - only internal communication
+    ports: !reset []
+    # Add resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '1'
+          memory: 512M
+    # Production restart policy
+    restart: always
+    # Override environment dengan production settings
+    environment:
+      LOG_LEVEL: WARNING
+      SERVICE_NAME: task-service
+      ENVIRONMENT: production
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        labels: "service=task-service,environment=production"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ==================== FRONTEND ====================
+  frontend:
+    # No port exposure - served through gateway
+    ports: !reset []
+    # Add resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    # Production restart policy
+    restart: always
+    environment:
+      ENVIRONMENT: production
+      SERVICE_NAME: frontend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        labels: "service=frontend,environment=production"
+
+  # ==================== API GATEWAY ====================
+  gateway:
+    # Gateway is the only public entrypoint
+    ports: !override
+      - "80:80"
+    # Add resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    # Production restart policy
+    restart: always
+    environment:
+      ENVIRONMENT: production
+      SERVICE_NAME: gateway
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        labels: "service=gateway,environment=production"
