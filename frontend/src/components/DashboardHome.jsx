@@ -8,6 +8,7 @@ function DashboardHome({
   onAddFolder,
   onOpenFolder,
   onEditFolder,
+  onDeleteFolder,
 }) {
   const today = new Date()
   const weekDays = Array.from({ length: 7 }, (_, index) => {
@@ -22,7 +23,6 @@ function DashboardHome({
     overdue: tasks.filter((task) => task.deadline && new Date(task.deadline) < new Date() && task.status !== "done").length,
   }
 
-  const completionRate = tasks.length ? Math.round((progressSummary.done / tasks.length) * 100) : 0
   const sharedFolders = allFolders.filter((folder) => folder.type === "group").length
   const greetingName = currentUser?.name?.trim() || "Teman"
 
@@ -97,32 +97,6 @@ function DashboardHome({
             </div>
           </div>
 
-          <div className="panel">
-            <div className="panel__head">
-              <h2>Percentage</h2>
-              <span>Snapshot</span>
-            </div>
-            <div className="progress-columns">
-              <div className="progress-columns__item">
-                <div className="progress-columns__bar">
-                  <span style={{ height: `${Math.max(completionRate, 12)}%` }} />
-                </div>
-                <small>done</small>
-              </div>
-              <div className="progress-columns__item">
-                <div className="progress-columns__bar">
-                  <span style={{ height: `${Math.max(Math.min(progressSummary.inProgress * 18, 100), 10)}%` }} />
-                </div>
-                <small>active</small>
-              </div>
-              <div className="progress-columns__item">
-                <div className="progress-columns__bar">
-                  <span style={{ height: `${Math.max(Math.min(progressSummary.overdue * 22, 100), 8)}%` }} />
-                </div>
-                <small>late</small>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="dashboard-content">
@@ -150,13 +124,21 @@ function DashboardHome({
             ) : (
               folders.map((folder) => {
                 const folderTasks = tasks.filter((task) => task.folderId === folder.id)
+                const hasMembers = folder.type === "group" && folder.members.length > 0
 
                 return (
-                  <button
+                  <article
                     key={folder.id}
-                    type="button"
                     className={`folder-card folder-card--${folder.color}`}
                     onClick={() => onOpenFolder(folder.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault()
+                        onOpenFolder(folder.id)
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
                   >
                     <div className="folder-card__avatar">
                       {folder.imageData ? (
@@ -176,27 +158,40 @@ function DashboardHome({
                       </div>
                       <p>{folder.description}</p>
                       <div className="folder-card__meta">
-                        <span>{folder.members.length} member</span>
+                        <span>{folder.type === "group" ? `${folder.members.length} member` : "Personal folder"}</span>
                         <span>{folderTasks.length} reminder</span>
-                        <span
-                          className="linkish"
+                        <button
+                          type="button"
+                          className="folder-card__action folder-card__action--edit"
                           onClick={(event) => {
                             event.stopPropagation()
                             onEditFolder(folder.id)
                           }}
                         >
-                          Edit foto
-                        </span>
+                          Edit folder
+                        </button>
+                        <button
+                          type="button"
+                          className="folder-card__action folder-card__action--delete"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            onDeleteFolder(folder.id)
+                          }}
+                        >
+                          Hapus folder
+                        </button>
                       </div>
-                      <div className="folder-card__members">
-                        {folder.members.map((member) => (
-                          <span key={member} className="folder-card__member-chip">
-                            {member}
-                          </span>
-                        ))}
-                      </div>
+                      {hasMembers && (
+                        <div className="folder-card__members">
+                          {folder.members.map((member) => (
+                            <span key={member} className="folder-card__member-chip">
+                              {member}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </button>
+                  </article>
                 )
               })
             )}

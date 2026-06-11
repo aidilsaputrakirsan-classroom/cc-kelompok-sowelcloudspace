@@ -1,4 +1,5 @@
 const FALLBACK_API_URL = "http://localhost:8000"
+const USER_STORAGE_KEY = "sowel_user"
 
 export class ApiError extends Error {
   constructor(
@@ -53,8 +54,23 @@ export function normalizeApiUrl(rawValue) {
 
   try {
     const url = new URL(value)
+    const hostname = url.hostname.toLowerCase()
+    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1"
+
+    if (url.protocol !== "https:" && !isLocalhost) {
+      throw createApiError("VITE_API_URL harus menggunakan HTTPS.", {
+        code: "INSECURE_API_URL",
+        userMessage: "Backend production harus memakai URL HTTPS penuh agar tidak terkena Mixed Content di Railway.",
+        isFatal: true,
+      })
+    }
+
     return url.toString().replace(/\/$/, "")
-  } catch {
+  } catch (error) {
+    if (isApiError(error)) {
+      throw error
+    }
+
     throw createApiError("VITE_API_URL bukan URL yang valid.", {
       code: "INVALID_API_URL",
       userMessage: "Konfigurasi API production tidak valid. Periksa format VITE_API_URL.",
@@ -66,16 +82,73 @@ export function normalizeApiUrl(rawValue) {
 export const API_URL = normalizeApiUrl(import.meta.env.VITE_API_URL)
 
 let authToken = localStorage.getItem("sowel_token") || null
-let storedUser = (() => {
+
+function normalizeFolder(folder) {
+  if (!folder || typeof folder !== "object") return null
+
+  return {
+    id: folder.id,
+    name: folder.name || "",
+    type: folder.type || "personal",
+    description: folder.description || "",
+    members: Array.isArray(folder.members) ? folder.members : [],
+    color: folder.color || "indigo",
+    imageData: folder.imageData || folder.image_data || "",
+    ownerId: folder.ownerId ?? folder.owner_id ?? null,
+    createdAt: folder.createdAt || folder.created_at || null,
+    updatedAt: folder.updatedAt || folder.updated_at || null,
+  }
+}
+
+function normalizeTask(task) {
+  if (!task || typeof task !== "object") return null
+
+  const folderId = task.folderId ?? task.folder_id ?? null
+  const createdAt = task.createdAt || task.created_at || null
+  const updatedAt = task.updatedAt || task.updated_at || null
+  const folder = normalizeFolder(task.folder)
+
+  return {
+    ...task,
+    folderId,
+    folder_id: folderId,
+    folder,
+    createdAt,
+    created_at: createdAt,
+    updatedAt,
+    updated_at: updatedAt,
+  }
+}
+
+function serializeFolderPayload(folderData = {}) {
+  return {
+    name: folderData.name?.trim() || "",
+    type: folderData.type || "personal",
+    description: folderData.description?.trim() || "",
+    members: Array.isArray(folderData.members) ? folderData.members : [],
+    color: folderData.color || "indigo",
+    image_data: folderData.imageData || folderData.image_data || "",
+  }
+}
+
+function storeUser(user) {
+  if (!user) {
+    localStorage.removeItem(USER_STORAGE_KEY)
+    return
+  }
+  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user))
+}
+
+export function getStoredUser() {
   try {
-    const raw = localStorage.getItem("sowel_user")
+    const raw = localStorage.getItem(USER_STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw)
     return parsed && typeof parsed === "object" ? parsed : null
   } catch {
     return null
   }
-})()
+}
 
 export function setToken(token) {
   authToken = token
@@ -86,20 +159,10 @@ export function getToken() {
   return authToken
 }
 
-export function setStoredUser(user) {
-  storedUser = user
-  localStorage.setItem("sowel_user", JSON.stringify(user))
-}
-
-export function getStoredUser() {
-  return storedUser
-}
-
 export function clearToken() {
   authToken = null
-  storedUser = null
   localStorage.removeItem("sowel_token")
-  localStorage.removeItem("sowel_user")
+  localStorage.removeItem(USER_STORAGE_KEY)
 }
 
 function authHeaders(isForm = false) {
@@ -175,8 +238,6 @@ export async function register(userData) {
 
 export async function login(username, password) {
   const formData = new URLSearchParams()
-  // Backend FastAPI menggunakan OAuth2PasswordRequestForm,
-  // jadi identifier login harus dikirim lewat field "username".
   formData.append("username", username)
   formData.append("password", password)
 
@@ -194,57 +255,56 @@ export async function login(username, password) {
   }
 
   setToken(data.access_token)
-  if (data.user) {
-    setStoredUser(data.user)
-  }
+  storeUser(data.user ?? null)
   return data
 }
 
 export async function fetchCurrentUser() {
-  const data = await request("/auth/me", {
+  const user = await request("/auth/me", {
     headers: authHeaders(),
   })
-
-  if (data && typeof data === "object") {
-    setStoredUser(data)
-  }
-
-  return data
+  storeUser(user)
+  return user
 }
 
 export async function fetchTasks() {
-  return request("/tasks", {
+  const data = await request("/tasks", {
     headers: authHeaders(),
   })
+  return Array.isArray(data) ? data.map(normalizeTask).filter(Boolean) : []
 }
 
 export async function fetchTask(id) {
-  return request(`/tasks/${id}`, {
+  const data = await request(`/tasks/${id}`, {
     headers: authHeaders(),
   })
+  return normalizeTask(data)
 }
 
 export async function createTask(taskData) {
-  return request("/tasks", {
+  const data = await request("/tasks", {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(taskData),
   })
+  return normalizeTask(data)
 }
 
 export async function updateTask(id, taskData) {
-  return request(`/tasks/${id}`, {
+  const data = await request(`/tasks/${id}`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify(taskData),
   })
+  return normalizeTask(data)
 }
 
 export async function completeTask(id) {
-  return request(`/tasks/${id}/complete`, {
+  const data = await request(`/tasks/${id}/complete`, {
     method: "PUT",
     headers: authHeaders(),
   })
+  return normalizeTask(data)
 }
 
 export async function deleteTask(id) {
@@ -256,6 +316,45 @@ export async function deleteTask(id) {
 
 export async function fetchStats() {
   return request("/tasks/stats", {
+    headers: authHeaders(),
+  })
+}
+
+export async function fetchFolders() {
+  const data = await request("/api/folders", {
+    headers: authHeaders(),
+  })
+  return Array.isArray(data) ? data.map(normalizeFolder).filter(Boolean) : []
+}
+
+export async function fetchFolder(id) {
+  const data = await request(`/api/folders/${id}`, {
+    headers: authHeaders(),
+  })
+  return normalizeFolder(data)
+}
+
+export async function createFolder(folderData) {
+  const data = await request("/api/folders", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(serializeFolderPayload(folderData)),
+  })
+  return normalizeFolder(data)
+}
+
+export async function updateFolder(id, folderData) {
+  const data = await request(`/api/folders/${id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(serializeFolderPayload(folderData)),
+  })
+  return normalizeFolder(data)
+}
+
+export async function deleteFolder(id) {
+  return request(`/api/folders/${id}`, {
+    method: "DELETE",
     headers: authHeaders(),
   })
 }

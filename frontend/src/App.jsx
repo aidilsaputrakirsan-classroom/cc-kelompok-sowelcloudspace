@@ -1,13 +1,12 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react"
-import TaskForm from "./components/TaskForm"
-import SearchBar from "./components/SearchBar"
-import TaskList from "./components/TaskList"
 import SidebarNav from "./components/SidebarNav"
 import FolderModal from "./components/FolderModal"
+import TaskModal from "./components/TaskModal"
 import {
   fetchTasks, createTask, updateTask, deleteTask, completeTask,
   checkHealth, login, register, clearToken, getToken, getStoredUser, fetchCurrentUser,
   getUserFriendlyErrorMessage, shouldEscalateApiError,
+  fetchFolders, fetchFolder, createFolder, updateFolder, deleteFolder,
 } from "./services/api"
 
 const LoginPage = lazy(() => import("./components/LoginPage"))
@@ -15,67 +14,16 @@ const AboutPage = lazy(() => import("./components/AboutPage"))
 const DashboardHome = lazy(() => import("./components/DashboardHome"))
 const ReminderPage = lazy(() => import("./components/ReminderPage"))
 const YearCalendarPage = lazy(() => import("./components/YearCalendarPage"))
-const WorkspacePage = lazy(() => import("./components/WorkspacePage"))
-
-const FOLDER_STORAGE_KEY = "sowel_folders"
-const TASK_FOLDER_STORAGE_KEY = "sowel_task_folder_map"
-
-const DEFAULT_FOLDERS = [
-  {
-    id: "folder-harahetta",
-    name: "harahetta",
-    type: "personal",
-    members: ["Cantika"],
-    color: "sunset",
-    description: "Folder pribadi untuk reminder harian dan target cepat.",
-  },
-  {
-    id: "folder-furab",
-    name: "furab",
-    type: "group",
-    members: ["Cantika", "Furab Team"],
-    color: "indigo",
-    description: "Folder kolaborasi kecil untuk checklist dan progress mingguan.",
-  },
-  {
-    id: "folder-sowelcloudspace",
-    name: "sowelcloudspace",
-    type: "group",
-    members: ["Cantika", "Anjas", "Arya", "Meiske"],
-    color: "pink",
-    description: "Folder tim utama untuk reminder project dan deadline bersama.",
-  },
-]
-
-function loadStoredFolders() {
-  try {
-    const raw = localStorage.getItem(FOLDER_STORAGE_KEY)
-    if (!raw) return DEFAULT_FOLDERS
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_FOLDERS
-  } catch {
-    return DEFAULT_FOLDERS
-  }
-}
-
-function loadStoredTaskFolderMap() {
-  try {
-    const raw = localStorage.getItem(TASK_FOLDER_STORAGE_KEY)
-    if (!raw) return {}
-    const parsed = JSON.parse(raw)
-    return parsed && typeof parsed === "object" ? parsed : {}
-  } catch {
-    return {}
-  }
-}
+const FolderDetailPage = lazy(() => import("./components/FolderDetailPage"))
 
 function Toast({ message, type, onClose }) {
-  if (!message) return null
-
   useEffect(() => {
+    if (!message) return undefined
     const timer = setTimeout(onClose, 3000)
     return () => clearTimeout(timer)
   }, [message, onClose])
+
+  if (!message) return null
 
   return (
     <div className={`toast toast--${type}`}>
@@ -111,9 +59,11 @@ function App() {
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false)
   const [folderModalMode, setFolderModalMode] = useState("create")
   const [folderEditingId, setFolderEditingId] = useState(null)
-  const [folders, setFolders] = useState(loadStoredFolders)
-  const [taskFolderMap, setTaskFolderMap] = useState(loadStoredTaskFolderMap)
+  const [folders, setFolders] = useState([])
   const [selectedFolderId, setSelectedFolderId] = useState(null)
+  const [isFolderDetailLoading, setIsFolderDetailLoading] = useState(false)
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [taskModalMode, setTaskModalMode] = useState("create")
   const [fatalError, setFatalError] = useState(null)
 
   const handleLogout = useCallback(() => {
@@ -128,6 +78,7 @@ function App() {
     setPriorityFilter("all")
     setDashboardQuery("")
     setSelectedFolderId(null)
+    setFolders([])
     setToast({ message: "Logout berhasil", type: "success" })
   }, [])
 
@@ -140,21 +91,13 @@ function App() {
     return false
   }, [])
 
-  useEffect(() => {
-    localStorage.setItem(FOLDER_STORAGE_KEY, JSON.stringify(folders))
-  }, [folders])
-
-  useEffect(() => {
-    localStorage.setItem(TASK_FOLDER_STORAGE_KEY, JSON.stringify(taskFolderMap))
-  }, [taskFolderMap])
-
   const enhancedTasks = useMemo(() => {
     return tasks.map((task) => {
-      const folderId = taskFolderMap[String(task.id)] || null
-      const folder = folders.find((item) => item.id === folderId) || null
+      const folderId = task.folderId ?? task.folder_id ?? null
+      const folder = task.folder || folders.find((item) => item.id === folderId) || null
       return { ...task, folderId, folder }
     })
-  }, [folders, taskFolderMap, tasks])
+  }, [folders, tasks])
 
   const selectedFolder = useMemo(
     () => folders.find((folder) => folder.id === selectedFolderId) || null,
@@ -171,7 +114,7 @@ function App() {
       const normalizedQuery = searchQuery.trim().toLowerCase()
       const matchesTitle = !normalizedQuery || task.title?.toLowerCase().includes(normalizedQuery)
       const matchesPriority = priorityFilter === "all" || task.priority === priorityFilter
-      const matchesFolder = !selectedFolderId || task.folderId === selectedFolderId
+      const matchesFolder = !selectedFolderId || String(task.folderId) === String(selectedFolderId)
 
       return matchesTitle && matchesPriority && matchesFolder
     })
@@ -209,6 +152,22 @@ function App() {
     }
   }, [escalateApiError, handleLogout])
 
+  const loadFolders = useCallback(async () => {
+    try {
+      const data = await fetchFolders()
+      setFatalError(null)
+      setFolders(Array.isArray(data) ? data : [])
+    } catch (err) {
+      if (err.message === "UNAUTHORIZED") {
+        handleLogout()
+        return
+      }
+      if (!escalateApiError(err, "Gagal memuat folder.")) {
+        setToast({ message: getUserFriendlyErrorMessage(err, "Gagal memuat folder."), type: "error" })
+      }
+    }
+  }, [escalateApiError, handleLogout])
+
   useEffect(() => {
     checkHealth().then(setIsConnected)
   }, [])
@@ -216,8 +175,9 @@ function App() {
   useEffect(() => {
     if (isAuthenticated) {
       loadTasks()
+      loadFolders()
     }
-  }, [isAuthenticated, loadTasks])
+  }, [isAuthenticated, loadFolders, loadTasks])
 
   useEffect(() => {
     if (!isAuthenticated || !getToken()) return
@@ -244,14 +204,41 @@ function App() {
     }
   }, [handleLogout, isAuthenticated])
 
-  const updateTaskFolder = useCallback((taskId, folderId) => {
-    setTaskFolderMap((prev) => {
-      const next = { ...prev }
-      if (folderId) next[String(taskId)] = folderId
-      else delete next[String(taskId)]
-      return next
-    })
-  }, [])
+  useEffect(() => {
+    if (!isAuthenticated || !selectedFolderId || currentPage !== "folder") return
+
+    let isMounted = true
+    setIsFolderDetailLoading(true)
+
+    fetchFolder(selectedFolderId)
+      .then((folder) => {
+        if (!isMounted || !folder) return
+        setFolders((prev) => {
+          const exists = prev.some((item) => item.id === folder.id)
+          if (!exists) return [folder, ...prev]
+          return prev.map((item) => (item.id === folder.id ? folder : item))
+        })
+      })
+      .catch((err) => {
+        if (!isMounted) return
+        if (err.message === "UNAUTHORIZED") {
+          handleLogout()
+          return
+        }
+        if (!escalateApiError(err, "Gagal memuat detail folder.")) {
+          setToast({ message: getUserFriendlyErrorMessage(err, "Gagal memuat detail folder."), type: "error" })
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsFolderDetailLoading(false)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [currentPage, escalateApiError, handleLogout, isAuthenticated, selectedFolderId])
 
   const handleLogin = async (username, password) => {
     try {
@@ -285,16 +272,20 @@ function App() {
   const handleSubmit = async (taskData, editId, folderId) => {
     setLoading(true)
     try {
+      const payload = {
+        ...taskData,
+        folder_id: folderId || null,
+      }
+
       if (editId) {
-        const updatedTask = await updateTask(editId, taskData)
-        updateTaskFolder(updatedTask.id || editId, folderId)
+        await updateTask(editId, payload)
         setEditingTask(null)
         setToast({ message: "Reminder berhasil diperbarui", type: "success" })
       } else {
-        const createdTask = await createTask(taskData)
-        updateTaskFolder(createdTask.id, folderId)
+        await createTask(payload)
         setToast({ message: "Reminder berhasil ditambahkan", type: "success" })
       }
+      setIsTaskModalOpen(false)
       await loadTasks()
     } catch (err) {
       if (err.message === "UNAUTHORIZED") handleLogout()
@@ -309,8 +300,15 @@ function App() {
   const handleEdit = (task) => {
     setSelectedFolderId(task.folderId || null)
     setEditingTask(task)
-    setCurrentPage("workspace")
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    setTaskModalMode("edit")
+    setIsTaskModalOpen(true)
+  }
+
+  const handleOpenCreateTaskModal = (folderId = null) => {
+    setSelectedFolderId(folderId)
+    setEditingTask(null)
+    setTaskModalMode("create")
+    setIsTaskModalOpen(true)
   }
 
   const handleDelete = async (id) => {
@@ -319,7 +317,6 @@ function App() {
     setLoading(true)
     try {
       await deleteTask(id)
-      updateTaskFolder(id, null)
       await loadTasks()
       setToast({ message: "Reminder berhasil dihapus", type: "success" })
     } catch (err) {
@@ -347,8 +344,8 @@ function App() {
 
   const handleOpenFolder = (folderId) => {
     setSelectedFolderId(folderId)
-    setCurrentPage("workspace")
     setEditingTask(null)
+    setCurrentPage("folder")
   }
 
   const handleOpenCreateFolderModal = () => {
@@ -363,32 +360,70 @@ function App() {
     setIsFolderModalOpen(true)
   }
 
-  const handleCreateFolder = (folderData) => {
-    const colorCycle = ["sunset", "indigo", "pink", "mint"]
-    const nextFolder = {
-      id: `folder-${Date.now()}`,
-      color: colorCycle[folders.length % colorCycle.length],
-      ...folderData,
+  const handleCreateFolder = async (folderData) => {
+    setLoading(true)
+    try {
+      const nextFolder = await createFolder(folderData)
+      setFolders((prev) => [nextFolder, ...prev])
+      setSelectedFolderId(nextFolder.id)
+      setCurrentPage("folder")
+      setEditingTask(null)
+      setIsFolderModalOpen(false)
+      setToast({ message: `Folder "${nextFolder.name}" berhasil dibuat`, type: "success" })
+    } catch (err) {
+      if (err.message === "UNAUTHORIZED") handleLogout()
+      else if (!escalateApiError(err, "Gagal membuat folder.")) {
+        setToast({ message: getUserFriendlyErrorMessage(err, "Gagal membuat folder."), type: "error" })
+      }
+    } finally {
+      setLoading(false)
     }
-
-    setFolders((prev) => [nextFolder, ...prev])
-    setSelectedFolderId(nextFolder.id)
-    setCurrentPage("workspace")
-    setEditingTask(null)
-    setIsFolderModalOpen(false)
-    setToast({ message: `Folder "${nextFolder.name}" berhasil dibuat`, type: "success" })
   }
 
-  const handleUpdateFolder = (folderData) => {
+  const handleUpdateFolder = async (folderData) => {
     if (!folderEditingId) return
 
-    setFolders((prev) => prev.map((folder) => (
-      folder.id === folderEditingId
-        ? { ...folder, ...folderData }
-        : folder
-    )))
-    setIsFolderModalOpen(false)
-    setToast({ message: `Folder "${folderData.name}" berhasil diperbarui`, type: "success" })
+    setLoading(true)
+    try {
+      const updatedFolder = await updateFolder(folderEditingId, folderData)
+      setFolders((prev) => prev.map((folder) => (
+        folder.id === folderEditingId ? updatedFolder : folder
+      )))
+      setIsFolderModalOpen(false)
+      setToast({ message: `Folder "${updatedFolder.name}" berhasil diperbarui`, type: "success" })
+    } catch (err) {
+      if (err.message === "UNAUTHORIZED") handleLogout()
+      else if (!escalateApiError(err, "Gagal memperbarui folder.")) {
+        setToast({ message: getUserFriendlyErrorMessage(err, "Gagal memperbarui folder."), type: "error" })
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeleteFolder = async (folderId) => {
+    const folder = folders.find((item) => item.id === folderId)
+    if (!folder) return
+    if (!window.confirm(`Yakin ingin menghapus folder "${folder.name}"? Semua reminder di folder ini akan kehilangan folder-nya.`)) return
+
+    setLoading(true)
+    try {
+      await deleteFolder(folderId)
+      setFolders((prev) => prev.filter((item) => item.id !== folderId))
+      await loadTasks()
+      if (selectedFolderId === folderId) {
+        setSelectedFolderId(null)
+        setCurrentPage("home")
+      }
+      setToast({ message: `Folder "${folder.name}" berhasil dihapus`, type: "success" })
+    } catch (err) {
+      if (err.message === "UNAUTHORIZED") handleLogout()
+      else if (!escalateApiError(err, "Gagal menghapus folder.")) {
+        setToast({ message: getUserFriendlyErrorMessage(err, "Gagal menghapus folder."), type: "error" })
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (fatalError) {
@@ -439,6 +474,7 @@ function App() {
               onAddFolder={handleOpenCreateFolderModal}
               onOpenFolder={handleOpenFolder}
               onEditFolder={handleOpenEditFolderModal}
+              onDeleteFolder={handleDeleteFolder}
             />
           )}
 
@@ -458,50 +494,30 @@ function App() {
             />
           )}
 
-          {currentPage === "workspace" && (
-            <WorkspacePage
+          {currentPage === "folder" && (
+            <FolderDetailPage
               selectedFolder={selectedFolder}
               folders={folders}
-              totalTasks={enhancedTasks.length}
-              filteredTasks={filteredTasks.length}
-              completedTasks={enhancedTasks.filter((task) => task.status === "done").length}
+              tasks={enhancedTasks}
               isConnected={isConnected}
+              loading={loading || isFolderDetailLoading}
               onAddFolder={handleOpenCreateFolderModal}
-              onClearFolder={() => setSelectedFolderId(null)}
-              onSelectFolder={setSelectedFolderId}
+              onClearFolder={() => {
+                setSelectedFolderId(null)
+                setCurrentPage("home")
+              }}
+              onSelectFolder={handleOpenFolder}
               onEditFolder={handleOpenEditFolderModal}
-            >
-              <TaskForm
-                onSubmit={handleSubmit}
-                editingTask={editingTask}
-                onCancelEdit={() => setEditingTask(null)}
-                folderOptions={folders}
-                selectedFolderId={selectedFolderId}
-              />
-              <SearchBar
-                totalTasks={enhancedTasks.length}
-                filteredTasks={filteredTasks.length}
-                searchQuery={searchQuery}
-                priorityFilter={priorityFilter}
-                onSearchChange={setSearchQuery}
-                onPriorityChange={setPriorityFilter}
-              />
-              {loading && (
-                <div className="loading-state">
-                  <div className="loading-spinner" />
-                </div>
-              )}
-              <TaskList
-                tasks={filteredTasks}
-                searchQuery={searchQuery}
-                priorityFilter={priorityFilter}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onComplete={handleComplete}
-                loading={loading}
-              />
-            </WorkspacePage>
+              onDeleteFolder={handleDeleteFolder}
+              onBackHome={() => setCurrentPage("home")}
+              onOpenCreateTaskModal={handleOpenCreateTaskModal}
+              onEditTask={handleEdit}
+              onDeleteTask={handleDelete}
+              onCompleteTask={handleComplete}
+            />
           )}
+
+
 
           {currentPage === "about" && <AboutPage onBack={() => setCurrentPage("home")} />}
         </main>
@@ -515,6 +531,19 @@ function App() {
             setFolderEditingId(null)
           }}
           onSubmit={folderModalMode === "edit" ? handleUpdateFolder : handleCreateFolder}
+        />
+
+        <TaskModal
+          isOpen={isTaskModalOpen}
+          mode={taskModalMode}
+          editingTask={editingTask}
+          onClose={() => {
+            setIsTaskModalOpen(false)
+            setEditingTask(null)
+          }}
+          onSubmit={handleSubmit}
+          folderOptions={folders}
+          selectedFolderId={selectedFolderId}
         />
 
         <Toast

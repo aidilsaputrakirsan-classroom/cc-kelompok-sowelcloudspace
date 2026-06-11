@@ -330,36 +330,6 @@
   color: #db4f74;
 }
 
-.progress-columns {
-  min-height: 240px;
-  display: flex;
-  justify-content: space-around;
-  align-items: end;
-  gap: 12px;
-}
-
-.progress-columns__item {
-  display: grid;
-  justify-items: center;
-  gap: 10px;
-}
-
-.progress-columns__bar {
-  width: 22px;
-  height: 180px;
-  background: #ffffff;
-  border-radius: 999px;
-  position: relative;
-  overflow: hidden;
-}
-
-.progress-columns__bar span {
-  position: absolute;
-  inset: auto 0 0;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #d44fab, #7c68b4);
-}
-
 .folder-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -397,15 +367,16 @@
   gap: 18px;
   text-align: left;
   color: white;
+  cursor: pointer;
   box-shadow: 0 18px 40px rgba(95, 73, 127, 0.2);
 }
 
 .folder-card--sunset {
-  background: linear-gradient(135deg, #d2822d, #bd7023);
+  background: linear-gradient(135deg, #8b78c6, #64508f);
 }
 
 .folder-card--indigo {
-  background: linear-gradient(135deg, #594982, #49376f);
+  background: linear-gradient(135deg, #6f5aa3, #4f3d7a);
 }
 
 .folder-card--pink {
@@ -463,6 +434,43 @@
   gap: 14px;
   margin-top: 10px;
   color: rgba(255, 255, 255, 0.8);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.folder-card__action {
+  border: 0;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+}
+
+.folder-card__action:hover {
+  transform: scale(1.05);
+}
+
+.folder-card__action--edit {
+  color: #d4c8ff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.folder-card__action--edit:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.folder-card__action--delete {
+  color: #ffb3b3;
+  background: rgba(255, 80, 80, 0.14);
+}
+
+.folder-card__action--delete:hover {
+  color: #ffffff;
+  background: rgba(220, 50, 50, 0.4);
 }
 
 .folder-card__members {
@@ -484,6 +492,196 @@
 
 .folder-empty {
   text-align: center;
+}
+
+.folder-detail-empty {
+  text-align: center;
+}
+
+.folder-detail-empty h2 {
+  margin: 0 0 8px;
+  font: 800 1.8rem "Baloo 2", cursive;
+}
+
+.folder-detail-empty p {
+  margin: 0;
+  color: var(--text-soft);
+  font: 500 0.95rem/1.6 "Plus Jakarta Sans", sans-serif;
+}
+
+.folder-detail-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 24px;
+  color: white;
+  box-shadow: 0 18px 40px rgba(95, 73, 127, 0.2);
+}
+
+.folder-detail-hero--sunset {
+  background: linear-gradient(135deg, #8b78c6, #64508f);
+}
+
+.folder-detail-hero--indigo {
+  background: linear-gradient(135deg, #6f5aa3, #4f3d7a);
+}
+
+.folder-detail-hero--pink {
+  background: linear-gradient(135deg, #cf53a6, #b63e88);
+}
+
+.folder-detail-hero--mint {
+  background: linear-gradient(135deg, #4da68c, #2f7f74);
+}
+
+.folder-detail-hero__main,
+.folder-detail-hero__side,
+.folder-detail-hero__identity,
+.folder-detail-stats,
+.folder-detail-members,
+.folder-detail-actions,
+.folder-detail-grid {
+  display: flex;
+  gap: 16px;
+}
+
+.folder-detail-hero__main,
+.folder-detail-hero__side {
+  flex-direction: column;
+}
+
+.folder-detail-hero__main {
+  flex: 1;
+  min-width: 0;
+  gap: 10px;
+}
+
+.folder-detail-hero__side {
+  justify-content: flex-start;
+  align-items: flex-end;
+  gap: 10px;
+  width: min(100%, 150px);
+}
+
+.folder-detail-hero__back {
+  align-self: flex-start;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.16);
+  color: white;
+  font: 700 0.76rem "Plus Jakarta Sans", sans-serif;
+}
+
+.folder-detail-hero__identity {
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.folder-detail-hero__avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 18px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--brand-dark);
+  font: 800 1.2rem "Baloo 2", cursive;
+  flex-shrink: 0;
+}
+
+.folder-detail-hero__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.folder-detail-hero h2 {
+  margin: 0 0 4px;
+  font: 800 clamp(1.6rem, 3vw, 2.25rem) "Baloo 2", cursive;
+  line-height: 0.95;
+}
+
+.folder-detail-hero__copy {
+  min-width: 0;
+  max-width: 460px;
+}
+
+.folder-detail-hero__description {
+  margin: 0;
+  max-width: 48ch;
+  color: rgba(255, 255, 255, 0.88);
+  font: 500 0.86rem/1.5 "Plus Jakarta Sans", sans-serif;
+}
+
+.folder-detail-pill {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: white;
+  text-align: center;
+  font: 700 0.78rem "Plus Jakarta Sans", sans-serif;
+}
+
+.folder-detail-grid {
+  flex-direction: column;
+}
+
+.folder-detail-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.folder-detail-stats {
+  flex-wrap: wrap;
+}
+
+.folder-detail-stat {
+  min-width: 180px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(243,238,249,0.92));
+  border: 1px solid rgba(218, 207, 238, 0.9);
+}
+
+.folder-detail-stat strong {
+  display: block;
+  font: 800 1.1rem/1.4 "Plus Jakarta Sans", sans-serif;
+  color: var(--brand-dark);
+}
+
+.folder-detail-stat span {
+  color: var(--text-soft);
+  font: 700 0.78rem "Plus Jakarta Sans", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.folder-detail-members {
+  flex-wrap: wrap;
+}
+
+.folder-card__member-chip--soft {
+  background: #efe7fb;
+  color: #644b90;
+}
+
+.folder-detail-actions {
+  flex-wrap: wrap;
+}
+
+.folder-danger-button {
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #e3637b, #c23f59);
+  color: white;
+  font: 800 0.94rem "Plus Jakarta Sans", sans-serif;
 }
 
 .workspace-hero__stats,
@@ -757,6 +955,10 @@
   font: 500 0.78rem/1.5 "Plus Jakarta Sans", sans-serif;
 }
 
+.member-builder .form-error {
+  color: #c0392b;
+}
+
 .upload-field {
   display: grid;
   gap: 8px;
@@ -956,6 +1158,32 @@
   .workspace-hero,
   .workspace-toolbar {
     flex-direction: column;
+  }
+
+  .folder-detail-hero,
+  .folder-detail-hero__identity,
+  .folder-detail-hero__side {
+    flex-direction: column;
+  }
+
+  .folder-detail-hero {
+    display: flex;
+    padding: 18px;
+  }
+
+  .folder-detail-hero__side {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .folder-detail-pill {
+    width: auto;
+    text-align: left;
+  }
+
+  .folder-detail-hero__avatar {
+    width: 62px;
+    height: 62px;
   }
 
   .folder-summary {
