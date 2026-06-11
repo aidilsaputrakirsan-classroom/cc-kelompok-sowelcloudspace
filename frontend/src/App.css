@@ -37,6 +37,11 @@
   background: linear-gradient(180deg, #a28dc8 0%, #967fbe 100%);
   color: white;
   box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.15);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 10;
 }
 
 .sidebar__brand {
@@ -1131,6 +1136,8 @@
     align-items: center;
     padding: 18px;
     overflow-x: auto;
+    overflow-y: visible;
+    height: auto;
   }
 
   .sidebar__brand {
