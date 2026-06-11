@@ -41,6 +41,7 @@ services:
 
   # ==================== FRONTEND (HOT-RELOAD) ====================
   frontend:
+    image: sowel-frontend-dev
     build:
       context: ./frontend
       dockerfile: Dockerfile
