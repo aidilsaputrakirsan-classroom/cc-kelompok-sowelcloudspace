@@ -1,6 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react"
 import SidebarNav from "./components/SidebarNav"
 import FolderModal from "./components/FolderModal"
+import TaskModal from "./components/TaskModal"
 import {
   fetchTasks, createTask, updateTask, deleteTask, completeTask,
   checkHealth, login, register, clearToken, getToken, getStoredUser, fetchCurrentUser,
@@ -61,7 +62,10 @@ function App() {
   const [folders, setFolders] = useState([])
   const [selectedFolderId, setSelectedFolderId] = useState(null)
   const [isFolderDetailLoading, setIsFolderDetailLoading] = useState(false)
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [taskModalMode, setTaskModalMode] = useState("create")
   const [fatalError, setFatalError] = useState(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const handleLogout = useCallback(() => {
     clearToken()
@@ -282,6 +286,7 @@ function App() {
         await createTask(payload)
         setToast({ message: "Reminder berhasil ditambahkan", type: "success" })
       }
+      setIsTaskModalOpen(false)
       await loadTasks()
     } catch (err) {
       if (err.message === "UNAUTHORIZED") handleLogout()
@@ -296,8 +301,15 @@ function App() {
   const handleEdit = (task) => {
     setSelectedFolderId(task.folderId || null)
     setEditingTask(task)
-    setCurrentPage(task.folderId ? "folder" : "reminders")
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    setTaskModalMode("edit")
+    setIsTaskModalOpen(true)
+  }
+
+  const handleOpenCreateTaskModal = (folderId = null) => {
+    setSelectedFolderId(folderId)
+    setEditingTask(null)
+    setTaskModalMode("create")
+    setIsTaskModalOpen(true)
   }
 
   const handleDelete = async (id) => {
@@ -445,9 +457,28 @@ function App() {
   return (
     <Suspense fallback={<PageLoader />}>
       <div className="app-shell">
+        <button
+          type="button"
+          className="mobile-menu-button"
+          onClick={() => setIsSidebarOpen(true)}
+          aria-label="Buka navigasi"
+          aria-expanded={isSidebarOpen}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+        <button
+          type="button"
+          className={`sidebar-backdrop ${isSidebarOpen ? "sidebar-backdrop--visible" : ""}`}
+          onClick={() => setIsSidebarOpen(false)}
+          aria-label="Tutup navigasi"
+        />
         <SidebarNav
           currentPage={currentPage}
+          isOpen={isSidebarOpen}
           onNavigate={setCurrentPage}
+          onClose={() => setIsSidebarOpen(false)}
           onLogout={handleLogout}
         />
 
@@ -499,6 +530,7 @@ function App() {
               onEditFolder={handleOpenEditFolderModal}
               onDeleteFolder={handleDeleteFolder}
               onBackHome={() => setCurrentPage("home")}
+              onOpenCreateTaskModal={handleOpenCreateTaskModal}
               onEditTask={handleEdit}
               onDeleteTask={handleDelete}
               onCompleteTask={handleComplete}
@@ -519,6 +551,19 @@ function App() {
             setFolderEditingId(null)
           }}
           onSubmit={folderModalMode === "edit" ? handleUpdateFolder : handleCreateFolder}
+        />
+
+        <TaskModal
+          isOpen={isTaskModalOpen}
+          mode={taskModalMode}
+          editingTask={editingTask}
+          onClose={() => {
+            setIsTaskModalOpen(false)
+            setEditingTask(null)
+          }}
+          onSubmit={handleSubmit}
+          folderOptions={folders}
+          selectedFolderId={selectedFolderId}
         />
 
         <Toast

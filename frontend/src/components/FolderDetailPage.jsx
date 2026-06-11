@@ -25,6 +25,7 @@ function FolderDetailPage({
   onDeleteFolder,
   onBackHome,
   onEditTask,
+  onOpenCreateTaskModal,
   onDeleteTask,
   onCompleteTask,
 }) {
@@ -62,11 +63,11 @@ function FolderDetailPage({
   return (
     <WorkspacePage
       selectedFolder={selectedFolder}
-        folders={folders}
-        totalTasks={folderTasks.length}
-        filteredTasks={folderTasks.length}
-        completedTasks={completedTasks}
-        isConnected={isConnected}
+      folders={folders}
+      totalTasks={folderTasks.length}
+      filteredTasks={folderTasks.length}
+      completedTasks={completedTasks}
+      isConnected={isConnected}
       onAddFolder={onAddFolder}
       onClearFolder={onClearFolder}
       onSelectFolder={onSelectFolder}

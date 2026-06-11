@@ -53,16 +53,7 @@ function WorkspacePage({
           ))}
         </div>
 
-        <div className="workspace-toolbar__actions">
-          {selectedFolder && (
-            <button type="button" className="ghost-button" onClick={() => onEditFolder(selectedFolder.id)}>
-              Edit folder
-            </button>
-          )}
-          <button type="button" className="primary-button" onClick={onAddFolder}>
-            Add folder
-          </button>
-        </div>
+
       </div>
 
       <div className="workspace-stack">{children}</div>

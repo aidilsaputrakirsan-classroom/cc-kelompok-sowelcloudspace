@@ -45,8 +45,9 @@ function TaskList({ tasks, searchQuery, priorityFilter, onEdit, onDelete, onComp
 const styles = {
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
     gap: "1rem",
+    minWidth: 0,
   },
   message: {
     textAlign: "center",
@@ -57,7 +58,7 @@ const styles = {
   },
   empty: {
     textAlign: "center",
-    padding: "3rem",
+    padding: "clamp(1.25rem, 6vw, 3rem)",
     background: "white",
     borderRadius: "16px",
     border: "2px dashed #d4d4d8",
