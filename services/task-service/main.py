@@ -1,25 +1,31 @@
 """
-Task Service — Handles task/todo management.
+Task Service — Handles task/todo and folder management.
 Microservice yang bertanggung jawab untuk:
 - CRUD tasks (Create, Read, Update, Delete)
+- CRUD folders
 - Task statistics
 - Task completion
 
-Memvalidasi JWT token via auth-service sebelum memproses request.
+Validasi JWT token dilakukan secara lokal (stateless) menggunakan SECRET_KEY.
 Disesuaikan dengan backend monolith Sowel Task API yang sudah ada.
 """
 import os
+import json
 import logging
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from jose import jwt, JWTError
 import httpx
 
 from database import engine, get_db, Base
-from models import Task
-from schemas import TaskCreate, TaskUpdate, TaskResponse
+from models import Task, Folder
+from schemas import (
+    TaskCreate, TaskUpdate, TaskResponse,
+    FolderCreate, FolderUpdate, FolderResponse
+)
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -30,7 +36,7 @@ logger = logging.getLogger("task-service")
 
 app = FastAPI(
     title="Task Service",
-    description="Task management microservice — CRUD tasks (Sowel Cloud)",
+    description="Task management microservice — CRUD tasks & folders (Sowel Cloud)",
     version="2.0.0",
 )
 
@@ -47,48 +53,73 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Auth service URL untuk verifikasi token
+SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey123")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://auth-service:8001")
 
-
-async def verify_token_via_auth(request: Request) -> str:
-    """
-    Dependency: Verifikasi JWT token dengan memanggil auth-service /auth/verify.
-    Return user_id jika token valid.
-    """
+async def verify_token_local(request: Request) -> str:
+    """Dependency: Verifikasi JWT token secara lokal."""
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
 
+    token = auth_header.split("Bearer ")[1]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return str(user_id)
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+async def get_user_name(user_id: int, request: Request) -> str:
+    """Helper untuk mengambil nama user dari auth-service (hanya dipanggil saat butuh validasi group folder)."""
+    auth_header = request.headers.get("Authorization")
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{AUTH_SERVICE_URL}/auth/verify",
-                headers={"Authorization": auth_header},
-                timeout=5.0,
-            )
-        if response.status_code != 200:
-            detail = response.json().get("detail", "Invalid token")
-            raise HTTPException(status_code=401, detail=detail)
+            resp = await client.get(f"{AUTH_SERVICE_URL}/auth/me", headers={"Authorization": auth_header}, timeout=5.0)
+            if resp.status_code == 200:
+                return resp.json().get("name", "")
+    except Exception:
+        pass
+    return ""
 
-        data = response.json()
-        return str(data["user_id"])
+async def check_task_permission(task: Task, user_id: int, db: Session, request: Request, required_level: str = "read_write"):
+    if task.owner_id == user_id:
+        return
 
-    except httpx.RequestError as e:
-        logger.error("Cannot reach auth-service: %s", str(e))
-        raise HTTPException(
-            status_code=503,
-            detail="Auth service unavailable"
-        )
+    if task.folder_id is not None:
+        folder = db.query(Folder).filter(Folder.id == task.folder_id).first()
+        if folder:
+            is_folder_owner = folder.owner_id == user_id
+            is_folder_member = False
+            if folder.type == "group":
+                user_name = await get_user_name(user_id, request)
+                if user_name:
+                    try:
+                        members = json.loads(folder.members or "[]")
+                    except Exception:
+                        members = []
+                    is_folder_member = any(m.lower() == user_name.lower() for m in members)
+
+            if is_folder_owner or is_folder_member:
+                if required_level == "read_write":
+                    return
+                if required_level == "admin" and is_folder_owner:
+                    return
+
+    raise HTTPException(status_code=403, detail="Tidak punya akses ke task ini")
 
 
 # =====================
-# ENDPOINTS
+# ENDPOINTS - HEALTH
 # =====================
 
 @app.get("/health")
 def health_check(db: Session = Depends(get_db)):
-    """Health check endpoint — cek status task-service dan database."""
     health = {
         "status": "healthy",
         "service": "task-service",
@@ -105,41 +136,217 @@ def health_check(db: Session = Depends(get_db)):
     return JSONResponse(content=health, status_code=status_code)
 
 
-# CREATE
+# =====================
+# ENDPOINTS - FOLDERS
+# =====================
+
+@app.post("/api/folders", response_model=FolderResponse)
+async def create_folder(
+    data: FolderCreate,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_token_local),
+):
+    uid = int(user_id)
+    db_folder = Folder(**data.model_dump(), owner_id=uid)
+    db.add(db_folder)
+    db.commit()
+    db.refresh(db_folder)
+    return db_folder
+
+@app.get("/api/folders", response_model=list[FolderResponse])
+async def get_folders(
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_token_local),
+    request: Request = None,
+):
+    uid = int(user_id)
+    folders = db.query(Folder).filter(Folder.owner_id == uid).all()
+    # Handle group folders
+    user_name = await get_user_name(uid, request)
+    if user_name:
+        all_group_folders = db.query(Folder).filter(Folder.type == "group").all()
+        for gf in all_group_folders:
+            if gf.owner_id == uid: continue
+            try:
+                members = json.loads(gf.members or "[]")
+                if any(m.lower() == user_name.lower() for m in members):
+                    folders.append(gf)
+            except Exception:
+                pass
+    return folders
+
+@app.get("/api/folders/{folder_id}", response_model=FolderResponse)
+async def get_folder(
+    folder_id: int,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_token_local),
+    request: Request = None,
+):
+    uid = int(user_id)
+    folder = db.query(Folder).filter(Folder.id == folder_id).first()
+    if not folder:
+        raise HTTPException(404, "Folder not found")
+    
+    is_owner = folder.owner_id == uid
+    is_member = False
+    if folder.type == "group":
+        user_name = await get_user_name(uid, request)
+        if user_name:
+            try:
+                members = json.loads(folder.members or "[]")
+                is_member = any(m.lower() == user_name.lower() for m in members)
+            except Exception:
+                pass
+    
+    if not (is_owner or is_member):
+        raise HTTPException(403, "Tidak memiliki akses ke folder ini")
+        
+    return folder
+
+@app.put("/api/folders/{folder_id}", response_model=FolderResponse)
+async def update_folder(
+    folder_id: int,
+    data: FolderUpdate,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_token_local),
+):
+    uid = int(user_id)
+    folder = db.query(Folder).filter(Folder.id == folder_id, Folder.owner_id == uid).first()
+    if not folder:
+        raise HTTPException(404, "Folder not found atau anda bukan owner")
+    
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(folder, key, value)
+    db.commit()
+    db.refresh(folder)
+    return folder
+
+@app.delete("/api/folders/{folder_id}")
+async def delete_folder(
+    folder_id: int,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_token_local),
+):
+    uid = int(user_id)
+    folder = db.query(Folder).filter(Folder.id == folder_id, Folder.owner_id == uid).first()
+    if not folder:
+        raise HTTPException(404, "Folder not found atau anda bukan owner")
+    db.delete(folder)
+    db.commit()
+    return {"message": "Folder deleted"}
+
+
+# =====================
+# ENDPOINTS - TASKS
+# =====================
+
 @app.post("/tasks", response_model=TaskResponse)
 async def create_task(
     task: TaskCreate,
+    request: Request,
     db: Session = Depends(get_db),
-    user_id: str = Depends(verify_token_via_auth),
+    user_id: str = Depends(verify_token_local),
 ):
-    """Membuat task baru."""
-    db_task = Task(**task.model_dump())
+    uid = int(user_id)
+    if task.folder_id is not None:
+        folder = db.query(Folder).filter(Folder.id == task.folder_id).first()
+        if not folder:
+            raise HTTPException(status_code=404, detail="Folder tidak ditemukan")
+        
+        is_owner = folder.owner_id == uid
+        is_member = False
+        if folder.type == "group":
+            user_name = await get_user_name(uid, request)
+            if user_name:
+                try:
+                    members = json.loads(folder.members or "[]")
+                    is_member = any(m.lower() == user_name.lower() for m in members)
+                except Exception:
+                    pass
+
+        if not (is_owner or is_member):
+            raise HTTPException(status_code=403, detail="Tidak memiliki akses ke folder ini")
+
+    db_task = Task(**task.model_dump(), owner_id=uid)
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
     return db_task
 
 
-# READ ALL
 @app.get("/tasks")
 async def read_tasks(
+    request: Request,
     skip: int = 0,
     limit: int = 100,
+    folder_id: int | None = None,
     db: Session = Depends(get_db),
-    user_id: str = Depends(verify_token_via_auth),
+    user_id: str = Depends(verify_token_local),
 ):
-    """Ambil semua tasks dengan pagination."""
-    return db.query(Task).offset(skip).limit(limit).all()
+    uid = int(user_id)
+    query = db.query(Task)
+    
+    if folder_id is not None:
+        query = query.filter(Task.folder_id == folder_id)
+        # Auth check will be applied later conceptually, 
+        # but since we filter by folder we should ensure they have access to folder
+        folder = db.query(Folder).filter(Folder.id == folder_id).first()
+        if folder:
+            is_owner = folder.owner_id == uid
+            is_member = False
+            if folder.type == "group":
+                user_name = await get_user_name(uid, request)
+                if user_name:
+                    try:
+                        members = json.loads(folder.members or "[]")
+                        is_member = any(m.lower() == user_name.lower() for m in members)
+                    except Exception:
+                        pass
+            if not (is_owner or is_member):
+                return [] # No access
+    else:
+        # Fetching all tasks user has access to
+        # 1. Tasks they own
+        # 2. Tasks in group folders they are a member of
+        user_name = await get_user_name(uid, request)
+        group_folder_ids = []
+        if user_name:
+            all_group_folders = db.query(Folder).filter(Folder.type == "group").all()
+            for gf in all_group_folders:
+                try:
+                    members = json.loads(gf.members or "[]")
+                    if any(m.lower() == user_name.lower() for m in members):
+                        group_folder_ids.append(gf.id)
+                except Exception:
+                    pass
+        query = query.filter((Task.owner_id == uid) | (Task.folder_id.in_(group_folder_ids)))
+
+    return query.offset(skip).limit(limit).all()
 
 
-# STATS
 @app.get("/tasks/stats")
 async def task_stats(
+    request: Request,
     db: Session = Depends(get_db),
-    user_id: str = Depends(verify_token_via_auth),
+    user_id: str = Depends(verify_token_local),
 ):
-    """Statistik task: total, completed, pending."""
-    tasks = db.query(Task).all()
+    uid = int(user_id)
+    # Similar filtering logic as read_tasks
+    query = db.query(Task)
+    user_name = await get_user_name(uid, request)
+    group_folder_ids = []
+    if user_name:
+        all_group_folders = db.query(Folder).filter(Folder.type == "group").all()
+        for gf in all_group_folders:
+            try:
+                members = json.loads(gf.members or "[]")
+                if any(m.lower() == user_name.lower() for m in members):
+                    group_folder_ids.append(gf.id)
+            except Exception:
+                pass
+    query = query.filter((Task.owner_id == uid) | (Task.folder_id.in_(group_folder_ids)))
+    
+    tasks = query.all()
     total = len(tasks)
     done = len([t for t in tasks if t.status == "done"])
     return {
@@ -149,32 +356,33 @@ async def task_stats(
     }
 
 
-# READ ONE
 @app.get("/tasks/{task_id}", response_model=TaskResponse)
 async def read_task(
     task_id: int,
+    request: Request,
     db: Session = Depends(get_db),
-    user_id: str = Depends(verify_token_via_auth),
+    user_id: str = Depends(verify_token_local),
 ):
-    """Ambil task berdasarkan ID."""
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(404, "Task not found")
+    await check_task_permission(task, int(user_id), db, request, "read_write")
     return task
 
 
-# UPDATE
 @app.put("/tasks/{task_id}", response_model=TaskResponse)
 async def update_task(
     task_id: int,
     data: TaskUpdate,
+    request: Request,
     db: Session = Depends(get_db),
-    user_id: str = Depends(verify_token_via_auth),
+    user_id: str = Depends(verify_token_local),
 ):
-    """Update task berdasarkan ID."""
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(404, "Task not found")
+    await check_task_permission(task, int(user_id), db, request, "read_write")
+    
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(task, key, value)
     db.commit()
@@ -182,33 +390,35 @@ async def update_task(
     return task
 
 
-# DELETE
 @app.delete("/tasks/{task_id}")
 async def delete_task(
     task_id: int,
+    request: Request,
     db: Session = Depends(get_db),
-    user_id: str = Depends(verify_token_via_auth),
+    user_id: str = Depends(verify_token_local),
 ):
-    """Hapus task berdasarkan ID."""
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(404, "Task not found")
+    await check_task_permission(task, int(user_id), db, request, "admin")
+    
     db.delete(task)
     db.commit()
     return {"message": "Deleted"}
 
 
-# COMPLETE TASK
 @app.put("/tasks/{task_id}/complete")
 async def complete_task(
     task_id: int,
+    request: Request,
     db: Session = Depends(get_db),
-    user_id: str = Depends(verify_token_via_auth),
+    user_id: str = Depends(verify_token_local),
 ):
-    """Tandai task sebagai selesai (status=done)."""
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(404, "Task not found")
+    await check_task_permission(task, int(user_id), db, request, "read_write")
+    
     task.status = "done"
     db.commit()
     db.refresh(task)
