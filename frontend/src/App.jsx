@@ -65,8 +65,6 @@ function App() {
   const [folders, setFolders] = useState([])
   const [selectedFolderId, setSelectedFolderId] = useState(null)
   const [isFolderDetailLoading, setIsFolderDetailLoading] = useState(false)
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
-  const [taskModalMode, setTaskModalMode] = useState("create")
   const [fatalError, setFatalError] = useState(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
