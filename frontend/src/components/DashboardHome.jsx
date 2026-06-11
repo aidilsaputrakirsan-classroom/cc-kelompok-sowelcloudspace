@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 
-const FOLDERS_PER_PAGE = 5
+const FOLDERS_PER_PAGE = 6
 
 function DashboardHome({
   folders,
