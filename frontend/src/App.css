@@ -17,19 +17,6 @@
   box-sizing: border-box;
 }
 
-<<<<<<< feature/update-frontend
-html,
-body,
-#root {
-  min-height: 100%;
-}
-
-body {
-  margin: 0;
-}
-
-=======
->>>>>>> main
 .app-shell {
   height: 100dvh;
   display: grid;
@@ -44,13 +31,8 @@ body {
 .app-main {
   width: 100%;
   min-width: 0;
-<<<<<<< feature/update-frontend
-  padding: 28px;
-  height: 100dvh;
-=======
   padding: 20px;
   height: 100vh;
->>>>>>> main
   overflow-y: auto;
 }
 
@@ -124,7 +106,6 @@ body {
   text-align: left;
   font: 700 0.98rem "Plus Jakarta Sans", sans-serif;
   width: 100%;
-  cursor: pointer;
 }
 
 .sidebar__nav-item--active {
@@ -239,10 +220,6 @@ body {
   padding: 12px 18px;
   font: 800 0.94rem "Plus Jakarta Sans", sans-serif;
   min-height: 44px;
-<<<<<<< feature/update-frontend
-  cursor: pointer;
-=======
->>>>>>> main
 }
 
 .primary-button {
@@ -534,11 +511,7 @@ body {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
   color: white;
-<<<<<<< feature/update-frontend
-  font: 700 0.78rem "Plus Jakarta Sans", sans-serif;
-=======
   font: 700 0.72rem "Plus Jakarta Sans", sans-serif;
->>>>>>> main
   max-width: 100%;
   overflow-wrap: anywhere;
 }
@@ -559,17 +532,11 @@ body {
   color: white;
   font: 800 0.88rem "Plus Jakarta Sans", sans-serif;
   box-shadow: 0 8px 18px rgba(91, 68, 133, 0.18);
-<<<<<<< feature/update-frontend
-  cursor: pointer;
-=======
->>>>>>> main
 }
 
 .folder-pagination button:disabled {
   cursor: not-allowed;
   opacity: 0.4;
-<<<<<<< feature/update-frontend
-=======
   transform: none;
 }
 
@@ -600,7 +567,6 @@ body {
   cursor: not-allowed;
   opacity: 0.4;
   transform: none;
->>>>>>> main
 }
 
 .folder-pagination span {
@@ -1182,7 +1148,7 @@ body {
 }
 
 .loading-state--page {
-  min-height: 100dvh;
+  min-height: 100vh;
 }
 
 .loading-spinner {
@@ -1195,7 +1161,7 @@ body {
 }
 
 .error-boundary {
-  min-height: 100dvh;
+  min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -1296,28 +1262,6 @@ body {
   .app-shell {
     grid-template-columns: 1fr;
     height: auto;
-<<<<<<< feature/update-frontend
-    min-height: 100dvh;
-    overflow: visible;
-  }
-
-  .app-main {
-    height: auto;
-    overflow-y: visible;
-    padding: 18px;
-  }
-
-  .sidebar {
-    position: sticky;
-    top: 0;
-    flex-direction: row;
-    align-items: center;
-    padding: 18px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    height: auto;
-    z-index: 20;
-=======
     overflow: visible;
   }
 
@@ -1390,7 +1334,6 @@ body {
   .app-main {
     height: auto;
     overflow-y: visible;
->>>>>>> main
   }
 
   .sidebar__brand {
@@ -1398,10 +1341,6 @@ body {
   }
 
   .sidebar__nav {
-<<<<<<< feature/update-frontend
-    flex-direction: row;
-    min-width: max-content;
-=======
     flex-direction: column;
   }
 
@@ -1417,7 +1356,6 @@ body {
 
   .dashboard-page__actions {
     width: 100%;
->>>>>>> main
   }
 
   .dashboard-grid,
@@ -1428,9 +1366,6 @@ body {
 
 @media (max-width: 760px) {
   .app-main {
-<<<<<<< feature/update-frontend
-    padding: 12px;
-=======
     padding: 70px 12px 14px;
   }
 
@@ -1442,7 +1377,6 @@ body {
   .workspace-stack,
   .reminder-sections {
     gap: 12px;
->>>>>>> main
   }
 
   .dashboard-page__header,
@@ -1536,13 +1470,8 @@ body {
 
   .folder-card {
     grid-template-columns: 1fr;
-<<<<<<< feature/update-frontend
-    gap: 12px;
-    padding: 16px;
-=======
     gap: 10px;
     padding: 14px;
->>>>>>> main
   }
 
   .folder-card__avatar {
@@ -1558,16 +1487,6 @@ body {
 
   .folder-card__meta,
   .folder-card__members {
-    gap: 8px;
-  }
-
-  .folder-pagination {
-    justify-content: center;
-  }
-
-  .folder-card__title-row {
-    align-items: flex-start;
-    flex-direction: column;
     gap: 8px;
   }
 
