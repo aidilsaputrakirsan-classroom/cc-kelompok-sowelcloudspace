@@ -16,7 +16,7 @@
 .app-shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-columns: 320px minmax(0, 1fr);
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), transparent 28%),
     linear-gradient(135deg, #f6effd 0%, #efe7fb 48%, #f5f0fb 100%);
@@ -31,7 +31,7 @@
 .sidebar {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 18px;
   padding: 24px 18px;
   background: linear-gradient(180deg, #a28dc8 0%, #967fbe 100%);
@@ -115,6 +115,7 @@
 .sidebar__logout {
   justify-content: center;
   background: rgba(255, 255, 255, 0.14);
+  margin-top: 24px;
 }
 
 .dashboard-page,
@@ -365,11 +366,11 @@
 
 .folder-card {
   border: 0;
-  padding: 18px;
-  border-radius: 22px;
+  padding: 14px 16px;
+  border-radius: 20px;
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 14px;
   text-align: left;
   color: white;
   cursor: pointer;
@@ -393,14 +394,14 @@
 }
 
 .folder-card__avatar {
-  width: 72px;
-  height: 72px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   display: grid;
   place-items: center;
   background: rgba(255, 255, 255, 0.9);
   color: var(--brand-dark);
-  font: 800 1.25rem "Baloo 2", cursive;
+  font: 800 1rem "Baloo 2", cursive;
   overflow: hidden;
 }
 
@@ -423,12 +424,12 @@
 
 .folder-card__title-row h3 {
   margin: 0;
-  font: 800 clamp(1.6rem, 2.6vw, 2.25rem) "Baloo 2", cursive;
+  font: 800 clamp(1.35rem, 2.2vw, 1.85rem) "Baloo 2", cursive;
   line-height: 0.95;
 }
 
 .folder-card__type {
-  padding: 7px 12px;
+  padding: 5px 10px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
   font: 700 0.8rem "Plus Jakarta Sans", sans-serif;
@@ -437,7 +438,7 @@
 .folder-card__meta {
   display: flex;
   gap: 10px;
-  margin-top: 8px;
+  margin-top: 6px;
   color: rgba(255, 255, 255, 0.8);
   flex-wrap: wrap;
   align-items: center;
@@ -447,8 +448,8 @@
   border: 0;
   cursor: pointer;
   font-weight: 700;
-  font-size: 0.88rem;
-  padding: 4px 10px;
+  font-size: 0.8rem;
+  padding: 4px 9px;
   border-radius: 10px;
   font-family: "Plus Jakarta Sans", sans-serif;
   transition: background 0.2s, color 0.2s, transform 0.15s;
@@ -482,17 +483,43 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .folder-card__member-chip {
   display: inline-flex;
   align-items: center;
-  padding: 7px 12px;
+  padding: 5px 10px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
   color: white;
-  font: 700 0.78rem "Plus Jakarta Sans", sans-serif;
+  font: 700 0.72rem "Plus Jakarta Sans", sans-serif;
+}
+
+.folder-pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.folder-pagination button {
+  border: 0;
+  border-radius: 12px;
+  padding: 8px 14px;
+  background: #efe8f9;
+  color: #5d487f;
+  font: 800 0.82rem "Plus Jakarta Sans", sans-serif;
+}
+
+.folder-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.folder-pagination span {
+  color: var(--text-soft);
+  font: 800 0.82rem "Plus Jakarta Sans", sans-serif;
 }
 
 .folder-empty {
@@ -1128,7 +1155,7 @@
 
 @media (max-width: 1280px) {
   .app-shell {
-    grid-template-columns: 210px minmax(0, 1fr);
+    grid-template-columns: 320px minmax(0, 1fr);
   }
 
   .app-main {
@@ -1164,13 +1191,13 @@
   }
 
   .folder-card {
-    grid-template-columns: 64px minmax(0, 1fr);
-    padding: 16px;
+    grid-template-columns: 52px minmax(0, 1fr);
+    padding: 12px 14px;
   }
 
   .folder-card__avatar {
-    width: 64px;
-    height: 64px;
+    width: 52px;
+    height: 52px;
   }
 }
 
