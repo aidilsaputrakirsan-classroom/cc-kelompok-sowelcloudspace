@@ -6,12 +6,12 @@
 
 html {
   min-width: 320px;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 body {
-  min-height: 100vh;
-  overflow-x: hidden;
+  height: 100vh;
+  overflow: hidden;
   font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
   background: #f4eef8;
   color: #40315d;
