@@ -16,7 +16,7 @@
 .app-shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: 240px minmax(0, 1fr);
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), transparent 28%),
     linear-gradient(135deg, #f6effd 0%, #efe7fb 48%, #f5f0fb 100%);
@@ -25,15 +25,15 @@
 
 .app-main {
   min-width: 0;
-  padding: 28px;
+  padding: 20px;
 }
 
 .sidebar {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 24px;
-  padding: 30px 26px;
+  gap: 18px;
+  padding: 24px 18px;
   background: linear-gradient(180deg, #a28dc8 0%, #967fbe 100%);
   color: white;
   box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.15);
@@ -48,7 +48,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 30px;
+  margin-bottom: 22px;
 }
 
 .sidebar__brand-mark {
@@ -69,17 +69,17 @@
 }
 
 .sidebar__brand-title {
-  font-size: 2rem;
+  font-size: 1.75rem;
 }
 
 .sidebar__brand-subtitle {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
 }
 
 .sidebar__nav {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .sidebar__nav-item,
@@ -87,11 +87,11 @@
   border: 0;
   background: transparent;
   color: inherit;
-  border-radius: 22px;
-  padding: 18px 20px;
+  border-radius: 18px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   text-align: left;
   font: 700 0.98rem "Plus Jakarta Sans", sans-serif;
   width: 100%;
@@ -103,8 +103,8 @@
 }
 
 .sidebar__icon {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 12px;
   display: grid;
   place-items: center;
@@ -121,7 +121,7 @@
 .stack-page {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 18px;
 }
 
 .dashboard-page__header,
@@ -133,8 +133,8 @@
   align-items: flex-start;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(218, 207, 238, 0.95);
-  border-radius: 28px;
-  padding: 26px 28px;
+  border-radius: 24px;
+  padding: 22px 24px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(16px);
 }
@@ -151,7 +151,7 @@
 .stack-page h1,
 .workspace-hero h1 {
   margin: 0;
-  font: 800 clamp(2rem, 4vw, 3rem) "Baloo 2", cursive;
+  font: 800 clamp(1.9rem, 3.5vw, 2.6rem) "Baloo 2", cursive;
   line-height: 0.95;
 }
 
@@ -165,7 +165,7 @@
 }
 
 .dashboard-page__actions {
-  min-width: min(100%, 520px);
+  min-width: min(100%, 460px);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -174,11 +174,11 @@
 
 .search-field {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: 64px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
-  padding: 16px 18px;
-  border-radius: 22px;
+  padding: 13px 16px;
+  border-radius: 20px;
   background: white;
   border: 2px solid rgba(140, 110, 187, 0.45);
 }
@@ -220,8 +220,8 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.4fr);
-  gap: 22px;
+  grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.45fr);
+  gap: 18px;
 }
 
 .dashboard-rail,
@@ -230,14 +230,14 @@
 .reminder-sections {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 .panel {
   background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(218, 207, 238, 0.9);
-  border-radius: 24px;
-  padding: 22px;
+  border-radius: 22px;
+  padding: 18px;
   box-shadow: var(--shadow);
 }
 
@@ -246,13 +246,13 @@
   justify-content: space-between;
   gap: 10px;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .panel__head h2,
 .panel__head h3 {
   margin: 0;
-  font: 800 1.55rem "Baloo 2", cursive;
+  font: 800 1.4rem "Baloo 2", cursive;
   line-height: 1;
 }
 
@@ -269,12 +269,12 @@
 .week-strip {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .week-strip__day {
-  padding: 14px 8px;
-  border-radius: 18px;
+  padding: 12px 6px;
+  border-radius: 16px;
   background: #f3eef8;
   text-align: center;
   color: #8d79b8;
@@ -306,8 +306,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px;
-  border-radius: 18px;
+  padding: 12px 14px;
+  border-radius: 16px;
   font-family: "Plus Jakarta Sans", sans-serif;
 }
 
@@ -338,12 +338,12 @@
 .folder-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 .folder-summary__item {
-  padding: 18px;
-  border-radius: 20px;
+  padding: 16px;
+  border-radius: 18px;
   background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(243,238,249,0.92));
   border: 1px solid rgba(218, 207, 238, 0.9);
 }
@@ -360,16 +360,16 @@
 
 .folder-list {
   display: grid;
-  gap: 18px;
+  gap: 14px;
 }
 
 .folder-card {
   border: 0;
-  padding: 22px;
-  border-radius: 24px;
+  padding: 18px;
+  border-radius: 22px;
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr);
-  gap: 18px;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 16px;
   text-align: left;
   color: white;
   cursor: pointer;
@@ -393,8 +393,8 @@
 }
 
 .folder-card__avatar {
-  width: 84px;
-  height: 84px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -423,7 +423,7 @@
 
 .folder-card__title-row h3 {
   margin: 0;
-  font: 800 clamp(1.9rem, 3vw, 2.7rem) "Baloo 2", cursive;
+  font: 800 clamp(1.6rem, 2.6vw, 2.25rem) "Baloo 2", cursive;
   line-height: 0.95;
 }
 
@@ -436,8 +436,8 @@
 
 .folder-card__meta {
   display: flex;
-  gap: 14px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 8px;
   color: rgba(255, 255, 255, 0.8);
   flex-wrap: wrap;
   align-items: center;
@@ -480,9 +480,9 @@
 
 .folder-card__members {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 .folder-card__member-chip {
@@ -1123,6 +1123,54 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1280px) {
+  .app-shell {
+    grid-template-columns: 210px minmax(0, 1fr);
+  }
+
+  .app-main {
+    padding: 16px;
+  }
+
+  .sidebar {
+    padding: 20px 14px;
+  }
+
+  .sidebar__nav-item,
+  .sidebar__logout {
+    padding: 12px 14px;
+  }
+
+  .dashboard-page__header,
+  .stack-page__header,
+  .workspace-hero {
+    padding: 20px;
+  }
+
+  .dashboard-page__actions {
+    min-width: min(100%, 400px);
+  }
+
+  .dashboard-grid {
+    grid-template-columns: minmax(240px, 0.65fr) minmax(0, 1.45fr);
+    gap: 16px;
+  }
+
+  .folder-summary {
+    gap: 10px;
+  }
+
+  .folder-card {
+    grid-template-columns: 64px minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .folder-card__avatar {
+    width: 64px;
+    height: 64px;
   }
 }
 
