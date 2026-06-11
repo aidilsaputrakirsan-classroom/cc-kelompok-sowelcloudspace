@@ -15,6 +15,7 @@ function TaskForm({
     deadline: "",
     assigned_to: "",
     folderId: selectedFolderId || "",
+    visible_to: [],
   })
   const [error, setError] = useState("")
 
@@ -27,6 +28,7 @@ function TaskForm({
         deadline: editingTask.deadline ? editingTask.deadline.slice(0, 16) : "",
         assigned_to: editingTask.assigned_to || "",
         folderId: editingTask.folderId || selectedFolderId || "",
+        visible_to: editingTask.visible_to || [],
       })
     } else {
       setFormData({
@@ -36,6 +38,7 @@ function TaskForm({
         deadline: "",
         assigned_to: "",
         folderId: selectedFolderId || "",
+        visible_to: [],
       })
     }
     setError("")
@@ -61,6 +64,7 @@ function TaskForm({
       priority: formData.priority,
       deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
       assigned_to: formData.assigned_to.trim() || null,
+      visible_to: formData.visible_to,
     }
 
     try {
@@ -72,6 +76,7 @@ function TaskForm({
         deadline: "",
         assigned_to: "",
         folderId: selectedFolderId || "",
+        visible_to: [],
       })
     } catch (err) {
       setError(err.message)
@@ -85,6 +90,19 @@ function TaskForm({
   }
 
   const selectedFolder = folderOptions.find((folder) => String(folder.id) === String(formData.folderId))
+  const selectedFolderMembers = Array.isArray(selectedFolder?.members) ? selectedFolder.members : []
+  const hasFolderMembers = selectedFolderMembers.length > 0
+
+  const handleVisibleToChange = (member, isChecked) => {
+    setFormData((prev) => {
+      const currentVisibleTo = Array.isArray(prev.visible_to) ? prev.visible_to : []
+      const nextVisibleTo = isChecked
+        ? [...new Set([...currentVisibleTo, member])]
+        : currentVisibleTo.filter((item) => item !== member)
+
+      return { ...prev, visible_to: nextVisibleTo }
+    })
+  }
 
   return (
     <div style={styles.container}>
@@ -194,6 +212,25 @@ function TaskForm({
           </div>
         </div>
 
+        {hasFolderMembers && (
+          <div style={styles.privateTaskPanel}>
+            <p style={styles.privateTaskTitle}>Private Task (Khusus Folder Group)</p>
+            <div style={styles.checkboxList}>
+              {selectedFolderMembers.map((member) => (
+                <label key={member} style={styles.checkboxItem}>
+                  <input
+                    type="checkbox"
+                    checked={formData.visible_to.includes(member)}
+                    onChange={(event) => handleVisibleToChange(member, event.target.checked)}
+                    style={styles.checkbox}
+                  />
+                  <span>{member}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div style={styles.actions}>
           <button type="submit" style={styles.btnSubmit} id="task-submit">
             {editingTask ? "Update Reminder" : "Tambah Reminder"}
@@ -271,16 +308,6 @@ const styles = {
     fontFamily: "'Inter', sans-serif",
     fontWeight: 600,
   },
-  lockedField: {
-    padding: "0.75rem 0.85rem",
-    border: "2px solid #e5e7eb",
-    borderRadius: "8px",
-    fontSize: "0.92rem",
-    color: "#4b5563",
-    background: "#f8fafc",
-    fontFamily: "'Inter', sans-serif",
-    fontWeight: 600,
-  },
   priorityGroup: {
     display: "flex",
     gap: "0.4rem",
@@ -295,6 +322,41 @@ const styles = {
     textTransform: "capitalize",
     transition: "all 0.2s",
     fontFamily: "'Inter', sans-serif",
+  },
+  privateTaskPanel: {
+    padding: "0.8rem 0.9rem",
+    border: "1px solid #e5e7eb",
+    borderRadius: "10px",
+    background: "#fafafa",
+  },
+  privateTaskTitle: {
+    margin: "0 0 0.6rem 0",
+    fontSize: "0.85rem",
+    fontWeight: 700,
+    color: "#4b5563",
+  },
+  checkboxList: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "0.55rem",
+  },
+  checkboxItem: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "0.45rem",
+    padding: "0.45rem 0.65rem",
+    border: "1px solid #e5e7eb",
+    borderRadius: "8px",
+    background: "white",
+    color: "#4b5563",
+    fontSize: "0.85rem",
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  checkbox: {
+    width: "1rem",
+    height: "1rem",
+    accentColor: "#7c5cbf",
   },
   actions: {
     display: "flex",
