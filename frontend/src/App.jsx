@@ -65,6 +65,7 @@ function App() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
   const [taskModalMode, setTaskModalMode] = useState("create")
   const [fatalError, setFatalError] = useState(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const handleLogout = useCallback(() => {
     clearToken()
@@ -456,9 +457,28 @@ function App() {
   return (
     <Suspense fallback={<PageLoader />}>
       <div className="app-shell">
+        <button
+          type="button"
+          className="mobile-menu-button"
+          onClick={() => setIsSidebarOpen(true)}
+          aria-label="Buka navigasi"
+          aria-expanded={isSidebarOpen}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+        <button
+          type="button"
+          className={`sidebar-backdrop ${isSidebarOpen ? "sidebar-backdrop--visible" : ""}`}
+          onClick={() => setIsSidebarOpen(false)}
+          aria-label="Tutup navigasi"
+        />
         <SidebarNav
           currentPage={currentPage}
+          isOpen={isSidebarOpen}
           onNavigate={setCurrentPage}
+          onClose={() => setIsSidebarOpen(false)}
           onLogout={handleLogout}
         />
 
