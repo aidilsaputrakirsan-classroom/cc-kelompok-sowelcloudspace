@@ -1,3 +1,7 @@
+import { useEffect, useMemo, useState } from "react"
+
+const FOLDERS_PER_PAGE = 5
+
 function DashboardHome({
   folders,
   allFolders,
@@ -25,6 +29,24 @@ function DashboardHome({
 
   const sharedFolders = allFolders.filter((folder) => folder.type === "group").length
   const greetingName = currentUser?.name?.trim() || "Teman"
+
+  const [folderPage, setFolderPage] = useState(1)
+  const totalFolderPages = Math.max(1, Math.ceil(folders.length / FOLDERS_PER_PAGE))
+
+  const paginatedFolders = useMemo(() => {
+    const start = (folderPage - 1) * FOLDERS_PER_PAGE
+    return folders.slice(start, start + FOLDERS_PER_PAGE)
+  }, [folderPage, folders])
+
+  // Reset to page 1 when search query changes
+  useEffect(() => {
+    setFolderPage(1)
+  }, [dashboardQuery])
+
+  // Clamp page if folders shrink (e.g. after delete)
+  useEffect(() => {
+    setFolderPage((prev) => Math.min(prev, totalFolderPages))
+  }, [totalFolderPages])
 
   return (
     <section className="dashboard-page">
@@ -122,7 +144,7 @@ function DashboardHome({
                 <p>Coba kata kunci lain atau buat folder reminder baru lewat tombol `Add New+`.</p>
               </div>
             ) : (
-              folders.map((folder) => {
+              paginatedFolders.map((folder) => {
                 const folderTasks = tasks.filter((task) => task.folderId === folder.id)
                 const hasMembers = folder.type === "group" && folder.members.length > 0
 
@@ -196,6 +218,28 @@ function DashboardHome({
               })
             )}
           </div>
+
+          {folders.length > FOLDERS_PER_PAGE && (
+            <div className="folder-pagination">
+              <button
+                type="button"
+                disabled={folderPage === 1}
+                onClick={() => setFolderPage((p) => Math.max(1, p - 1))}
+              >
+                ← Prev
+              </button>
+              <span>
+                {folderPage} / {totalFolderPages}
+              </span>
+              <button
+                type="button"
+                disabled={folderPage === totalFolderPages}
+                onClick={() => setFolderPage((p) => Math.min(totalFolderPages, p + 1))}
+              >
+                Next →
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </section>
@@ -203,3 +247,4 @@ function DashboardHome({
 }
 
 export default DashboardHome
+
