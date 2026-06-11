@@ -1,4 +1,4 @@
-const FALLBACK_API_URL = "http://localhost:8000"
+const FALLBACK_API_URL = "http://localhost"
 const USER_STORAGE_KEY = "sowel_user"
 
 export class ApiError extends Error {
