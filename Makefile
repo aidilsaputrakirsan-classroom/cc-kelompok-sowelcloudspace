@@ -1,8 +1,12 @@
-.PHONY: up down build logs ps clean restart
+.PHONY: up dev down build logs logs-auth logs-task ps clean restart shell-auth shell-task shell-db
 
 # Start semua services
 up:
 	docker compose up -d
+
+# Start development stack dengan hot-reload microservice
+dev:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
 # Start dengan rebuild
 build:
@@ -25,17 +29,23 @@ restart:
 logs:
 	docker compose logs -f
 
-# Lihat logs backend saja
-logs-backend:
-	docker compose logs -f backend
+# Lihat logs service aplikasi
+logs-auth:
+	docker compose logs -f auth-service
+
+logs-task:
+	docker compose logs -f task-service
 
 # Lihat status
 ps:
 	docker compose ps
 
-# Masuk ke backend shell
-shell-backend:
-	docker compose exec backend bash
+# Masuk ke shell service aplikasi
+shell-auth:
+	docker compose exec auth-service sh
+
+shell-task:
+	docker compose exec task-service sh
 
 # Masuk ke database
 shell-db:

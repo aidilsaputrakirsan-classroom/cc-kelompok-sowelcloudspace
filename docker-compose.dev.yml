@@ -1,49 +1,68 @@
-version: '3.9'
-
 # ============================================================
-# Docker Compose Override — Development Mode
-# Digunakan untuk hot-reload development
+# Docker Compose Override - Development Mode
+# Digunakan untuk hot-reload microservice lokal
 # ============================================================
 # Usage:
-#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 # ============================================================
 
 services:
-  # ==================== BACKEND (HOT-RELOAD) ====================
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+  # ==================== AUTH SERVICE (HOT-RELOAD) ====================
+  auth-service:
     volumes:
-      - ./backend:/app                    # Mount seluruh backend folder untuk hot-reload
-      - /app/__pycache__                  # Exclude __pycache__ untuk performa
+      - ./services/auth-service:/app
+      - /app/__pycache__
     command: >
-      uvicorn main:app 
-      --host 0.0.0.0 
-      --port 8000 
-      --reload                            # Hot-reload saat file berubah
+      uvicorn main:app
+      --host 0.0.0.0
+      --port 8001
+      --reload
       --reload-dirs /app
     environment:
-      - ENV=development
-      - DEBUG=True
+      ENVIRONMENT: development
+      DEBUG: "true"
+
+  # ==================== TASK SERVICE (HOT-RELOAD) ====================
+  task-service:
+    volumes:
+      - ./services/task-service:/app
+      - /app/__pycache__
+    command: >
+      uvicorn main:app
+      --host 0.0.0.0
+      --port 8002
+      --reload
+      --reload-dirs /app
+    environment:
+      ENVIRONMENT: development
+      DEBUG: "true"
+      SECRET_KEY: your-secret-key-minimum-32-characters
+      ALGORITHM: HS256
 
   # ==================== FRONTEND (HOT-RELOAD) ====================
   frontend:
+    image: sowel-frontend-dev
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: builder
       args:
-        VITE_API_URL: http://localhost:8000  # URL backend untuk development
+        VITE_API_URL: http://localhost:8080
     volumes:
-      - ./frontend/src:/app/src           # Mount source folder
+      - ./frontend/src:/app/src
       - ./frontend/public:/app/public
       - ./frontend/index.html:/app/index.html
       - ./frontend/vite.config.js:/app/vite.config.js
       - ./frontend/package.json:/app/package.json
       - ./frontend/eslint.config.js:/app/eslint.config.js
-      - /app/node_modules                 # Exclude node_modules
+      - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:8000
-    command: npm run dev                  # Jalankan Vite dev server (auto hot-reload)
+      VITE_API_URL: http://localhost:8080
+    command: npm run dev -- --host 0.0.0.0
     ports:
-      - "5173:5173"                       # Vite dev server port
+      - "5173:5173"
+
+  # ==================== API GATEWAY (DEV PORT) ====================
+  gateway:
+    ports: !override
+      - "8080:80"

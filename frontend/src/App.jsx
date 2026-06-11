@@ -1,6 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from "react"
 import SidebarNav from "./components/SidebarNav"
 import FolderModal from "./components/FolderModal"
+import TaskModal from "./components/TaskModal"
 import {
   fetchTasks, createTask, updateTask, deleteTask, completeTask,
   checkHealth, login, register, clearToken, getToken, getStoredUser, fetchCurrentUser,
@@ -15,26 +16,14 @@ const ReminderPage = lazy(() => import("./components/ReminderPage"))
 const YearCalendarPage = lazy(() => import("./components/YearCalendarPage"))
 const FolderDetailPage = lazy(() => import("./components/FolderDetailPage"))
 
-const TASK_FOLDER_STORAGE_KEY = "sowel_task_folder_map"
-
-function loadStoredTaskFolderMap() {
-  try {
-    const raw = localStorage.getItem(TASK_FOLDER_STORAGE_KEY)
-    if (!raw) return {}
-    const parsed = JSON.parse(raw)
-    return parsed && typeof parsed === "object" ? parsed : {}
-  } catch {
-    return {}
-  }
-}
-
 function Toast({ message, type, onClose }) {
-  if (!message) return null
-
   useEffect(() => {
+    if (!message) return undefined
     const timer = setTimeout(onClose, 3000)
     return () => clearTimeout(timer)
   }, [message, onClose])
+
+  if (!message) return null
 
   return (
     <div className={`toast toast--${type}`}>
@@ -71,10 +60,12 @@ function App() {
   const [folderModalMode, setFolderModalMode] = useState("create")
   const [folderEditingId, setFolderEditingId] = useState(null)
   const [folders, setFolders] = useState([])
-  const [taskFolderMap, setTaskFolderMap] = useState(loadStoredTaskFolderMap)
   const [selectedFolderId, setSelectedFolderId] = useState(null)
   const [isFolderDetailLoading, setIsFolderDetailLoading] = useState(false)
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [taskModalMode, setTaskModalMode] = useState("create")
   const [fatalError, setFatalError] = useState(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const handleLogout = useCallback(() => {
     clearToken()
@@ -101,17 +92,13 @@ function App() {
     return false
   }, [])
 
-  useEffect(() => {
-    localStorage.setItem(TASK_FOLDER_STORAGE_KEY, JSON.stringify(taskFolderMap))
-  }, [taskFolderMap])
-
   const enhancedTasks = useMemo(() => {
     return tasks.map((task) => {
-      const folderId = taskFolderMap[String(task.id)] || null
-      const folder = folders.find((item) => item.id === folderId) || null
+      const folderId = task.folderId ?? task.folder_id ?? null
+      const folder = task.folder || folders.find((item) => item.id === folderId) || null
       return { ...task, folderId, folder }
     })
-  }, [folders, taskFolderMap, tasks])
+  }, [folders, tasks])
 
   const selectedFolder = useMemo(
     () => folders.find((folder) => folder.id === selectedFolderId) || null,
@@ -128,7 +115,7 @@ function App() {
       const normalizedQuery = searchQuery.trim().toLowerCase()
       const matchesTitle = !normalizedQuery || task.title?.toLowerCase().includes(normalizedQuery)
       const matchesPriority = priorityFilter === "all" || task.priority === priorityFilter
-      const matchesFolder = !selectedFolderId || task.folderId === selectedFolderId
+      const matchesFolder = !selectedFolderId || String(task.folderId) === String(selectedFolderId)
 
       return matchesTitle && matchesPriority && matchesFolder
     })
@@ -254,15 +241,6 @@ function App() {
     }
   }, [currentPage, escalateApiError, handleLogout, isAuthenticated, selectedFolderId])
 
-  const updateTaskFolder = useCallback((taskId, folderId) => {
-    setTaskFolderMap((prev) => {
-      const next = { ...prev }
-      if (folderId) next[String(taskId)] = folderId
-      else delete next[String(taskId)]
-      return next
-    })
-  }, [])
-
   const handleLogin = async (username, password) => {
     try {
       const data = await login(username, password)
@@ -295,16 +273,20 @@ function App() {
   const handleSubmit = async (taskData, editId, folderId) => {
     setLoading(true)
     try {
+      const payload = {
+        ...taskData,
+        folder_id: folderId || null,
+      }
+
       if (editId) {
-        const updatedTask = await updateTask(editId, taskData)
-        updateTaskFolder(updatedTask.id || editId, folderId)
+        await updateTask(editId, payload)
         setEditingTask(null)
         setToast({ message: "Reminder berhasil diperbarui", type: "success" })
       } else {
-        const createdTask = await createTask(taskData)
-        updateTaskFolder(createdTask.id, folderId)
+        await createTask(payload)
         setToast({ message: "Reminder berhasil ditambahkan", type: "success" })
       }
+      setIsTaskModalOpen(false)
       await loadTasks()
     } catch (err) {
       if (err.message === "UNAUTHORIZED") handleLogout()
@@ -319,8 +301,15 @@ function App() {
   const handleEdit = (task) => {
     setSelectedFolderId(task.folderId || null)
     setEditingTask(task)
-    setCurrentPage(task.folderId ? "folder" : "reminders")
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    setTaskModalMode("edit")
+    setIsTaskModalOpen(true)
+  }
+
+  const handleOpenCreateTaskModal = (folderId = null) => {
+    setSelectedFolderId(folderId)
+    setEditingTask(null)
+    setTaskModalMode("create")
+    setIsTaskModalOpen(true)
   }
 
   const handleDelete = async (id) => {
@@ -329,7 +318,6 @@ function App() {
     setLoading(true)
     try {
       await deleteTask(id)
-      updateTaskFolder(id, null)
       await loadTasks()
       setToast({ message: "Reminder berhasil dihapus", type: "success" })
     } catch (err) {
@@ -423,13 +411,7 @@ function App() {
     try {
       await deleteFolder(folderId)
       setFolders((prev) => prev.filter((item) => item.id !== folderId))
-      setTaskFolderMap((prev) => {
-        const next = { ...prev }
-        for (const [taskId, mappedFolderId] of Object.entries(next)) {
-          if (mappedFolderId === folderId) delete next[taskId]
-        }
-        return next
-      })
+      await loadTasks()
       if (selectedFolderId === folderId) {
         setSelectedFolderId(null)
         setCurrentPage("home")
@@ -475,9 +457,28 @@ function App() {
   return (
     <Suspense fallback={<PageLoader />}>
       <div className="app-shell">
+        <button
+          type="button"
+          className="mobile-menu-button"
+          onClick={() => setIsSidebarOpen(true)}
+          aria-label="Buka navigasi"
+          aria-expanded={isSidebarOpen}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+        <button
+          type="button"
+          className={`sidebar-backdrop ${isSidebarOpen ? "sidebar-backdrop--visible" : ""}`}
+          onClick={() => setIsSidebarOpen(false)}
+          aria-label="Tutup navigasi"
+        />
         <SidebarNav
           currentPage={currentPage}
+          isOpen={isSidebarOpen}
           onNavigate={setCurrentPage}
+          onClose={() => setIsSidebarOpen(false)}
           onLogout={handleLogout}
         />
 
@@ -517,7 +518,7 @@ function App() {
             <FolderDetailPage
               selectedFolder={selectedFolder}
               folders={folders}
-              tasks={filteredTasks}
+              tasks={enhancedTasks}
               isConnected={isConnected}
               loading={loading || isFolderDetailLoading}
               onAddFolder={handleOpenCreateFolderModal}
@@ -529,6 +530,7 @@ function App() {
               onEditFolder={handleOpenEditFolderModal}
               onDeleteFolder={handleDeleteFolder}
               onBackHome={() => setCurrentPage("home")}
+              onOpenCreateTaskModal={handleOpenCreateTaskModal}
               onEditTask={handleEdit}
               onDeleteTask={handleDelete}
               onCompleteTask={handleComplete}
@@ -549,6 +551,19 @@ function App() {
             setFolderEditingId(null)
           }}
           onSubmit={folderModalMode === "edit" ? handleUpdateFolder : handleCreateFolder}
+        />
+
+        <TaskModal
+          isOpen={isTaskModalOpen}
+          mode={taskModalMode}
+          editingTask={editingTask}
+          onClose={() => {
+            setIsTaskModalOpen(false)
+            setEditingTask(null)
+          }}
+          onSubmit={handleSubmit}
+          folderOptions={folders}
+          selectedFolderId={selectedFolderId}
         />
 
         <Toast
