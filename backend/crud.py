@@ -51,16 +51,51 @@ def get_user_by_name(db: Session, username: str):
 # ==================== TASK CRUD ====================
 
 
+def _parse_visible_to(raw) -> list[str]:
+    """Parse visible_to dari Task model (bisa string JSON atau list)."""
+    if isinstance(raw, list):
+        return raw
+    try:
+        parsed = json.loads(raw or "[]")
+        return parsed if isinstance(parsed, list) else []
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+
+def _task_to_dict(task: Task) -> dict:
+    """Konversi Task model ke dict dengan visible_to sebagai list."""
+    return {
+        "id": task.id,
+        "title": task.title,
+        "description": task.description,
+        "status": task.status,
+        "priority": task.priority,
+        "deadline": task.deadline,
+        "assigned_to": task.assigned_to,
+        "visible_to": _parse_visible_to(task.visible_to),
+        "owner_id": task.owner_id,
+        "folder_id": task.folder_id,
+        "created_at": task.created_at,
+    }
+
+
 def create_task(db: Session, data, owner_id: int):
     """Buat task baru milik user tertentu."""
-    task = Task(**data.model_dump(), owner_id=owner_id)
+    task_data = data.model_dump()
+    # Serialize visible_to list ke JSON string untuk disimpan di DB
+    if "visible_to" in task_data and task_data["visible_to"] is not None:
+        task_data["visible_to"] = json.dumps(task_data["visible_to"])
+    else:
+        task_data["visible_to"] = "[]"
+    task = Task(**task_data, owner_id=owner_id)
     db.add(task)
     db.commit()
     db.refresh(task)
-    return task
+    return _task_to_dict(task)
 
 def get_tasks(db: Session, owner_id: int, skip: int = 0, limit: int = 100, folder_id: int | None = None):
-    """Ambil semua task milik user atau task yang ada di folder yang bisa diakses user."""
+    """Ambil semua task milik user atau task yang ada di folder yang bisa diakses user.
+    Task dengan visible_to yang diisi hanya muncul untuk user yang ada di list tsb + owner task."""
     from sqlalchemy import or_
     folders = get_folders_by_owner(db, owner_id)
     accessible_folder_ids = [f["id"] for f in folders]
@@ -76,23 +111,52 @@ def get_tasks(db: Session, owner_id: int, skip: int = 0, limit: int = 100, folde
             query = query.filter(Task.folder_id == folder_id)
         else:
             return []
-    return query.offset(skip).limit(limit).all()
+
+    all_tasks = query.offset(skip).limit(limit).all()
+
+    # Filter berdasarkan visible_to: jika visible_to tidak kosong,
+    # hanya owner task dan user yang ada di list yang bisa lihat
+    user = db.query(User).filter(User.id == owner_id).first()
+    username = user.name if user else ""
+
+    filtered = []
+    for task in all_tasks:
+        visible_list = _parse_visible_to(task.visible_to)
+        if not visible_list:
+            # visible_to kosong = semua member folder bisa lihat
+            filtered.append(task)
+        elif task.owner_id == owner_id:
+            # Owner task selalu bisa lihat
+            filtered.append(task)
+        elif any(v.lower() == username.lower() for v in visible_list):
+            # User ada di visible_to list
+            filtered.append(task)
+        # else: user tidak ada di visible_to, skip task ini
+
+    return [_task_to_dict(t) for t in filtered]
 
 def get_task(db: Session, task_id: int):
-    return db.query(Task).filter(Task.id == task_id).first()
-
-def update_task(db: Session, task_id: int, data):
-    task = get_task(db, task_id)
+    task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         return None
-    for key, value in data.model_dump(exclude_unset=True).items():
+    return _task_to_dict(task)
+
+def update_task(db: Session, task_id: int, data):
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        return None
+    update_data = data.model_dump(exclude_unset=True)
+    # Serialize visible_to list ke JSON string
+    if "visible_to" in update_data and update_data["visible_to"] is not None:
+        update_data["visible_to"] = json.dumps(update_data["visible_to"])
+    for key, value in update_data.items():
         setattr(task, key, value)
     db.commit()
     db.refresh(task)
-    return task
+    return _task_to_dict(task)
 
 def delete_task(db: Session, task_id: int):
-    task = get_task(db, task_id)
+    task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         return False
     db.delete(task)
