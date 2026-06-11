@@ -5,9 +5,19 @@ const NAV_ITEMS = [
   { id: "about", label: "About", icon: "AB" },
 ]
 
-function SidebarNav({ currentPage, onNavigate, onLogout }) {
+function SidebarNav({ currentPage, isOpen, onNavigate, onClose, onLogout }) {
+  const handleNavigate = (pageId) => {
+    onNavigate(pageId)
+    onClose()
+  }
+
+  const handleLogout = () => {
+    onClose()
+    onLogout()
+  }
+
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? "sidebar--open" : ""}`}>
       <div>
         <div className="sidebar__brand">
           <div className="sidebar__brand-mark">ST</div>
@@ -23,7 +33,7 @@ function SidebarNav({ currentPage, onNavigate, onLogout }) {
               key={item.id}
               type="button"
               className={`sidebar__nav-item ${currentPage === item.id ? "sidebar__nav-item--active" : ""}`}
-              onClick={() => onNavigate(item.id)}
+              onClick={() => handleNavigate(item.id)}
             >
               <span className="sidebar__icon">{item.icon}</span>
               <span>{item.label}</span>
@@ -32,7 +42,7 @@ function SidebarNav({ currentPage, onNavigate, onLogout }) {
         </nav>
       </div>
 
-      <button type="button" className="sidebar__logout" onClick={onLogout}>
+      <button type="button" className="sidebar__logout" onClick={handleLogout}>
         Logout
       </button>
     </aside>

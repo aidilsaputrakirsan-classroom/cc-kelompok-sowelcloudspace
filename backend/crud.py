@@ -59,9 +59,24 @@ def create_task(db: Session, data, owner_id: int):
     db.refresh(task)
     return task
 
-def get_tasks(db: Session, owner_id: int, skip: int = 0, limit: int = 100):
-    """Ambil semua task milik user tertentu."""
-    return db.query(Task).filter(Task.owner_id == owner_id).offset(skip).limit(limit).all()
+def get_tasks(db: Session, owner_id: int, skip: int = 0, limit: int = 100, folder_id: int | None = None):
+    """Ambil semua task milik user atau task yang ada di folder yang bisa diakses user."""
+    from sqlalchemy import or_
+    folders = get_folders_by_owner(db, owner_id)
+    accessible_folder_ids = [f["id"] for f in folders]
+
+    query = db.query(Task).filter(
+        or_(
+            Task.owner_id == owner_id,
+            Task.folder_id.in_(accessible_folder_ids) if accessible_folder_ids else False
+        )
+    )
+    if folder_id is not None:
+        if folder_id in accessible_folder_ids:
+            query = query.filter(Task.folder_id == folder_id)
+        else:
+            return []
+    return query.offset(skip).limit(limit).all()
 
 def get_task(db: Session, task_id: int):
     return db.query(Task).filter(Task.id == task_id).first()

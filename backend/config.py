@@ -85,6 +85,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger("sowel-api")
 
+# Validasi CORS untuk Production
+if IS_PRODUCTION:
+    if not ALLOWED_ORIGINS:
+        logger.warning("=" * 60)
+        logger.warning("CORS WARNING: ALLOWED_ORIGINS is empty in production mode!")
+        logger.warning("All cross-origin requests from frontend to API will be BLOCKED by browsers.")
+        logger.warning("Please configure the ALLOWED_ORIGINS environment variable in Railway.")
+        logger.warning("=" * 60)
+    elif "*" in ALLOWED_ORIGINS:
+        logger.warning("=" * 60)
+        logger.warning("CORS WARNING: ALLOWED_ORIGINS contains '*' (wildcard) in production!")
+        logger.warning("This is incompatible with allow_credentials=True and will block requests.")
+        logger.warning("Please specify the exact frontend URL (e.g., ALLOWED_ORIGINS=https://your-frontend.up.railway.app).")
+        logger.warning("=" * 60)
+
 # Tampilkan ringkasan config saat startup (hanya di dev)
 if not IS_PRODUCTION:
     logger.debug("=" * 50)
@@ -96,3 +111,4 @@ if not IS_PRODUCTION:
     logger.debug("  DOCS_ENABLED   : %s", DOCS_ENABLED)
     logger.debug("  DATABASE_URL   : %s...%s", DATABASE_URL[:25], DATABASE_URL[-10:])
     logger.debug("=" * 50)
+

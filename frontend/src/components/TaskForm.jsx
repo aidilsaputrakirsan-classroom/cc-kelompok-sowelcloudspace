@@ -212,12 +212,13 @@ function TaskForm({
 const styles = {
   container: {
     background: "white",
-    padding: "1.5rem",
+    padding: "clamp(1rem, 4vw, 1.5rem)",
     borderRadius: "16px",
     border: "1px solid #e5e7eb",
     marginBottom: "1.5rem",
     boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
     fontFamily: "'Inter', sans-serif",
+    minWidth: 0,
   },
   title: {
     margin: "0 0 1rem 0",
@@ -234,13 +235,14 @@ const styles = {
     display: "flex",
     gap: "1rem",
     flexWrap: "wrap",
+    minWidth: 0,
   },
   field: {
-    flex: 1,
+    flex: "1 1 180px",
     display: "flex",
     flexDirection: "column",
     gap: "0.3rem",
-    minWidth: "180px",
+    minWidth: 0,
   },
   label: {
     fontSize: "0.82rem",
@@ -256,6 +258,18 @@ const styles = {
     transition: "border-color 0.2s",
     fontFamily: "'Inter', sans-serif",
     background: "white",
+    width: "100%",
+    boxSizing: "border-box",
+  },
+  lockedField: {
+    padding: "0.75rem 0.85rem",
+    border: "2px solid #e5e7eb",
+    borderRadius: "8px",
+    fontSize: "0.92rem",
+    color: "#4b5563",
+    background: "#f8fafc",
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: 600,
   },
   lockedField: {
     padding: "0.75rem 0.85rem",
@@ -270,9 +284,10 @@ const styles = {
   priorityGroup: {
     display: "flex",
     gap: "0.4rem",
+    flexWrap: "wrap",
   },
   priorityBtn: {
-    flex: 1,
+    flex: "1 1 72px",
     padding: "0.5rem 0.3rem",
     borderRadius: "8px",
     cursor: "pointer",
@@ -285,8 +300,10 @@ const styles = {
     display: "flex",
     gap: "0.75rem",
     marginTop: "0.5rem",
+    flexWrap: "wrap",
   },
   btnSubmit: {
+    flex: "1 1 180px",
     padding: "0.7rem 1.5rem",
     background: "linear-gradient(135deg, #7c5cbf, #9b8ec4)",
     color: "white",
@@ -300,6 +317,7 @@ const styles = {
     fontFamily: "'Inter', sans-serif",
   },
   btnCancel: {
+    flex: "1 1 120px",
     padding: "0.7rem 1.5rem",
     backgroundColor: "#f3f4f6",
     color: "#555",

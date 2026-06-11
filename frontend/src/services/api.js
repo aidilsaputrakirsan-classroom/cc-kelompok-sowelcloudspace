@@ -1,4 +1,4 @@
-const FALLBACK_API_URL = "http://localhost:8000"
+const FALLBACK_API_URL = "http://localhost"
 const USER_STORAGE_KEY = "sowel_user"
 
 export class ApiError extends Error {
@@ -54,8 +54,23 @@ export function normalizeApiUrl(rawValue) {
 
   try {
     const url = new URL(value)
+    const hostname = url.hostname.toLowerCase()
+    const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1"
+
+    if (url.protocol !== "https:" && !isLocalhost) {
+      throw createApiError("VITE_API_URL harus menggunakan HTTPS.", {
+        code: "INSECURE_API_URL",
+        userMessage: "Backend production harus memakai URL HTTPS penuh agar tidak terkena Mixed Content di Railway.",
+        isFatal: true,
+      })
+    }
+
     return url.toString().replace(/\/$/, "")
-  } catch {
+  } catch (error) {
+    if (isApiError(error)) {
+      throw error
+    }
+
     throw createApiError("VITE_API_URL bukan URL yang valid.", {
       code: "INVALID_API_URL",
       userMessage: "Konfigurasi API production tidak valid. Periksa format VITE_API_URL.",
@@ -82,6 +97,26 @@ function normalizeFolder(folder) {
     ownerId: folder.ownerId ?? folder.owner_id ?? null,
     createdAt: folder.createdAt || folder.created_at || null,
     updatedAt: folder.updatedAt || folder.updated_at || null,
+  }
+}
+
+function normalizeTask(task) {
+  if (!task || typeof task !== "object") return null
+
+  const folderId = task.folderId ?? task.folder_id ?? null
+  const createdAt = task.createdAt || task.created_at || null
+  const updatedAt = task.updatedAt || task.updated_at || null
+  const folder = normalizeFolder(task.folder)
+
+  return {
+    ...task,
+    folderId,
+    folder_id: folderId,
+    folder,
+    createdAt,
+    created_at: createdAt,
+    updatedAt,
+    updated_at: updatedAt,
   }
 }
 
@@ -233,38 +268,43 @@ export async function fetchCurrentUser() {
 }
 
 export async function fetchTasks() {
-  return request("/tasks", {
+  const data = await request("/tasks", {
     headers: authHeaders(),
   })
+  return Array.isArray(data) ? data.map(normalizeTask).filter(Boolean) : []
 }
 
 export async function fetchTask(id) {
-  return request(`/tasks/${id}`, {
+  const data = await request(`/tasks/${id}`, {
     headers: authHeaders(),
   })
+  return normalizeTask(data)
 }
 
 export async function createTask(taskData) {
-  return request("/tasks", {
+  const data = await request("/tasks", {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(taskData),
   })
+  return normalizeTask(data)
 }
 
 export async function updateTask(id, taskData) {
-  return request(`/tasks/${id}`, {
+  const data = await request(`/tasks/${id}`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify(taskData),
   })
+  return normalizeTask(data)
 }
 
 export async function completeTask(id) {
-  return request(`/tasks/${id}/complete`, {
+  const data = await request(`/tasks/${id}/complete`, {
     method: "PUT",
     headers: authHeaders(),
   })
+  return normalizeTask(data)
 }
 
 export async function deleteTask(id) {

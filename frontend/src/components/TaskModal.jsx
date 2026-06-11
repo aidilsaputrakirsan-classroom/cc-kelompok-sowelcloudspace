@@ -2,32 +2,26 @@ import TaskForm from "./TaskForm"
 
 function TaskModal({
   isOpen,
+  mode = "create",
+  editingTask = null,
   onClose,
   onSubmit,
-  editingTask,
   folderOptions = [],
   selectedFolderId = null,
 }) {
   if (!isOpen) return null
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card modal-card--task" onClick={(event) => event.stopPropagation()}>
-        <div className="modal-card__header">
-          <div>
-            <p className="eyebrow">{editingTask ? "Edit Task" : "New Task"}</p>
-            <h2>{editingTask ? "Ubah task" : "Tambah Task Baru"}</h2>
-          </div>
-          <button type="button" className="modal-close" onClick={onClose}>x</button>
-        </div>
-
+    <div className="modal-overlay">
+      {/* We strip out standard modal-content padding/background because TaskForm has its own container styling */}
+      <div className="modal-content" style={{ padding: 0, background: "transparent", boxShadow: "none", border: "none", maxWidth: "650px" }}>
         <TaskForm
           onSubmit={onSubmit}
           editingTask={editingTask}
           onCancelEdit={onClose}
           folderOptions={folderOptions}
           selectedFolderId={selectedFolderId}
-          lockFolderSelection={Boolean(selectedFolderId)}
+          lockFolderSelection={mode === "create" && selectedFolderId !== null}
         />
       </div>
     </div>

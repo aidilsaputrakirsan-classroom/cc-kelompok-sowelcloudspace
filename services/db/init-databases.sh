@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # ============================================================
 # Init script — Membuat database untuk masing-masing microservice
 # Script ini dijalankan otomatis saat container PostgreSQL pertama kali start
