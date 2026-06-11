@@ -13,19 +13,37 @@
   --shadow: 0 24px 60px rgba(102, 72, 141, 0.14);
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
 .app-shell {
-  min-height: 100vh;
+  height: 100dvh;
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: 280px minmax(0, 1fr);
   background:
     radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), transparent 28%),
     linear-gradient(135deg, #f6effd 0%, #efe7fb 48%, #f5f0fb 100%);
   color: var(--text-main);
+  overflow: hidden;
 }
 
 .app-main {
+  width: 100%;
   min-width: 0;
   padding: 28px;
+  height: 100dvh;
+  overflow-y: auto;
 }
 
 .sidebar {
@@ -37,6 +55,14 @@
   background: linear-gradient(180deg, #a28dc8 0%, #967fbe 100%);
   color: white;
   box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.15);
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100dvh;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  z-index: 10;
 }
 
 .sidebar__brand {
@@ -90,6 +116,7 @@
   text-align: left;
   font: 700 0.98rem "Plus Jakarta Sans", sans-serif;
   width: 100%;
+  cursor: pointer;
 }
 
 .sidebar__nav-item--active {
@@ -132,6 +159,7 @@
   padding: 26px 28px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(16px);
+  min-width: 0;
 }
 
 .eyebrow {
@@ -187,6 +215,7 @@
 .modal-form input,
 .modal-form textarea,
 .modal-form select {
+  min-width: 0;
   border: 0;
   outline: 0;
   background: transparent;
@@ -200,6 +229,8 @@
   border-radius: 14px;
   padding: 12px 18px;
   font: 800 0.94rem "Plus Jakarta Sans", sans-serif;
+  min-height: 44px;
+  cursor: pointer;
 }
 
 .primary-button {
@@ -414,12 +445,15 @@
   justify-content: space-between;
   gap: 12px;
   align-items: center;
+  min-width: 0;
 }
 
 .folder-card__title-row h3 {
   margin: 0;
   font: 800 clamp(1.9rem, 3vw, 2.7rem) "Baloo 2", cursive;
   line-height: 0.95;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .folder-card__type {
@@ -427,6 +461,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
   font: 700 0.8rem "Plus Jakarta Sans", sans-serif;
+  white-space: nowrap;
 }
 
 .folder-card__meta {
@@ -488,6 +523,37 @@
   background: rgba(255, 255, 255, 0.16);
   color: white;
   font: 700 0.78rem "Plus Jakarta Sans", sans-serif;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.folder-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+}
+
+.folder-pagination button {
+  border: 0;
+  border-radius: 14px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #7b67b3, #5f497f);
+  color: white;
+  font: 800 0.88rem "Plus Jakarta Sans", sans-serif;
+  box-shadow: 0 8px 18px rgba(91, 68, 133, 0.18);
+  cursor: pointer;
+}
+
+.folder-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.folder-pagination span {
+  color: var(--text-soft);
+  font: 700 0.9rem "Plus Jakarta Sans", sans-serif;
 }
 
 .folder-empty {
@@ -753,6 +819,7 @@
   border-radius: 20px;
   padding: 18px;
   text-align: left;
+  min-width: 0;
 }
 
 .reminder-item__top,
@@ -767,6 +834,7 @@
 .reminder-item h3 {
   margin: 0;
   font: 800 1.35rem "Baloo 2", cursive;
+  overflow-wrap: anywhere;
 }
 
 .reminder-item p {
@@ -848,6 +916,8 @@
   padding: 5px 8px;
   border-radius: 10px;
   font: 700 0.68rem/1.2 "Plus Jakarta Sans", sans-serif;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .calendar-pill {
@@ -874,7 +944,7 @@
 
 .modal-card {
   width: min(100%, 520px);
-  max-height: calc(100vh - 40px);
+  max-height: min(820px, calc(100dvh - 40px));
   background: white;
   border-radius: 28px;
   padding: 24px;
@@ -1010,6 +1080,7 @@
 .modal-form input,
 .modal-form textarea,
 .modal-form select {
+  width: 100%;
   padding: 14px 16px;
   border-radius: 16px;
   border: 1px solid #dacfee;
@@ -1059,7 +1130,7 @@
 }
 
 .loading-state--page {
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .loading-spinner {
@@ -1072,7 +1143,7 @@
 }
 
 .error-boundary {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -1124,13 +1195,27 @@
 @media (max-width: 1080px) {
   .app-shell {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .app-main {
+    height: auto;
+    overflow-y: visible;
+    padding: 18px;
   }
 
   .sidebar {
+    position: sticky;
+    top: 0;
     flex-direction: row;
     align-items: center;
     padding: 18px;
     overflow-x: auto;
+    overflow-y: hidden;
+    height: auto;
+    z-index: 20;
   }
 
   .sidebar__brand {
@@ -1140,6 +1225,7 @@
 
   .sidebar__nav {
     flex-direction: row;
+    min-width: max-content;
   }
 
   .dashboard-grid,
@@ -1150,7 +1236,7 @@
 
 @media (max-width: 760px) {
   .app-main {
-    padding: 16px;
+    padding: 12px;
   }
 
   .dashboard-page__header,
@@ -1192,11 +1278,23 @@
 
   .folder-card {
     grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
   }
 
   .folder-card__avatar {
     width: 64px;
     height: 64px;
+  }
+
+  .folder-card__title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .folder-pagination {
+    justify-content: center;
   }
 
   .week-strip {
