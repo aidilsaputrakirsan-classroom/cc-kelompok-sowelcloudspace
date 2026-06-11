@@ -11,21 +11,19 @@ function TaskCard({ task, onEdit, onDelete, onComplete }) {
   }
 
   const priorityConfig = {
-    low: { label: "Low", color: "#16a34a", bg: "#dcfce7", icon: "🟢" },
-    medium: { label: "Medium", color: "#ca8a04", bg: "#fef9c3", icon: "🟡" },
-    high: { label: "High", color: "#dc2626", bg: "#fee2e2", icon: "🔴" },
+    low: { label: "Low", color: "#16a34a", bg: "#dcfce7" },
+    medium: { label: "Medium", color: "#ca8a04", bg: "#fef9c3" },
+    high: { label: "High", color: "#dc2626", bg: "#fee2e2" },
   }
 
   const statusConfig = {
-    pending: { label: "Pending", color: "#d97706", bg: "#fef3c7", icon: "⏳" },
-    done: { label: "Done", color: "#059669", bg: "#d1fae5", icon: "✅" },
+    pending: { label: "Pending", color: "#d97706", bg: "#fef3c7" },
+    done: { label: "Done", color: "#059669", bg: "#d1fae5" },
   }
 
   const priority = priorityConfig[task.priority] || priorityConfig.medium
   const status = statusConfig[task.status] || statusConfig.pending
   const isDone = task.status === "done"
-
-  // Check if deadline has passed
   const isOverdue = task.deadline && new Date(task.deadline) < new Date() && !isDone
 
   return (
@@ -43,66 +41,49 @@ function TaskCard({ task, onEdit, onDelete, onComplete }) {
           {task.title}
         </h3>
         <div style={styles.badges}>
-          <span style={{
-            ...styles.badge,
-            backgroundColor: priority.bg,
-            color: priority.color,
-          }}>
-            {priority.icon} {priority.label}
+          <span style={{ ...styles.badge, backgroundColor: priority.bg, color: priority.color }}>
+            {priority.label}
           </span>
-          <span style={{
-            ...styles.badge,
-            backgroundColor: status.bg,
-            color: status.color,
-          }}>
-            {status.icon} {status.label}
+          <span style={{ ...styles.badge, backgroundColor: status.bg, color: status.color }}>
+            {status.label}
           </span>
+          {task.folder?.name && (
+            <span style={{ ...styles.badge, backgroundColor: "#ede9fe", color: "#7c3aed" }}>
+              {task.folder.name}
+            </span>
+          )}
         </div>
       </div>
 
-      {task.description && (
-        <p style={styles.description}>{task.description}</p>
-      )}
+      {task.description && <p style={styles.description}>{task.description}</p>}
 
       <div style={styles.meta}>
-        {task.assigned_to && (
-          <span style={styles.metaItem}>👤 {task.assigned_to}</span>
-        )}
+        {task.assigned_to && <span style={styles.metaItem}>Assigned: {task.assigned_to}</span>}
         {task.deadline && (
-          <span style={{
-            ...styles.metaItem,
-            color: isOverdue ? "#dc2626" : "#666",
-            fontWeight: isOverdue ? 600 : 400,
-          }}>
-            📅 {formatDate(task.deadline)} {isOverdue && "⚠️"}
+          <span
+            style={{
+              ...styles.metaItem,
+              color: isOverdue ? "#dc2626" : "#666",
+              fontWeight: isOverdue ? 600 : 400,
+            }}
+          >
+            Due: {formatDate(task.deadline)} {isOverdue && "(Overdue)"}
           </span>
         )}
-        <span style={styles.metaItem}>🕐 {formatDate(task.created_at)}</span>
+        <span style={styles.metaItem}>Created: {formatDate(task.created_at)}</span>
       </div>
 
       <div style={styles.actions}>
         {!isDone && (
-          <button
-            onClick={() => onComplete(task.id)}
-            style={styles.btnComplete}
-            id={`complete-task-${task.id}`}
-          >
-            ✅ Selesai
+          <button onClick={() => onComplete(task.id)} style={styles.btnComplete} id={`complete-task-${task.id}`}>
+            Selesai
           </button>
         )}
-        <button
-          onClick={() => onEdit(task)}
-          style={styles.btnEdit}
-          id={`edit-task-${task.id}`}
-        >
-          ✏️ Edit
+        <button onClick={() => onEdit(task)} style={styles.btnEdit} id={`edit-task-${task.id}`}>
+          Edit
         </button>
-        <button
-          onClick={() => onDelete(task.id)}
-          style={styles.btnDelete}
-          id={`delete-task-${task.id}`}
-        >
-          🗑️ Hapus
+        <button onClick={() => onDelete(task.id)} style={styles.btnDelete} id={`delete-task-${task.id}`}>
+          Hapus
         </button>
       </div>
     </div>
@@ -137,6 +118,8 @@ const styles = {
     display: "flex",
     gap: "0.35rem",
     flexShrink: 0,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
   },
   badge: {
     padding: "0.2rem 0.6rem",
@@ -165,6 +148,7 @@ const styles = {
     gap: "0.4rem",
     borderTop: "1px solid #f3f4f6",
     paddingTop: "0.75rem",
+    flexWrap: "wrap",
   },
   btnComplete: {
     flex: 1,

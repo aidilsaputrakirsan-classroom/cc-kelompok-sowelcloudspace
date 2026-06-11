@@ -48,6 +48,15 @@
 ![tes-6](images/hasil-ui-test/test-6.png)
 
 
+
+### Test Case 7: Cari item via SearchBar
+- **Status:** Pass ✅
+- **Keterangan:** Data berhasil ditemukan saat user mencri item visa searchbar.
+
+**Hasil Pengujian**
+![tes-7](images/hasil-ui-test/test-7.png)
+
+
 ### Test Case 8: Hapus item,confirm dialog muncul?
 - **Status:** Pass ✅
 - **Keterangan:** Confirm dialog berhasil muncul saat akan menghapus data.

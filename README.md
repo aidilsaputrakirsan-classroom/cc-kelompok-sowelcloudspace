@@ -1,7 +1,27 @@
 # 📦 Cloud App - Sowel Task
+![CI](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-sowelcloudspace/actions/workflows/ci.yml/badge.svg)
+
+
+## 🌐 Live Demo
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://frontend-production-93f7a.up.railway.app/              |
+| Backend API | https://backend-production-b026.up.railway.app/             |
+| API Docs (Swagger) | https://backend-production-b026.up.railway.app/docs  |
+
+## 🔄 CI/CD
+
+[![CI Pipeline](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-sowelcloudspace/actions/workflows/ci.yml/badge.svg)](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-sowelcloudspace/actions/workflows/ci.yml) 
+
+Pipeline otomatis berjalan saat push ke main:
+1. ✅ Test backend (pytest)
+2. ✅ Test frontend (Vitest)
+3. ✅ Build Docker images
+4. 🚀 Deploy ke Railway
 
 ## Deskripsi Proyek
-Aplikasi Sowel Task adalah To-Do List Kolaboratif berbasis cloud adalah sebuah platform produktivitas yang dirancang untuk membantu individu maupun kelompok mengatur dan menyelesaikan tugas secara lebih terstruktur. Aplikasi ini memungkinkan pengguna membuat daftar tugas harian atau proyek, menyimpannya di cloud agar dapat diakses dari berbagai perangkat, serta membagikannya kepada anggota tim atau keluarga. Dengan fitur kolaborasi real-time, setiap perubahan yang dilakukan oleh satu anggota—seperti menandai tugas selesai atau menambahkan catatan—akan langsung terlihat oleh semua anggota lain, sehingga transparansi progres kerja terjaga.
+Aplikasi Sowel Task adalah To-Do List Kolaboratif berbasis cloud adalah sebuah platform produktivitas yang dirancang untuk membantu individu maupun kelompok mengatur dan menyelesaikan tugas secara lebih terstruktur. Aplikasi ini memungkinkan pengguna membuat daftar tugas harian atau proyek, menyimpannya di cloud agar dapat diakses dari berbagai perangkat, serta membagikannya kepada anggota tim atau keluarga. Dengan fitur kolaborasi real-time, setiap perubahan yang dilakukan oleh satu anggota seperti menandai tugas selesai atau menambahkan catatan akan langsung terlihat oleh semua anggota lain, sehingga transparansi progres kerja terjaga.
 
 Target utama aplikasi ini adalah tim kerja kecil, mahasiswa yang mengerjakan tugas kelompok, atau keluarga yang ingin mengatur kegiatan bersama. Masalah utama yang diselesaikan adalah koordinasi yang sering terhambat karena catatan tugas tersebar di perangkat berbeda, kurangnya sinkronisasi antar anggota, serta kesulitan memantau siapa yang sudah menyelesaikan tugas. Dengan adanya fitur pengingat deadline, label prioritas, dan dashboard progres, aplikasi ini membantu pengguna tetap fokus pada hal penting, mengurangi risiko lupa, serta meningkatkan efisiensi kerja kelompok.
 Secara keseluruhan, aplikasi ini menjadi solusi ringan namun efektif untuk kebutuhan kolaborasi sehari-hari, menawarkan kemudahan akses lintas perangkat, keamanan data melalui cloud, dan pengalaman kerja yang lebih terorganisir tanpa kompleksitas sistem manajemen proyek besar.
@@ -32,7 +52,13 @@ Secara keseluruhan, aplikasi ini menjadi solusi ringan namun efektif untuk kebut
 
 ## 🏗️ Architecture
 
-[React Frontend] <--HTTP--> [FastAPI Backend] <--SQL--> [PostgreSQL]
+User (Browser)
+     ↓
+[ React Frontend (Docker Container) ]
+     ↓ HTTP
+[ FastAPI Backend (Docker Container) ]
+     ↓
+[ PostgreSQL Database (Docker Container + Volume) ]
 
 ---
 
@@ -44,17 +70,21 @@ Secara keseluruhan, aplikasi ini menjadi solusi ringan namun efektif untuk kebut
 - Node.js 18+
 - Git
 
-### ⚙️ Backend Setup
+### ⚙️ Backend Setup (Without Docker)
 
-cd backend  
-pip install -r requirements.txt  
+cd backend
+pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 
-### 🎨 Frontend Setup
+### 🎨 Frontend Setup (Without Docker)
 
-cd frontend  
-npm install  
+cd frontend
+npm install
 npm run dev
+
+### 🐳 Run with Docker
+
+docker-compose up --build
 
 ---
 
@@ -78,6 +108,8 @@ npm run dev
 
 ```text
 cc-kelompok-sowelcloudspace/
+├── docker-compose.yml                           # BARU (orchestrasi multi-container: backend, frontend, db, dll)
+
 ├── backend/                                     # FastAPI Backend
 │   ├── scripts/
 │   │   └── wait-for-db.sh                       # Startup script — ping PostgreSQL sebelum start uvicorn
@@ -91,9 +123,10 @@ cc-kelompok-sowelcloudspace/
 │   ├── Dockerfile                               # Docker image config (multi-step, healthcheck, wait-for-db)
 │   ├── .dockerignore                            # File yang dikecualikan dari Docker build
 │   ├── .env                                     # Environment variables (DATABASE_URL, JWT, CORS)
+│   ├── .env.docker                              # BARU (env khusus untuk container Docker)
 │   └── .env.example                             # Template konfigurasi environment
 │
-├── frontend/                                    # React Frontend (Vite)
+├── frontend/                                    # React Frontend (Vite + Nginx)
 │   ├── public/                                  # Aset statis publik
 │   │   └── vite.svg
 │   ├── src/                                     # Source code utama
@@ -108,16 +141,19 @@ cc-kelompok-sowelcloudspace/
 │   │   │   ├── TaskForm.jsx                     # Form create/edit task
 │   │   │   ├── TaskList.jsx                     # Container daftar tasks
 │   │   │   └── ItemList.jsx                     # Container daftar items (legacy)
-│   │   ├── services/
-│   │   │   └── api.js                           # Semua fungsi fetch API
-│   │   ├── App.jsx                              # Komponen utama React
-│   │   ├── App.css                              # Style komponen App
-│   │   ├── main.jsx                             # Entry point React
-│   │   └── index.css                            # Style global
+│   ├── services/
+│   │   └── api.js                               # Semua fungsi fetch API
+│   ├── App.jsx                                  # Komponen utama React
+│   ├── App.css                                  # Style komponen App
+│   ├── main.jsx                                 # Entry point React
+│   ├── index.css                                # Style global
 │   ├── index.html                               # Template HTML utama
 │   ├── package.json                             # Dependency & scripts Node.js
 │   ├── vite.config.js                           # Konfigurasi Vite
-│   └── eslint.config.js                         # Konfigurasi ESLint
+│   ├── eslint.config.js                         # Konfigurasi ESLint
+│   ├── Dockerfile                               # BARU (build + serve pakai Nginx)
+│   ├── nginx.conf                               # BARU (config reverse proxy / static serve)
+│   └── .dockerignore                            # BARU
 │
 ├── docs/                                        # Dokumentasi tim
 │   ├── docs/

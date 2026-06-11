@@ -26,24 +26,26 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 6.5. Copy dan set permission untuk startup script
-#      Script ini akan menunggu PostgreSQL siap sebelum start uvicorn
+#      Normalisasi line ending menghindari error shebang `/bin/sh^M`
 COPY scripts/wait-for-db.sh /app/scripts/wait-for-db.sh
-RUN chmod +x /app/scripts/wait-for-db.sh
+RUN sed -i 's/\r$//' /app/scripts/wait-for-db.sh && chmod +x /app/scripts/wait-for-db.sh
 
 # 7. Buat non-root user untuk security best practice
 RUN useradd -m appuser && \
     chown -R appuser:appuser /app
 
 # 8. Dokumentasikan port yang digunakan
-EXPOSE 8000
+#    Railway menyediakan PORT env var secara dinamis
+EXPOSE ${PORT:-8000}
 
 # 9. Switch ke non-root user
 USER appuser
 
 # 10. Healthcheck — cek endpoint /health setiap 30 detik
 #     Docker akan menandai container sebagai healthy/unhealthy
+#     Gunakan $PORT agar sesuai dengan port yang dipakai uvicorn
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
 # 11. Entrypoint — jalankan wait-for-db.sh yang akan menunggu DB siap
 #     sebelum meneruskan ke CMD (uvicorn)
@@ -51,4 +53,6 @@ ENTRYPOINT ["/app/scripts/wait-for-db.sh"]
 
 # 12. Command untuk menjalankan aplikasi
 #     --host 0.0.0.0: agar bisa diakses dari luar container
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+#     --port $PORT:  Railway memberikan port dinamis via env var PORT
+#     Gunakan shell form agar $PORT di-expand saat runtime
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}

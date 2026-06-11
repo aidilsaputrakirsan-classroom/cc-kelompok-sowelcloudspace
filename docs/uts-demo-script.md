@@ -19,7 +19,7 @@
 ---
 
 ### ⏱️ Menit 1–3 — Authentication (Lead Frontend)
-- Buka: http://localhost:3000
+- Buka: http://localhost:5173/
 - Register user baru
   - Tunjukkan validasi form
 - Login dengan user tersebut
@@ -30,7 +30,7 @@
 
 ---
 
-### ⏱️ Menit 3–6 — CRUD Operations (Lead FE + BE)
+### ⏱️ Menit 3–6 — CRUD Operations (Lead Frontend)
 - Create 2–3 item
 - Read → list muncul
 - Search item

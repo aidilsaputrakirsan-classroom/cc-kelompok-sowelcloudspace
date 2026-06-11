@@ -1,12 +1,20 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 
-function TaskForm({ onSubmit, editingTask, onCancelEdit }) {
+function TaskForm({
+  onSubmit,
+  editingTask,
+  onCancelEdit,
+  folderOptions = [],
+  selectedFolderId = null,
+  lockFolderSelection = false,
+}) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     priority: "medium",
     deadline: "",
     assigned_to: "",
+    folderId: selectedFolderId || "",
   })
   const [error, setError] = useState("")
 
@@ -18,20 +26,28 @@ function TaskForm({ onSubmit, editingTask, onCancelEdit }) {
         priority: editingTask.priority || "medium",
         deadline: editingTask.deadline ? editingTask.deadline.slice(0, 16) : "",
         assigned_to: editingTask.assigned_to || "",
+        folderId: editingTask.folderId || selectedFolderId || "",
       })
     } else {
-      setFormData({ title: "", description: "", priority: "medium", deadline: "", assigned_to: "" })
+      setFormData({
+        title: "",
+        description: "",
+        priority: "medium",
+        deadline: "",
+        assigned_to: "",
+        folderId: selectedFolderId || "",
+      })
     }
     setError("")
-  }, [editingTask])
+  }, [editingTask, selectedFolderId])
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
+  const handleChange = (event) => {
+    const { name, value } = event.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleSubmit = async (event) => {
+    event.preventDefault()
     setError("")
 
     if (!formData.title.trim()) {
@@ -48,8 +64,15 @@ function TaskForm({ onSubmit, editingTask, onCancelEdit }) {
     }
 
     try {
-      await onSubmit(taskData, editingTask?.id)
-      setFormData({ title: "", description: "", priority: "medium", deadline: "", assigned_to: "" })
+      await onSubmit(taskData, editingTask?.id, formData.folderId || null)
+      setFormData({
+        title: "",
+        description: "",
+        priority: "medium",
+        deadline: "",
+        assigned_to: "",
+        folderId: selectedFolderId || "",
+      })
     } catch (err) {
       setError(err.message)
     }
@@ -61,10 +84,12 @@ function TaskForm({ onSubmit, editingTask, onCancelEdit }) {
     high: { bg: "#fee2e2", color: "#dc2626", border: "#fca5a5" },
   }
 
+  const selectedFolder = folderOptions.find((folder) => String(folder.id) === String(formData.folderId))
+
   return (
     <div style={styles.container}>
       <h2 style={styles.title}>
-        {editingTask ? "✏️ Edit Task" : "➕ Tambah Task Baru"}
+        {editingTask ? "Edit Reminder" : "Tambah Reminder Baru"}
       </h2>
 
       {error && <div style={styles.error}>{error}</div>}
@@ -86,20 +111,20 @@ function TaskForm({ onSubmit, editingTask, onCancelEdit }) {
           <div style={{ ...styles.field, flex: 1 }}>
             <label style={styles.label}>Priority</label>
             <div style={styles.priorityGroup}>
-              {["low", "medium", "high"].map((p) => (
+              {["low", "medium", "high"].map((priority) => (
                 <button
-                  key={p}
+                  key={priority}
                   type="button"
-                  onClick={() => setFormData((prev) => ({ ...prev, priority: p }))}
+                  onClick={() => setFormData((prev) => ({ ...prev, priority }))}
                   style={{
                     ...styles.priorityBtn,
-                    backgroundColor: formData.priority === p ? priorityColors[p].bg : "#f5f5f5",
-                    color: formData.priority === p ? priorityColors[p].color : "#999",
-                    border: `2px solid ${formData.priority === p ? priorityColors[p].border : "#e5e5e5"}`,
-                    fontWeight: formData.priority === p ? 700 : 500,
+                    backgroundColor: formData.priority === priority ? priorityColors[priority].bg : "#f5f5f5",
+                    color: formData.priority === priority ? priorityColors[priority].color : "#999",
+                    border: `2px solid ${formData.priority === priority ? priorityColors[priority].border : "#e5e5e5"}`,
+                    fontWeight: formData.priority === priority ? 700 : 500,
                   }}
                 >
-                  {p === "low" ? "🟢" : p === "medium" ? "🟡" : "🔴"} {p}
+                  {priority}
                 </button>
               ))}
             </div>
@@ -122,6 +147,28 @@ function TaskForm({ onSubmit, editingTask, onCancelEdit }) {
         </div>
 
         <div style={styles.row}>
+          <div style={styles.field}>
+            <label style={styles.label}>Folder Reminder</label>
+            {lockFolderSelection ? (
+              <div style={styles.lockedField}>
+                {selectedFolder ? `${selectedFolder.name} (${selectedFolder.type})` : "Folder aktif"}
+              </div>
+            ) : (
+              <select
+                name="folderId"
+                value={formData.folderId}
+                onChange={handleChange}
+                style={styles.input}
+              >
+                <option value="">Tanpa folder</option>
+                {folderOptions.map((folder) => (
+                  <option key={folder.id} value={folder.id}>
+                    {folder.name} ({folder.type})
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
           <div style={styles.field}>
             <label style={styles.label}>Deadline</label>
             <input
@@ -149,11 +196,11 @@ function TaskForm({ onSubmit, editingTask, onCancelEdit }) {
 
         <div style={styles.actions}>
           <button type="submit" style={styles.btnSubmit} id="task-submit">
-            {editingTask ? "💾 Update Task" : "➕ Tambah Task"}
+            {editingTask ? "Update Reminder" : "Tambah Reminder"}
           </button>
           {editingTask && (
             <button type="button" onClick={onCancelEdit} style={styles.btnCancel}>
-              ✕ Batal
+              Batal
             </button>
           )}
         </div>
@@ -208,6 +255,17 @@ const styles = {
     outline: "none",
     transition: "border-color 0.2s",
     fontFamily: "'Inter', sans-serif",
+    background: "white",
+  },
+  lockedField: {
+    padding: "0.75rem 0.85rem",
+    border: "2px solid #e5e7eb",
+    borderRadius: "8px",
+    fontSize: "0.92rem",
+    color: "#4b5563",
+    background: "#f8fafc",
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: 600,
   },
   priorityGroup: {
     display: "flex",

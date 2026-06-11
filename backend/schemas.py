@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
@@ -10,6 +10,7 @@ class TaskBase(BaseModel):
     priority: str = "medium"
     deadline: Optional[datetime] = None
     assigned_to: Optional[str] = None
+    folder_id: Optional[int] = None
 
 class TaskCreate(TaskBase):
     pass
@@ -21,10 +22,13 @@ class TaskUpdate(BaseModel):
     priority: Optional[str] = None
     deadline: Optional[datetime] = None
     assigned_to: Optional[str] = None
+    folder_id: Optional[int] = None
 
 class TaskResponse(TaskBase):
     id: int
     status: str
+    owner_id: Optional[int] = None
+    folder_id: Optional[int] = None
     created_at: datetime
 
     class Config:
@@ -34,10 +38,52 @@ class TaskResponse(TaskBase):
 # ================= AUTH =================
 
 class UserCreate(BaseModel):
-    email: str
+    # Validasi Email dengan regex (memastikan format user@domain.com)
+    email: str = Field(..., pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
+    
     name: str
-    password: str
+    
+    # Validasi Password: Minimal 8 karakter
+    password: str = Field(
+        ..., 
+        min_length=8, 
+        description="Password minimal 8 karakter"
+    )
 
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+
+# ================= FOLDER =================
+
+class FolderCreate(BaseModel):
+    name: str
+    type: str = "personal"
+    description: str = ""
+    members: list[str] = []
+    color: str = "sunset"
+    image_data: str = ""           # base64 data-URL string
+
+class FolderUpdate(BaseModel):
+    name: Optional[str] = None
+    type: Optional[str] = None
+    description: Optional[str] = None
+    members: Optional[list[str]] = None
+    color: Optional[str] = None
+    image_data: Optional[str] = None
+
+class FolderResponse(BaseModel):
+    id: int
+    name: str
+    type: str
+    description: str
+    members: list[str]
+    color: str
+    image_data: str
+    owner_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
