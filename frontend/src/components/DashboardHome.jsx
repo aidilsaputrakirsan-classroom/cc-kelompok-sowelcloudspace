@@ -31,17 +31,20 @@ function DashboardHome({
   const greetingName = currentUser?.name?.trim() || "Teman"
   const [folderPage, setFolderPage] = useState(1)
   const totalFolderPages = Math.max(1, Math.ceil(folders.length / FOLDERS_PER_PAGE))
+
   const paginatedFolders = useMemo(() => {
-    const startIndex = (folderPage - 1) * FOLDERS_PER_PAGE
-    return folders.slice(startIndex, startIndex + FOLDERS_PER_PAGE)
+    const start = (folderPage - 1) * FOLDERS_PER_PAGE
+    return folders.slice(start, start + FOLDERS_PER_PAGE)
   }, [folderPage, folders])
 
+  // Reset to page 1 when search query changes
   useEffect(() => {
     setFolderPage(1)
   }, [dashboardQuery])
 
+  // Clamp page if folders shrink (e.g. after delete)
   useEffect(() => {
-    setFolderPage((currentPage) => Math.min(currentPage, totalFolderPages))
+    setFolderPage((prev) => Math.min(prev, totalFolderPages))
   }, [totalFolderPages])
 
   return (
