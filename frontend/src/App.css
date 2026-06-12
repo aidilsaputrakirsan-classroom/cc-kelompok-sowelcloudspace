@@ -831,6 +831,81 @@
   margin-bottom: 18px;
 }
 
+.reminder-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.reminder-hero {
+  align-items: center;
+}
+
+.reminder-hero__stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.reminder-hero__stats span,
+.difficulty-segment__button {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font: 800 0.82rem "Plus Jakarta Sans", sans-serif;
+}
+
+.reminder-hero__stats span {
+  background: #f0e8fb;
+  color: #654f91;
+}
+
+.reminder-hero__stats .is-danger {
+  background: #fde5e8;
+  color: #c33d55;
+}
+
+.reminder-list-panel,
+.reminder-calendar {
+  min-width: 0;
+}
+
+.reminder-panel-head {
+  align-items: center;
+}
+
+.difficulty-segment {
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: #f1eafb;
+  flex-wrap: wrap;
+}
+
+.difficulty-segment__button {
+  color: #6d5a91;
+  background: transparent;
+  min-height: 38px;
+}
+
+.difficulty-segment__button--active {
+  color: white;
+  background: linear-gradient(135deg, #7b67b3, #5f497f);
+  box-shadow: 0 10px 18px rgba(91, 68, 133, 0.18);
+}
+
+.reminder-error {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fde8ec;
+  color: #bf3e58;
+  font: 700 0.88rem/1.45 "Plus Jakarta Sans", sans-serif;
+}
+
 .reminder-items {
   display: grid;
   gap: 14px;
@@ -843,6 +918,22 @@
   padding: 18px;
   text-align: left;
   min-width: 0;
+}
+
+.reminder-item--modern {
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.reminder-item--modern:hover {
+  transform: translateY(-2px);
+  border-color: #cdbbe8;
+  box-shadow: 0 14px 30px rgba(95, 73, 127, 0.14);
+}
+
+.reminder-item--overdue {
+  border-color: #f2acb8;
+  background: linear-gradient(180deg, #fff8f9, #fde8ec);
 }
 
 .reminder-item__top,
@@ -878,15 +969,139 @@
   color: #cb4359;
 }
 
-.tag--soon {
+.tag--soon,
+.tag--medium {
   background: #fff1d9;
   color: #cb7b0d;
 }
 
 .tag--later,
-.tag--completed {
+.tag--completed,
+.tag--low {
   background: #ece7f7;
   color: #6a5a92;
+}
+
+.tag--high {
+  background: #fde6e8;
+  color: #cb4359;
+}
+
+.reminder-calendar__weekdays,
+.reminder-calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.reminder-calendar__weekdays {
+  margin-bottom: 10px;
+  color: var(--text-soft);
+  font: 800 0.74rem "Plus Jakarta Sans", sans-serif;
+  text-align: center;
+}
+
+.reminder-calendar__cell {
+  min-height: 48px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: #f8f3fd;
+  color: #705b99;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+.reminder-calendar__cell:disabled {
+  cursor: default;
+}
+
+.reminder-calendar__cell span {
+  font-weight: 800;
+}
+
+.reminder-calendar__cell strong {
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: #7b67b3;
+  color: white;
+  font-size: 0.68rem;
+}
+
+.reminder-calendar__cell--empty {
+  background: transparent;
+}
+
+.reminder-calendar__cell--has-task {
+  background: #efe7fb;
+  border-color: #d9c9ef;
+  cursor: pointer;
+}
+
+.reminder-calendar__cell--overdue {
+  background: #fde8ec;
+  border-color: #f0b7c1;
+  color: #b83650;
+}
+
+.reminder-calendar__cell--overdue strong {
+  background: #c23f59;
+}
+
+.reminder-calendar__cell--today {
+  box-shadow: inset 0 0 0 2px #7b67b3;
+}
+
+.reminder-calendar__cell--selected {
+  border-color: #5f497f;
+  box-shadow: 0 10px 18px rgba(91, 68, 133, 0.18);
+}
+
+.calendar-summary-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.calendar-summary-item {
+  display: grid;
+  gap: 3px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  background: #f8f3fd;
+  border: 1px solid #eadff7;
+}
+
+.calendar-summary-item--overdue {
+  background: #fde8ec;
+  border-color: #f0b7c1;
+}
+
+.calendar-summary-item strong {
+  color: var(--brand-dark);
+  font: 800 0.9rem/1.25 "Plus Jakarta Sans", sans-serif;
+  overflow-wrap: anywhere;
+}
+
+.calendar-summary-item span {
+  color: var(--text-soft);
+  font: 600 0.78rem/1.4 "Plus Jakarta Sans", sans-serif;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .linkish {
@@ -1368,8 +1583,17 @@
   }
 
   .dashboard-grid,
-  .year-grid {
+  .year-grid,
+  .reminder-layout {
     grid-template-columns: 1fr;
+  }
+
+  .reminder-hero {
+    align-items: flex-start;
+  }
+
+  .reminder-hero__stats {
+    justify-content: flex-start;
   }
 }
 
@@ -1440,6 +1664,30 @@
   .panel__head h2,
   .panel__head h3 {
     font-size: 1.28rem;
+  }
+
+  .reminder-panel-head {
+    align-items: stretch;
+  }
+
+  .difficulty-segment {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .difficulty-segment__button {
+    padding-inline: 8px;
+  }
+
+  .reminder-calendar__weekdays,
+  .reminder-calendar__grid {
+    gap: 5px;
+  }
+
+  .reminder-calendar__cell {
+    min-height: 42px;
+    border-radius: 11px;
   }
 
   .folder-detail-hero,
@@ -1575,9 +1823,15 @@
 
   .folder-chip,
   .workspace-hero__stats span,
-  .status-chip {
+  .status-chip,
+  .reminder-hero__stats span {
     width: 100%;
     text-align: center;
+  }
+
+  .reminder-item__meta {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .month-card__cell {
