@@ -1,6 +1,6 @@
 """Pydantic schemas for Task Service — disesuaikan dengan backend monolith."""
-from pydantic import BaseModel, field_validator
-from typing import Optional
+from pydantic import BaseModel, field_validator, Field
+from typing import Optional, Any
 from datetime import datetime
 import json
 
@@ -8,12 +8,19 @@ import json
 # ================= TASK =================
 
 class TaskBase(BaseModel):
-    title: str = Field(..., max_length=200)
+    title: str = Field(..., max_length=50)
     description: Optional[str] = None
     priority: str = "medium"
     deadline: Optional[datetime] = None
     assigned_to: Optional[str] = None
     folder_id: Optional[int] = None
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, v):
+        if len(v.strip()) < 1:
+            raise ValueError("Judul tidak boleh kosong")
+        return v.strip()
 
 
 class TaskCreate(TaskBase):
@@ -50,6 +57,15 @@ class FolderCreate(BaseModel):
     members: list[str] = []
     color: str = "sunset"
     image_data: str = ""           # base64 data-URL string
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v):
+        if len(v.strip()) < 1:
+            raise ValueError("Nama folder tidak boleh kosong")
+        if len(v) > 50:
+            raise ValueError("Nama folder maksimal 50 karakter")
+        return v.strip()
 
 class FolderUpdate(BaseModel):
     name: Optional[str] = None
