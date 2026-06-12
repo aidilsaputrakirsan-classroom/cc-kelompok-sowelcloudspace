@@ -30,8 +30,12 @@ from schemas import (
 # Create tables
 Base.metadata.create_all(bind=engine)
 
-# Logging
-logging.basicConfig(level=logging.INFO)
+from logging_config import setup_logging
+from logging_middleware import RequestLoggingMiddleware
+from metrics import metrics
+
+# Setup structured logging
+setup_logging()
 logger = logging.getLogger("auth-service")
 
 app = FastAPI(
@@ -52,6 +56,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Logging middleware (setelah CORS)
+app.add_middleware(RequestLoggingMiddleware)
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -216,4 +223,13 @@ def verify_username(username: str, db: Session = Depends(get_db)):
         "id": user.id,
         "name": user.name,
         "email": user.email,
+    }
+
+
+@app.get("/metrics")
+def get_metrics():
+    """Return application metrics."""
+    return {
+        "service": "auth-service",
+        **metrics.get_metrics(),
     }

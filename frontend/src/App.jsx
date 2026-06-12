@@ -444,7 +444,12 @@ function App() {
   if (!isAuthenticated) {
     return (
       <Suspense fallback={<PageLoader />}>
-        <>
+        <div style={{ display: "flex", flexDirection: "column", width: "100%", minHeight: "100vh" }}>
+          {!isConnected && (
+            <div className="auth-down-banner auth-down-banner--global">
+              <span>⚠️ Some features temporarily unavailable</span>
+            </div>
+          )}
           {currentPage === "about" ? (
             <AboutPage onBack={() => setCurrentPage("home")} />
           ) : (
@@ -459,7 +464,7 @@ function App() {
             type={toast.type}
             onClose={() => setToast({ message: "", type: "" })}
           />
-        </>
+        </div>
       </Suspense>
     )
   }
@@ -493,6 +498,11 @@ function App() {
         />
 
         <main className="app-main">
+          {!isConnected && (
+            <div className="auth-down-banner">
+              <span>⚠️ Some features temporarily unavailable</span>
+            </div>
+          )}
           {currentPage === "home" && (
             <DashboardHome
               folders={visibleFolders}

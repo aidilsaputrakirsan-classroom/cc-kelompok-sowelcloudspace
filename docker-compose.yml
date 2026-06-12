@@ -59,6 +59,13 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost,http://localhost:8080}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SERVICE_NAME: auth-service
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "auth-service"
     ports:
       - "8001:8001"                                                 # Expose auth-service ke localhost:8001
     networks:
@@ -87,6 +94,13 @@ services:
       ALGORITHM: ${ALGORITHM:-HS256}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost,http://localhost:8080}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SERVICE_NAME: task-service
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "task-service"
     ports:
       - "8002:8002"                                                 # Expose task-service ke localhost:8002
     networks:
