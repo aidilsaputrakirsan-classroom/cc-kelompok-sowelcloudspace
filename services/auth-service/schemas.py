@@ -7,7 +7,7 @@ class UserCreate(BaseModel):
     # Validasi Email dengan regex (memastikan format user@domain.com)
     email: str = Field(..., pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
 
-    name: str
+    name: str = Field(..., max_length=200)
 
     # Validasi Password: Minimal 8 karakter
     password: str = Field(
