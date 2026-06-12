@@ -2,6 +2,11 @@ import { useState } from "react"
 
 const NAME_MAX_LENGTH = 200
 const NAME_WARNING_LENGTH = 180
+const PASSWORD_RULE_MESSAGE = "Password minimal 8 karakter, mengandung 1 huruf besar dan 1 angka"
+
+function isValidPassword(password) {
+  return password.length >= 8 && /[A-Z]/.test(password) && /\d/.test(password)
+}
 
 function LoginPage({ onLogin, onRegister, onOpenAbout }) {
   const [isRegister, setIsRegister] = useState(false)
@@ -46,8 +51,8 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
           setLoading(false)
           return
         }
-        if (formData.password.length < 8) {
-          setError("Password minimal 8 karakter")
+        if (!isValidPassword(formData.password)) {
+          setError(PASSWORD_RULE_MESSAGE)
           setLoading(false)
           return
         }
