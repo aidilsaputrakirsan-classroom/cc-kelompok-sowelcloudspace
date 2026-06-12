@@ -139,6 +139,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 # =====================
 
 @app.get("/health")
+@app.get("/auth/health")
 def health_check(db: Session = Depends(get_db)):
     """Health check endpoint — cek status auth-service dan database."""
     health = {

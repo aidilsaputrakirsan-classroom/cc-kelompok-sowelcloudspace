@@ -7,7 +7,7 @@ import uuid
 import logging
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from .metrics import metrics
+from metrics import metrics
 
 logger = logging.getLogger(__name__)
 
