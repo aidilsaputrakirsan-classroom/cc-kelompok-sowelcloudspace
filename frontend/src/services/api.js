@@ -195,13 +195,16 @@ async function handleResponse(response) {
     const detail = await parseErrorResponse(response)
     const message = detail || `Request gagal (${response.status})`
     const isServerError = response.status >= 500
+    const is503 = response.status === 503
 
     throw createApiError(message, {
-      code: isServerError ? "SERVER_ERROR" : "REQUEST_FAILED",
+      code: is503 ? "SERVICE_UNAVAILABLE" : (isServerError ? "SERVER_ERROR" : "REQUEST_FAILED"),
       status: response.status,
-      userMessage: isServerError
-        ? "Server sedang bermasalah. Coba beberapa saat lagi."
-        : message,
+      userMessage: is503
+        ? "Layanan tidak tersedia saat ini. Silakan coba beberapa saat lagi."
+        : (isServerError
+          ? "Server sedang bermasalah. Coba beberapa saat lagi."
+          : message),
       isFatal: isServerError,
     })
   }
@@ -394,4 +397,12 @@ export async function checkHealth() {
   } catch {
     return false
   }
+}
+
+export async function fetchServiceMetrics(service) {
+  return request(`/${service}/metrics`)
+}
+
+export async function fetchServiceHealth(service) {
+  return request(`/${service}/health`)
 }
