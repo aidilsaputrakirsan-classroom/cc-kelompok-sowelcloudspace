@@ -266,7 +266,7 @@ function ReminderPage({ onOpenFolder, onEditTask }) {
               <div className="loading-spinner" />
             </div>
           ) : upcomingTasks.length === 0 ? (
-            <div className="empty-inline">Belum ada task belum selesai untuk tingkat kesulitan ini.</div>
+            <div className="empty-inline">Belum ada task untuk tingkat kesulitan ini.</div>
           ) : (
             <div className="reminder-items">
               {upcomingTasks.map((task) => {
