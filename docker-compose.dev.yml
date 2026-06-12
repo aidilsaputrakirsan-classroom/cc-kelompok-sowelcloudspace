@@ -12,12 +12,7 @@ services:
     volumes:
       - ./services/auth-service:/app
       - /app/__pycache__
-    command: >
-      uvicorn main:app
-      --host 0.0.0.0
-      --port 8001
-      --reload
-      --reload-dirs /app
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--reload", "--reload-dir", "/app"]
     environment:
       ENVIRONMENT: development
       DEBUG: "true"
@@ -27,12 +22,7 @@ services:
     volumes:
       - ./services/task-service:/app
       - /app/__pycache__
-    command: >
-      uvicorn main:app
-      --host 0.0.0.0
-      --port 8002
-      --reload
-      --reload-dirs /app
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002", "--reload", "--reload-dir", "/app"]
     environment:
       ENVIRONMENT: development
       DEBUG: "true"

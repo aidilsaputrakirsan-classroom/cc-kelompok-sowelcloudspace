@@ -187,7 +187,10 @@ async def create_folder(
     user_id: str = Depends(verify_token_local),
 ):
     uid = int(user_id)
-    db_folder = Folder(**data.model_dump(), owner_id=uid)
+    folder_data = data.model_dump()
+    if 'members' in folder_data:
+        folder_data['members'] = json.dumps(folder_data['members'])
+    db_folder = Folder(**folder_data, owner_id=uid)
     db.add(db_folder)
     db.commit()
     db.refresh(db_folder)
@@ -255,8 +258,13 @@ async def update_folder(
     if not folder:
         raise HTTPException(404, "Folder not found atau anda bukan owner")
     
-    for key, value in data.model_dump(exclude_unset=True).items():
+    update_data = data.model_dump(exclude_unset=True)
+    if 'members' in update_data:
+        update_data['members'] = json.dumps(update_data['members'])
+        
+    for key, value in update_data.items():
         setattr(folder, key, value)
+        
     db.commit()
     db.refresh(folder)
     return folder
