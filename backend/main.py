@@ -313,6 +313,29 @@ def read_all(
     return crud.get_tasks(db, int(user_id), skip=skip, limit=limit, folder_id=folder_id)
 
 
+# REMINDERS
+@app.get("/tasks/reminders/upcoming", response_model=list[TaskResponse])
+def get_upcoming_reminders(
+    difficulty: str | None = None,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    user_id=Depends(get_current_user),
+):
+    """Mendapatkan tugas dengan deadline terdekat yang belum selesai."""
+    return crud.get_upcoming_reminders(db, int(user_id), difficulty=difficulty, limit=limit)
+
+
+@app.get("/tasks/reminders/calendar", response_model=list[TaskResponse])
+def get_calendar_reminders(
+    year: int,
+    month: int,
+    db: Session = Depends(get_db),
+    user_id=Depends(get_current_user),
+):
+    """Mendapatkan semua tugas yang memiliki deadline pada bulan dan tahun tertentu."""
+    return crud.get_calendar_reminders(db, int(user_id), year=year, month=month)
+
+
 # STATS
 @app.get("/tasks/stats")
 def stats(db: Session = Depends(get_db), user_id=Depends(get_current_user)):
