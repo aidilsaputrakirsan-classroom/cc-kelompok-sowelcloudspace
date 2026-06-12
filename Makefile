@@ -8,6 +8,10 @@ up:
 dev:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
+# Start production stack
+prod:
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+
 # Start dengan rebuild
 build:
 	docker compose up --build -d
@@ -36,8 +40,8 @@ logs-auth:
 logs-task:
 	docker compose logs -f task-service
 
-# Lihat status
-ps:
+# Lihat status (Docker compose ps)
+status:
 	docker compose ps
 
 # Masuk ke shell service aplikasi
