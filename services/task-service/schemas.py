@@ -72,6 +72,16 @@ class FolderResponse(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
+    @field_validator('members', mode='before')
+    @classmethod
+    def parse_members(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return []
+        return v
+
     class Config:
         from_attributes = True
 
