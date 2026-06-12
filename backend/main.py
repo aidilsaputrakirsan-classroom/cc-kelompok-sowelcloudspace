@@ -30,7 +30,20 @@ logger = logging.getLogger("sowel-api")
 
 Base.metadata.create_all(bind=engine)
 
-# ==================== APP INIT ====================
+# ==================== AUTO MIGRATION ====================
+try:
+    from sqlalchemy import inspect
+    inspector = inspect(engine)
+    if inspector.has_table("tasks"):
+        columns = [col["name"] for col in inspector.get_columns("tasks")]
+        if "visible_to" not in columns:
+            logger.info("Migrating database: Adding 'visible_to' column to 'tasks' table...")
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE tasks ADD COLUMN visible_to TEXT DEFAULT '[]'"))
+                conn.execute(text("UPDATE tasks SET visible_to = '[]' WHERE visible_to IS NULL"))
+            logger.info("Migration completed successfully.")
+except Exception as e:
+    logger.error("Error during auto-migration: %s", e)# ==================== APP INIT ====================
 app = FastAPI(
     title=APP_TITLE,
     version=APP_VERSION,
