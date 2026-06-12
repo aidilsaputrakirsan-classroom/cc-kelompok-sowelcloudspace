@@ -8,7 +8,7 @@ import json
 # ================= TASK =================
 
 class TaskBase(BaseModel):
-    title: str
+    title: str = Field(..., max_length=200)
     description: Optional[str] = None
     priority: str = "medium"
     deadline: Optional[datetime] = None
@@ -83,3 +83,19 @@ class FolderResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+    @field_validator('members', mode='before')
+    def parse_members(cls, v: Any) -> list[str]:
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, dict):
+                    return []
+                return parsed if isinstance(parsed, list) else []
+            except Exception:
+                try:
+                    parsed = ast.literal_eval(v)
+                    return parsed if isinstance(parsed, list) else []
+                except Exception:
+                    return []
+        return v if isinstance(v, list) else []
