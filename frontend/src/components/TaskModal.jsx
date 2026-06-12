@@ -12,9 +12,16 @@ function TaskModal({
   if (!isOpen) return null
 
   return (
-    <div className="modal-overlay">
-      {/* We strip out standard modal-content padding/background because TaskForm has its own container styling */}
-      <div className="modal-content" style={{ padding: 0, background: "transparent", boxShadow: "none", border: "none", maxWidth: "650px" }}>
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-card modal-card--task" onClick={(event) => event.stopPropagation()}>
+        <div className="modal-card__header">
+          <div>
+            <p className="eyebrow">{mode === "edit" ? "Edit Task" : "New Task"}</p>
+            <h2>{mode === "edit" ? "Ubah reminder" : "Buat task baru"}</h2>
+          </div>
+          <button type="button" className="modal-close" onClick={onClose}>x</button>
+        </div>
+
         <TaskForm
           onSubmit={onSubmit}
           editingTask={editingTask}
@@ -22,6 +29,7 @@ function TaskModal({
           folderOptions={folderOptions}
           selectedFolderId={selectedFolderId}
           lockFolderSelection={mode === "create" && selectedFolderId !== null}
+          isModal
         />
       </div>
     </div>
