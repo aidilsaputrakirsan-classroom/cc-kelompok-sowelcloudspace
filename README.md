@@ -1,6 +1,10 @@
 # 📦 Cloud App - Sowel Task
-![CI](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-sowelcloudspace/actions/workflows/ci.yml/badge.svg)
+> Aplikasi cloud-native untuk manajemen inventory, dibangun dengan arsitektur
+> microservices sebagai proyek mata kuliah Komputasi Awan — Institut Teknologi
+> Kalimantan. 
 
+![CI](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-sowelcloudspace/actions/workflows/ci.yml/badge.svg)
+![CD](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-sowelcloudspace/actions/workflows/ci.yml/badge.svg?branch=main) 
 
 ## 🌐 Live Demo
 
@@ -388,6 +392,22 @@ Periksa log deployment Railway dan log GitHub Actions untuk mengetahui penyebab 
 - Secrets via environment variables (never hardcoded)
 - Database per service (no shared DB)
 
+
+## 📄 Documentation
+
+- [Architecture Guide](docs/architecture.md)
+- [Deployment Guide](docs/deployment-guide.md)
+- [Operations Guide](docs/operations-guide.md)
+- [API Contract](docs/api-contract.md)
+- [Release Notes](docs/release-notes-m3.md)
+- [Dokumentasi hasil testing semua endpoint via Swagger](docs/api-test-results.md)
+- [Dokumentasi UI testing](docs/ui-test-results.md)
+- [Dokumentasi Auth testing](docs/auth-test-results.md)
+- [Docker Cheatsheet](docs/docker-cheatsheet.md)
+- [Setup Guide](docs/setup-guide.md)
+- [Testing Guide](docs/testing-guide.md)
+- [Production Test](docs/production-test.md)
+- [Git Workflow](docs/git-workflow.md)
 
 ## 🚀 Getting Started
 
