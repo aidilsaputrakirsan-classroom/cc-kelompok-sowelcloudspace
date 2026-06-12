@@ -1,5 +1,8 @@
 import { useState } from "react"
 
+const NAME_MAX_LENGTH = 200
+const NAME_WARNING_LENGTH = 180
+
 function LoginPage({ onLogin, onRegister, onOpenAbout }) {
   const [isRegister, setIsRegister] = useState(false)
   const [formData, setFormData] = useState({
@@ -38,6 +41,11 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
           setLoading(false)
           return
         }
+        if (formData.registerUsername.trim().length > NAME_MAX_LENGTH) {
+          setError(`Username maksimal ${NAME_MAX_LENGTH} karakter`)
+          setLoading(false)
+          return
+        }
         if (formData.password.length < 8) {
           setError("Password minimal 8 karakter")
           setLoading(false)
@@ -62,6 +70,9 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
       setLoading(false)
     }
   }
+
+  const registerUsernameLength = formData.registerUsername.length
+  const showRegisterUsernameCounter = isRegister && registerUsernameLength >= NAME_WARNING_LENGTH
 
   return (
     <div className="login-wrapper" style={styles.wrapper}>
@@ -111,7 +122,18 @@ function LoginPage({ onLogin, onRegister, onOpenAbout }) {
                   placeholder="Username"
                   style={styles.input}
                   autoComplete="username"
+                  maxLength={NAME_MAX_LENGTH}
                 />
+                {showRegisterUsernameCounter && (
+                  <small
+                    style={{
+                      ...styles.characterCounter,
+                      color: registerUsernameLength >= NAME_MAX_LENGTH ? "#dc2626" : "#7c5cbf",
+                    }}
+                  >
+                    {registerUsernameLength}/{NAME_MAX_LENGTH} karakter
+                  </small>
+                )}
               </div>
             )}
 
@@ -337,6 +359,13 @@ const styles = {
     gap: "1.2rem",
   },
   fieldGroup: {},
+  characterCounter: {
+    display: "block",
+    marginTop: "0.35rem",
+    textAlign: "right",
+    fontSize: "0.78rem",
+    fontWeight: 600,
+  },
   input: {
     width: "100%",
     padding: "0.85rem 1rem",
