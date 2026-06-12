@@ -6,6 +6,7 @@
 # ============================================================
 
 ACTION=${1:-start}
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before running this script}
 
 case $ACTION in
   start)
@@ -20,7 +21,7 @@ case $ACTION in
       --name db \
       --network cloudnet \
       -e POSTGRES_USER=postgres \
-      -e POSTGRES_PASSWORD=postgres123 \
+      -e POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
       -e POSTGRES_DB=cloudapp \
       -p 5433:5432 \
       -v pgdata:/var/lib/postgresql/data \
