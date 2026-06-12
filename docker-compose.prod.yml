@@ -25,7 +25,7 @@ services:
     restart: always
     environment:
       # Override dengan production password
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres123}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in production environment}
       SERVICE_NAME: database
       ENVIRONMENT: production
     logging:
@@ -52,6 +52,11 @@ services:
     restart: always
     # Override environment dengan production settings
     environment:
+      DATABASE_URL: ${AUTH_DATABASE_URL:?Set AUTH_DATABASE_URL in production environment}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in production environment}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      CORS_ORIGINS: ${CORS_ORIGINS:?Set CORS_ORIGINS in production environment}
       LOG_LEVEL: WARNING
       SERVICE_NAME: auth-service
       ENVIRONMENT: production
@@ -85,6 +90,11 @@ services:
     restart: always
     # Override environment dengan production settings
     environment:
+      DATABASE_URL: ${TASK_DATABASE_URL:?Set TASK_DATABASE_URL in production environment}
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://auth-service:8001}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in production environment}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      CORS_ORIGINS: ${CORS_ORIGINS:?Set CORS_ORIGINS in production environment}
       LOG_LEVEL: WARNING
       SERVICE_NAME: task-service
       ENVIRONMENT: production

@@ -428,3 +428,46 @@ curl http://localhost/tasks \
 # 8. Conclusion
 
 Implementasi arsitektur microservices pada aplikasi SowelTask berhasil dilakukan dengan memisahkan layanan autentikasi dan layanan manajemen tugas ke dalam service yang independen. Setiap service memiliki database masing-masing sehingga mendukung prinsip loose coupling dan memudahkan pengembangan serta pemeliharaan sistem. API Gateway berfungsi sebagai pintu masuk utama aplikasi dan meneruskan request ke service yang sesuai. Berdasarkan hasil pengujian, proses registrasi, login, validasi JWT, pembuatan tugas, pengelolaan tugas, dan komunikasi antar service berjalan dengan baik. Pendekatan microservices yang diterapkan pada SowelTask memberikan fleksibilitas yang lebih tinggi dalam pengembangan dan skalabilitas aplikasi di masa mendatang.
+
+---
+
+# 9. Final DevOps Hardening
+
+Bagian ini mencatat kondisi final Modul 15 dari sisi DevOps.
+
+## 9.1 Database Topology
+
+Compose final memakai satu container PostgreSQL bernama `sowel-db`. Di dalam container tersebut, script `services/db/init-databases.sh` membuat dua database logical:
+
+| Database | Dipakai Oleh |
+| -------- | ------------ |
+| `auth_db` | Auth Service |
+| `task_db` | Task Service |
+
+Dengan pola ini, service tetap memiliki boundary data masing-masing, tetapi operasional lokal lebih sederhana karena hanya ada satu container database.
+
+## 9.2 Gateway Routes
+
+| Path | Target | Rate Limit |
+| ---- | ------ | ---------- |
+| `/auth/login` | `auth-service:8001/auth/login` | `auth_limit`, 5 req/s |
+| `/auth/register` | `auth-service:8001/auth/register` | `auth_limit`, 5 req/s |
+| `/auth/*` | `auth-service:8001/auth/*` | `general_limit`, 30 req/s |
+| `/users/verify/*` | `auth-service:8001/users/verify/*` | `api_limit`, 20 req/s |
+| `/tasks/*` | `task-service:8002/tasks/*` | `api_limit`, 20 req/s |
+| `/api/folders/*` | `task-service:8002/api/folders/*` | `api_limit`, 20 req/s |
+| `/` | `frontend:80` | `general_limit`, 30 req/s |
+
+Jika request melebihi limit, gateway mengembalikan HTTP `429` dengan response JSON.
+
+## 9.3 Secret Management
+
+Compose final membaca credential dari environment variables:
+
+- `POSTGRES_PASSWORD`
+- `AUTH_DATABASE_URL`
+- `TASK_DATABASE_URL`
+- `SECRET_KEY`
+- `CORS_ORIGINS`
+
+Template tersedia di root `.env.example`. File `.env` lokal tidak boleh di-commit.

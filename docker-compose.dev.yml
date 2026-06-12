@@ -36,8 +36,8 @@ services:
     environment:
       ENVIRONMENT: development
       DEBUG: "true"
-      SECRET_KEY: your-secret-key-minimum-32-characters
-      ALGORITHM: HS256
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      ALGORITHM: ${ALGORITHM:-HS256}
 
   # ==================== FRONTEND (HOT-RELOAD) ====================
   frontend:
@@ -47,7 +47,7 @@ services:
       dockerfile: Dockerfile
       target: builder
       args:
-        VITE_API_URL: http://localhost:8080
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public
@@ -57,7 +57,7 @@ services:
       - ./frontend/eslint.config.js:/app/eslint.config.js
       - /app/node_modules
     environment:
-      VITE_API_URL: http://localhost:8080
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
     command: npm run dev -- --host 0.0.0.0
     ports:
       - "5173:5173"
