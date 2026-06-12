@@ -9,7 +9,7 @@ import ast
 # ================= TASK =================
 
 class TaskBase(BaseModel):
-    title: str = Field(..., max_length=200)
+    title: str = Field(..., max_length=50)
     description: Optional[str] = None
     priority: str = "medium"
     deadline: Optional[datetime] = None
@@ -64,8 +64,8 @@ class FolderCreate(BaseModel):
     def validate_name(cls, v):
         if len(v.strip()) < 1:
             raise ValueError("Nama folder tidak boleh kosong")
-        if len(v) > 100:
-            raise ValueError("Nama folder maksimal 100 karakter")
+        if len(v) > 50:
+            raise ValueError("Nama folder maksimal 50 karakter")
         return v.strip()
 
 class FolderUpdate(BaseModel):

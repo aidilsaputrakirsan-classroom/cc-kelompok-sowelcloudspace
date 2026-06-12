@@ -178,6 +178,11 @@ function authHeaders(isForm = false) {
 
 async function parseErrorResponse(response) {
   const errorBody = await response.json().catch(() => null)
+  
+  if (Array.isArray(errorBody?.detail)) {
+    return errorBody.detail.map(err => err.msg).join(", ")
+  }
+  
   return errorBody?.detail || errorBody?.message || null
 }
 
