@@ -274,6 +274,34 @@ export async function fetchTasks() {
   return Array.isArray(data) ? data.map(normalizeTask).filter(Boolean) : []
 }
 
+function normalizeTaskListResponse(data) {
+  if (Array.isArray(data)) {
+    return data.map(normalizeTask).filter(Boolean)
+  }
+
+  const taskList = data?.tasks || data?.items || data?.reminders || []
+  return Array.isArray(taskList) ? taskList.map(normalizeTask).filter(Boolean) : []
+}
+
+export async function fetchUpcomingReminders(difficulty) {
+  const query = new URLSearchParams({ difficulty }).toString()
+  const data = await request(`/tasks/reminders/upcoming?${query}`, {
+    headers: authHeaders(),
+  })
+  return normalizeTaskListResponse(data)
+}
+
+export async function fetchCalendarReminders(year, month) {
+  const query = new URLSearchParams({
+    year: String(year),
+    month: String(month).padStart(2, "0"),
+  }).toString()
+  const data = await request(`/tasks/reminders/calendar?${query}`, {
+    headers: authHeaders(),
+  })
+  return normalizeTaskListResponse(data)
+}
+
 export async function fetchTask(id) {
   const data = await request(`/tasks/${id}`, {
     headers: authHeaders(),
