@@ -450,6 +450,79 @@ async def task_stats(
     }
 
 
+@app.get("/tasks/reminders/upcoming", response_model=list[TaskResponse])
+async def get_upcoming_reminders(
+    request: Request,
+    difficulty: str | None = None,
+    limit: int = 5,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_token_local),
+):
+    uid = int(user_id)
+    query = db.query(Task)
+    
+    user_name = await get_user_name(uid, request)
+    group_folder_ids = []
+    if user_name:
+        all_group_folders = db.query(Folder).filter(Folder.type == "group").all()
+        for gf in all_group_folders:
+            try:
+                members = json.loads(gf.members or "[]")
+                if any(m.lower() == user_name.lower() for m in members):
+                    group_folder_ids.append(gf.id)
+            except Exception:
+                pass
+    
+    query = query.filter((Task.owner_id == uid) | (Task.folder_id.in_(group_folder_ids)))
+    query = query.filter(Task.deadline.isnot(None), Task.status != "done")
+
+    if difficulty:
+        query = query.filter(Task.priority == difficulty)
+
+    query = query.order_by(Task.deadline.asc())
+    return query.limit(limit).all()
+
+
+@app.get("/tasks/reminders/calendar", response_model=list[TaskResponse])
+async def get_calendar_reminders(
+    request: Request,
+    year: int,
+    month: int,
+    db: Session = Depends(get_db),
+    user_id: str = Depends(verify_token_local),
+):
+    import calendar
+    from datetime import datetime
+    
+    uid = int(user_id)
+    _, last_day = calendar.monthrange(year, month)
+    start_date = datetime(year, month, 1)
+    end_date = datetime(year, month, last_day, 23, 59, 59)
+
+    query = db.query(Task)
+    user_name = await get_user_name(uid, request)
+    group_folder_ids = []
+    if user_name:
+        all_group_folders = db.query(Folder).filter(Folder.type == "group").all()
+        for gf in all_group_folders:
+            try:
+                members = json.loads(gf.members or "[]")
+                if any(m.lower() == user_name.lower() for m in members):
+                    group_folder_ids.append(gf.id)
+            except Exception:
+                pass
+
+    query = query.filter((Task.owner_id == uid) | (Task.folder_id.in_(group_folder_ids)))
+    query = query.filter(
+        Task.deadline.isnot(None),
+        Task.deadline >= start_date,
+        Task.deadline <= end_date
+    ).order_by(Task.deadline.asc())
+    
+    return query.all()
+
+
+
 @app.get("/tasks/public", response_model=list[TaskResponse])
 async def get_public_tasks(
     db: Session = Depends(get_db),
