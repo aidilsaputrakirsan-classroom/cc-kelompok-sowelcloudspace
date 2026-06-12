@@ -134,6 +134,53 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+  min-width: 0;
+}
+
+.dashboard-page,
+.stack-page,
+.panel,
+.folder-card,
+.folder-detail-hero,
+.workspace-hero,
+.workspace-toolbar,
+.reminder-item,
+.month-card {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.dashboard-page h1,
+.dashboard-page h2,
+.dashboard-page h3,
+.stack-page h1,
+.stack-page h2,
+.stack-page h3,
+.panel p,
+.folder-card p,
+.folder-card__title-row h3,
+.folder-card__meta span,
+.folder-card__member-chip,
+.folder-detail-hero h2,
+.folder-detail-hero__description,
+.folder-detail-pill,
+.folder-detail-stat strong,
+.folder-detail-members,
+.workspace-hero h1,
+.workspace-hero__lead,
+.workspace-hero__stats span,
+.folder-chip,
+.status-chip,
+.tag,
+.calendar-pill,
+.calendar-summary-item strong,
+.calendar-summary-item span,
+.reminder-item h3,
+.reminder-item p,
+.reminder-item__meta span {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .dashboard-page__header,
@@ -152,6 +199,12 @@
   min-width: 0;
 }
 
+.dashboard-page__header > div,
+.stack-page__header > div,
+.workspace-hero > div {
+  min-width: 0;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   color: var(--text-soft);
@@ -166,6 +219,7 @@
   margin: 0;
   font: 800 clamp(1.9rem, 3.5vw, 2.6rem) "Baloo 2", cursive;
   line-height: 0.95;
+  max-width: 100%;
 }
 
 .dashboard-page__subtitle,
@@ -389,6 +443,7 @@
   color: white;
   cursor: pointer;
   box-shadow: 0 18px 40px rgba(95, 73, 127, 0.2);
+  min-width: 0;
 }
 
 .folder-card--sunset {
@@ -433,7 +488,8 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
   min-width: 0;
 }
 
@@ -441,8 +497,12 @@
   margin: 0;
   font: 800 clamp(1.6rem, 2.6vw, 2.25rem) "Baloo 2", cursive;
   line-height: 0.95;
+  flex: 1 1 220px;
   min-width: 0;
+  max-width: 100%;
   overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .folder-card__type {
@@ -450,7 +510,9 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.16);
   font: 700 0.8rem "Plus Jakarta Sans", sans-serif;
-  white-space: nowrap;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .folder-card__meta {
@@ -508,12 +570,14 @@
   display: inline-flex;
   align-items: center;
   padding: 5px 10px;
-  border-radius: 999px;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.16);
   color: white;
   font: 700 0.72rem "Plus Jakarta Sans", sans-serif;
   max-width: 100%;
   overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .folder-pagination {
@@ -595,7 +659,7 @@
 
 .folder-detail-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 150px);
   align-items: start;
   gap: 14px;
   padding: 18px 20px;
@@ -647,6 +711,7 @@
   align-items: flex-end;
   gap: 10px;
   width: min(100%, 150px);
+  min-width: 0;
 }
 
 .folder-detail-hero__back {
@@ -660,7 +725,7 @@
 }
 
 .folder-detail-hero__identity {
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
   min-width: 0;
 }
@@ -688,11 +753,15 @@
   margin: 0 0 4px;
   font: 800 clamp(1.6rem, 3vw, 2.25rem) "Baloo 2", cursive;
   line-height: 0.95;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .folder-detail-hero__copy {
   min-width: 0;
-  max-width: 460px;
+  max-width: 100%;
 }
 
 .folder-detail-hero__description {
@@ -700,16 +769,22 @@
   max-width: 48ch;
   color: rgba(255, 255, 255, 0.88);
   font: 500 0.86rem/1.5 "Plus Jakarta Sans", sans-serif;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .folder-detail-pill {
   width: 100%;
   padding: 8px 12px;
-  border-radius: 999px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.16);
   color: white;
   text-align: center;
   font: 700 0.78rem "Plus Jakarta Sans", sans-serif;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .folder-detail-grid {
@@ -780,15 +855,20 @@
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 
 .workspace-hero__stats span,
 .status-chip {
   padding: 10px 14px;
-  border-radius: 999px;
+  border-radius: 16px;
   background: #f1eafb;
   color: #6e5897;
   font: 700 0.84rem "Plus Jakarta Sans", sans-serif;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .status-chip--ok {
@@ -804,6 +884,7 @@
 .workspace-toolbar {
   justify-content: space-between;
   align-items: center;
+  min-width: 0;
 }
 
 .workspace-toolbar__actions {
@@ -817,8 +898,13 @@
   background: white;
   color: #715d98;
   padding: 10px 14px;
-  border-radius: 999px;
+  border-radius: 16px;
   font: 700 0.88rem "Plus Jakarta Sans", sans-serif;
+  max-width: min(100%, 32rem);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  text-align: left;
 }
 
 .folder-chip--active {
@@ -943,25 +1029,41 @@
   gap: 12px;
   flex-wrap: wrap;
   align-items: center;
+  min-width: 0;
+}
+
+.reminder-item__top > div,
+.reminder-item__meta > span {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .reminder-item h3 {
   margin: 0;
   font: 800 1.35rem "Baloo 2", cursive;
   overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .reminder-item p {
   margin: 8px 0 12px;
   color: var(--text-soft);
   font: 500 0.92rem/1.55 "Plus Jakarta Sans", sans-serif;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .tag {
   padding: 7px 12px;
-  border-radius: 999px;
+  border-radius: 14px;
   font: 800 0.72rem "Plus Jakarta Sans", sans-serif;
   text-transform: uppercase;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .tag--urgent {
@@ -1085,11 +1187,16 @@
   color: var(--brand-dark);
   font: 800 0.9rem/1.25 "Plus Jakarta Sans", sans-serif;
   overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .calendar-summary-item span {
   color: var(--text-soft);
   font: 600 0.78rem/1.4 "Plus Jakarta Sans", sans-serif;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .sr-only {
@@ -1136,6 +1243,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .month-card__cell--empty {
@@ -1156,6 +1264,8 @@
   font: 700 0.68rem/1.2 "Plus Jakarta Sans", sans-serif;
   max-width: 100%;
   overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .calendar-pill {

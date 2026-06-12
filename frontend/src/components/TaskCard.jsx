@@ -117,6 +117,8 @@ const styles = {
     flex: "1 1 180px",
     minWidth: 0,
     overflowWrap: "anywhere",
+    wordBreak: "break-word",
+    whiteSpace: "normal",
   },
   badges: {
     display: "flex",
@@ -128,10 +130,13 @@ const styles = {
   },
   badge: {
     padding: "0.2rem 0.6rem",
-    borderRadius: "20px",
+    borderRadius: "10px",
     fontSize: "0.7rem",
     fontWeight: 600,
     overflowWrap: "anywhere",
+    wordBreak: "break-word",
+    whiteSpace: "normal",
+    maxWidth: "100%",
   },
   description: {
     color: "#666",
@@ -139,6 +144,8 @@ const styles = {
     margin: "0.25rem 0 0.75rem 0",
     lineHeight: 1.5,
     overflowWrap: "anywhere",
+    wordBreak: "break-word",
+    whiteSpace: "normal",
   },
   meta: {
     display: "flex",
@@ -150,6 +157,9 @@ const styles = {
   },
   metaItem: {
     overflowWrap: "anywhere",
+    wordBreak: "break-word",
+    whiteSpace: "normal",
+    maxWidth: "100%",
   },
   actions: {
     display: "flex",
