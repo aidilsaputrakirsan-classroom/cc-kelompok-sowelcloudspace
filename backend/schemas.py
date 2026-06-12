@@ -5,7 +5,7 @@ from datetime import datetime
 # ================= TASK =================
 
 class TaskBase(BaseModel):
-    title: str
+    title: str = Field(..., max_length=200)
     description: Optional[str] = None
     priority: str = "medium"
     deadline: Optional[datetime] = None
@@ -43,7 +43,7 @@ class UserCreate(BaseModel):
     # Validasi Email dengan regex (memastikan format user@domain.com)
     email: str = Field(..., pattern=r"^[\w\.-]+@[\w\.-]+\.\w+$")
     
-    name: str
+    name: str = Field(..., max_length=200)
     
     # Validasi Password: Minimal 8 karakter
     password: str = Field(

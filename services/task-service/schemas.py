@@ -1,5 +1,5 @@
 """Pydantic schemas for Task Service — disesuaikan dengan backend monolith."""
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, Field
 from typing import Optional, Any
 from datetime import datetime
 import json
@@ -9,7 +9,7 @@ import ast
 # ================= TASK =================
 
 class TaskBase(BaseModel):
-    title: str
+    title: str = Field(..., max_length=200)
     description: Optional[str] = None
     priority: str = "medium"
     deadline: Optional[datetime] = None
