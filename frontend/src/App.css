@@ -1228,6 +1228,14 @@
   color: #694f9d;
 }
 
+.modal-form__error {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fee2e2;
+  color: #b42318;
+  font: 700 0.84rem/1.4 "Plus Jakarta Sans", sans-serif;
+}
+
 .member-builder {
   display: grid;
   gap: 10px;
