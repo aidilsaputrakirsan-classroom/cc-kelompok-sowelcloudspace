@@ -398,3 +398,11 @@ export async function checkHealth() {
     return false
   }
 }
+
+export async function fetchServiceMetrics(service) {
+  return request(`/${service}/metrics`)
+}
+
+export async function fetchServiceHealth(service) {
+  return request(`/${service}/health`)
+}

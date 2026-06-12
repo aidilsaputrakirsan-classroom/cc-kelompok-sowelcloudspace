@@ -12,7 +12,8 @@ import os
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
-from fastapi import FastAPI, Depends, HTTPException, Header
+import time
+from fastapi import FastAPI, Depends, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -39,6 +40,33 @@ app = FastAPI(
     description="Authentication microservice — register, login, verify tokens (Sowel Cloud)",
     version="2.0.0",
 )
+
+# In-memory metrics storage
+METRICS = {
+    "total_requests": 0,
+    "error_requests": 0,
+    "total_latency": 0.0,
+    "start_time": time.time(),
+}
+
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    path = request.url.path
+    if path in ["/metrics", "/health", "/auth/health", "/auth/metrics"]:
+        return await call_next(request)
+
+    METRICS["total_requests"] += 1
+    start_time = time.time()
+    try:
+        response = await call_next(request)
+        latency = time.time() - start_time
+        METRICS["total_latency"] += latency
+        if response.status_code >= 400:
+            METRICS["error_requests"] += 1
+        return response
+    except Exception as e:
+        METRICS["error_requests"] += 1
+        raise e
 
 # CORS
 CORS_ORIGINS = os.getenv(
@@ -121,6 +149,27 @@ def health_check(db: Session = Depends(get_db)):
     status_code = 200 if health["status"] == "healthy" else 503
     from fastapi.responses import JSONResponse
     return JSONResponse(content=health, status_code=status_code)
+
+
+@app.get("/metrics")
+def get_metrics():
+    uptime = time.time() - METRICS["start_time"]
+    total = METRICS["total_requests"]
+    errors = METRICS["error_requests"]
+    avg_latency = (METRICS["total_latency"] / total) * 1000 if total > 0 else 0.0
+    error_rate = (errors / total) * 100.0 if total > 0 else 0.0
+
+    return {
+        "status": "healthy",
+        "requests": {
+            "total": total,
+            "success": total - errors,
+            "failed": errors
+        },
+        "error_rate": round(error_rate, 2),
+        "avg_latency_ms": round(avg_latency, 2),
+        "uptime_seconds": int(uptime)
+    }
 
 
 @app.post("/auth/register", response_model=UserResponse, status_code=201)

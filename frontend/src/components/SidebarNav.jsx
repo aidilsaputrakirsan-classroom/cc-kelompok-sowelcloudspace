@@ -2,6 +2,7 @@ const NAV_ITEMS = [
   { id: "home", label: "Home", icon: "HM" },
   { id: "reminders", label: "Reminder", icon: "RM" },
   { id: "calendar", label: "Calendar", icon: "CL" },
+  { id: "status", label: "Status Page", icon: "ST" },
   { id: "about", label: "About", icon: "AB" },
 ]
 
