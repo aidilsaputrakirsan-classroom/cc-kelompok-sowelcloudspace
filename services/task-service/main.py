@@ -32,8 +32,12 @@ from schemas import (
 # Create tables
 Base.metadata.create_all(bind=engine)
 
-# Logging
-logging.basicConfig(level=logging.INFO)
+from logging_config import setup_logging
+from logging_middleware import RequestLoggingMiddleware
+from metrics import metrics
+
+# Setup structured logging
+setup_logging()
 logger = logging.getLogger("task-service")
 
 app = FastAPI(
@@ -82,6 +86,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Logging middleware (setelah CORS)
+app.add_middleware(RequestLoggingMiddleware)
+
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     SECRET_KEY = secrets.token_urlsafe(32)
@@ -124,9 +131,15 @@ async def verify_token_optional(request: Request) -> str | None:
 async def get_user_name(user_id: int, request: Request) -> str:
     """Helper untuk mengambil nama user dari auth-service (hanya dipanggil saat butuh validasi group folder)."""
     auth_header = request.headers.get("Authorization")
+    correlation_id = getattr(request.state, "correlation_id", None)
+    
+    headers = {"Authorization": auth_header}
+    if correlation_id:
+        headers["X-Correlation-ID"] = correlation_id
+
     try:
         async with httpx.AsyncClient() as client:
-            resp = await client.get(f"{AUTH_SERVICE_URL}/auth/me", headers={"Authorization": auth_header}, timeout=5.0)
+            resp = await client.get(f"{AUTH_SERVICE_URL}/auth/me", headers=headers, timeout=5.0)
             if resp.status_code == 200:
                 return resp.json().get("name", "")
     except Exception:
