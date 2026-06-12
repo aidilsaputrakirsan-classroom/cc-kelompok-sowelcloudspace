@@ -117,7 +117,7 @@ const styles = {
     flex: "1 1 180px",
     minWidth: 0,
     overflowWrap: "anywhere",
-    wordBreak: "break-word",
+    wordBreak: "break-all",
     whiteSpace: "normal",
   },
   badges: {
@@ -134,7 +134,7 @@ const styles = {
     fontSize: "0.7rem",
     fontWeight: 600,
     overflowWrap: "anywhere",
-    wordBreak: "break-word",
+    wordBreak: "break-all",
     whiteSpace: "normal",
     maxWidth: "100%",
   },
@@ -144,7 +144,7 @@ const styles = {
     margin: "0.25rem 0 0.75rem 0",
     lineHeight: 1.5,
     overflowWrap: "anywhere",
-    wordBreak: "break-word",
+    wordBreak: "break-all",
     whiteSpace: "normal",
   },
   meta: {
@@ -157,7 +157,7 @@ const styles = {
   },
   metaItem: {
     overflowWrap: "anywhere",
-    wordBreak: "break-word",
+    wordBreak: "break-all",
     whiteSpace: "normal",
     maxWidth: "100%",
   },

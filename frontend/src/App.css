@@ -178,9 +178,38 @@
 .reminder-item h3,
 .reminder-item p,
 .reminder-item__meta span {
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
   word-break: break-word;
   white-space: normal;
+  max-width: 100%;
+}
+
+.folder-card__title-row h3,
+.folder-card__type,
+.folder-card__meta span,
+.folder-card__member-chip,
+.folder-detail-hero h2,
+.folder-detail-hero__description,
+.folder-detail-pill,
+.folder-detail-stat strong,
+.folder-detail-members,
+.workspace-hero h1,
+.workspace-hero__lead,
+.workspace-hero__stats span,
+.folder-chip,
+.status-chip,
+.tag,
+.calendar-pill,
+.calendar-summary-item strong,
+.calendar-summary-item span,
+.reminder-item h3,
+.reminder-item p,
+.reminder-item__meta span,
+.member-chip {
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  white-space: normal;
+  max-width: 100%;
 }
 
 .dashboard-page__header,
@@ -203,6 +232,7 @@
 .stack-page__header > div,
 .workspace-hero > div {
   min-width: 0;
+  max-width: 100%;
 }
 
 .eyebrow {
@@ -482,6 +512,7 @@
 
 .folder-card__body {
   min-width: 0;
+  max-width: 100%;
 }
 
 .folder-card__title-row {
@@ -512,6 +543,7 @@
   font: 700 0.8rem "Plus Jakarta Sans", sans-serif;
   max-width: 100%;
   overflow-wrap: break-word;
+  word-break: break-all;
   white-space: normal;
 }
 
@@ -522,6 +554,7 @@
   color: rgba(255, 255, 255, 0.8);
   flex-wrap: wrap;
   align-items: center;
+  min-width: 0;
 }
 
 .folder-card__action {
@@ -564,6 +597,7 @@
   gap: 8px;
   flex-wrap: wrap;
   margin-top: 10px;
+  min-width: 0;
 }
 
 .folder-card__member-chip {
@@ -576,7 +610,7 @@
   font: 700 0.72rem "Plus Jakarta Sans", sans-serif;
   max-width: 100%;
   overflow-wrap: anywhere;
-  word-break: break-word;
+  word-break: break-all;
   white-space: normal;
 }
 
@@ -666,6 +700,11 @@
   border-radius: 24px;
   color: white;
   box-shadow: 0 18px 40px rgba(95, 73, 127, 0.2);
+  min-width: 0;
+}
+
+.folder-detail-hero > * {
+  min-width: 0;
 }
 
 .folder-detail-hero--sunset {
@@ -755,7 +794,7 @@
   line-height: 0.95;
   max-width: 100%;
   overflow-wrap: anywhere;
-  word-break: break-word;
+  word-break: break-all;
   white-space: normal;
 }
 
@@ -770,7 +809,7 @@
   color: rgba(255, 255, 255, 0.88);
   font: 500 0.86rem/1.5 "Plus Jakarta Sans", sans-serif;
   overflow-wrap: anywhere;
-  word-break: break-word;
+  word-break: break-all;
   white-space: normal;
 }
 
@@ -783,7 +822,7 @@
   text-align: center;
   font: 700 0.78rem "Plus Jakarta Sans", sans-serif;
   overflow-wrap: anywhere;
-  word-break: break-word;
+  word-break: break-all;
   white-space: normal;
 }
 
@@ -856,6 +895,7 @@
   gap: 12px;
   flex-wrap: wrap;
   min-width: 0;
+  max-width: 100%;
 }
 
 .workspace-hero__stats span,
@@ -867,7 +907,7 @@
   font: 700 0.84rem "Plus Jakarta Sans", sans-serif;
   max-width: 100%;
   overflow-wrap: anywhere;
-  word-break: break-word;
+  word-break: break-all;
   white-space: normal;
 }
 
@@ -902,9 +942,10 @@
   font: 700 0.88rem "Plus Jakarta Sans", sans-serif;
   max-width: min(100%, 32rem);
   overflow-wrap: anywhere;
-  word-break: break-word;
+  word-break: break-all;
   white-space: normal;
   text-align: left;
+  min-width: 0;
 }
 
 .folder-chip--active {
@@ -1042,7 +1083,7 @@
   margin: 0;
   font: 800 1.35rem "Baloo 2", cursive;
   overflow-wrap: anywhere;
-  word-break: break-word;
+  word-break: break-all;
   white-space: normal;
 }
 
@@ -1051,7 +1092,7 @@
   color: var(--text-soft);
   font: 500 0.92rem/1.55 "Plus Jakarta Sans", sans-serif;
   overflow-wrap: anywhere;
-  word-break: break-word;
+  word-break: break-all;
   white-space: normal;
 }
 
@@ -1062,7 +1103,7 @@
   text-transform: uppercase;
   max-width: 100%;
   overflow-wrap: anywhere;
-  word-break: break-word;
+  word-break: break-all;
   white-space: normal;
 }
 
@@ -1264,7 +1305,7 @@
   font: 700 0.68rem/1.2 "Plus Jakarta Sans", sans-serif;
   max-width: 100%;
   overflow-wrap: anywhere;
-  word-break: break-word;
+  word-break: break-all;
   white-space: normal;
 }
 
@@ -1366,6 +1407,10 @@
   background: #efe7fb;
   color: #644b90;
   font: 700 0.84rem "Plus Jakarta Sans", sans-serif;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  white-space: normal;
 }
 
 .member-chip__remove {
