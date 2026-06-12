@@ -10,6 +10,7 @@ Validasi JWT token dilakukan secara lokal (stateless) menggunakan SECRET_KEY.
 Disesuaikan dengan backend monolith Sowel Task API yang sudah ada.
 """
 import os
+import time
 import json
 import logging
 import secrets
@@ -40,6 +41,33 @@ app = FastAPI(
     description="Task management microservice — CRUD tasks & folders (Sowel Cloud)",
     version="2.0.0",
 )
+
+# In-memory metrics storage
+METRICS = {
+    "total_requests": 0,
+    "error_requests": 0,
+    "total_latency": 0.0,
+    "start_time": time.time(),
+}
+
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    path = request.url.path
+    if path in ["/metrics", "/health", "/tasks/health", "/tasks/metrics"]:
+        return await call_next(request)
+
+    METRICS["total_requests"] += 1
+    start_time = time.time()
+    try:
+        response = await call_next(request)
+        latency = time.time() - start_time
+        METRICS["total_latency"] += latency
+        if response.status_code >= 400:
+            METRICS["error_requests"] += 1
+        return response
+    except Exception as e:
+        METRICS["error_requests"] += 1
+        raise e
 
 # CORS
 CORS_ORIGINS = os.getenv(
@@ -74,9 +102,9 @@ async def verify_token_local(request: Request) -> str:
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token")
         return str(user_id)
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except JWTError:
+    except JWTError as e:
+        if "expired" in str(e).lower():
+            raise HTTPException(status_code=401, detail="Token expired")
         raise HTTPException(status_code=401, detail="Invalid token")
 
 async def verify_token_optional(request: Request) -> str | None:
@@ -154,6 +182,27 @@ def health_check(db: Session = Depends(get_db)):
     return JSONResponse(content=health, status_code=status_code)
 
 
+@app.get("/metrics")
+def get_metrics():
+    uptime = time.time() - METRICS["start_time"]
+    total = METRICS["total_requests"]
+    errors = METRICS["error_requests"]
+    avg_latency = (METRICS["total_latency"] / total) * 1000 if total > 0 else 0.0
+    error_rate = (errors / total) * 100.0 if total > 0 else 0.0
+
+    return {
+        "status": "healthy",
+        "requests": {
+            "total": total,
+            "success": total - errors,
+            "failed": errors
+        },
+        "error_rate": round(error_rate, 2),
+        "avg_latency_ms": round(avg_latency, 2),
+        "uptime_seconds": int(uptime)
+    }
+
+
 # =====================
 # ENDPOINTS - FOLDERS
 # =====================
@@ -165,7 +214,10 @@ async def create_folder(
     user_id: str = Depends(verify_token_local),
 ):
     uid = int(user_id)
-    db_folder = Folder(**data.model_dump(), owner_id=uid)
+    folder_data = data.model_dump()
+    if isinstance(folder_data.get("members"), list):
+        folder_data["members"] = json.dumps(folder_data["members"])
+    db_folder = Folder(**folder_data, owner_id=uid)
     db.add(db_folder)
     db.commit()
     db.refresh(db_folder)
@@ -232,8 +284,11 @@ async def update_folder(
     folder = db.query(Folder).filter(Folder.id == folder_id, Folder.owner_id == uid).first()
     if not folder:
         raise HTTPException(404, "Folder not found atau anda bukan owner")
-    
-    for key, value in data.model_dump(exclude_unset=True).items():
+
+    update_data = data.model_dump(exclude_unset=True)
+    if "members" in update_data and isinstance(update_data["members"], list):
+        update_data["members"] = json.dumps(update_data["members"])
+    for key, value in update_data.items():
         setattr(folder, key, value)
     db.commit()
     db.refresh(folder)

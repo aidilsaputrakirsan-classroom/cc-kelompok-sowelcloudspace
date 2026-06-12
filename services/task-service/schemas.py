@@ -1,7 +1,8 @@
 """Pydantic schemas for Task Service — disesuaikan dengan backend monolith."""
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional
 from datetime import datetime
+import json
 
 
 # ================= TASK =================
@@ -69,6 +70,16 @@ class FolderResponse(BaseModel):
     owner_id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+    @field_validator('members', mode='before')
+    @classmethod
+    def parse_members(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except Exception:
+                return []
+        return v
 
     class Config:
         from_attributes = True
