@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 
-const TITLE_MAX_LENGTH = 200
-const TITLE_WARNING_LENGTH = 180
+const TITLE_MAX_LENGTH = 50
+const TITLE_WARNING_LENGTH = 45
 
 function TaskForm({
   onSubmit,

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 
 import { API_URL, getToken, getUserFriendlyErrorMessage, isApiError } from "../services/api"
 
-const FOLDER_NAME_MAX_LENGTH = 200
+const FOLDER_NAME_MAX_LENGTH = 50
 
 const DEFAULT_FORM = {
   name: "",
