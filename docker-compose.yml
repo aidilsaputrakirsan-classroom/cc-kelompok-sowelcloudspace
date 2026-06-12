@@ -28,9 +28,9 @@ services:
     container_name: sowel-db
     restart: unless-stopped                                         # Restart otomatis kecuali dihentikan manual
     environment:
-      POSTGRES_USER: postgres                                       # Username database
-      POSTGRES_PASSWORD: postgres123
-      POSTGRES_DB: cloudapp                                         # Database default
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}                     # Username database
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-cloudapp}                         # Database default
     ports:
       - "5433:5432"                                                 # Map port lokal 5433 → port PostgreSQL 5432 di container
     volumes:
@@ -39,7 +39,7 @@ services:
     networks:
       - cloudnet                                                    # Menghubungkan ke network internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d cloudapp"]     # Cek apakah DB siap menerima koneksi
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-cloudapp}"]  # Cek apakah DB siap menerima koneksi
       interval: 10s                                                 # Interval pengecekan
       timeout: 5s                                                   # Batas waktu tiap pengecekan
       retries: 5                                                    # Jumlah percobaan sebelum dianggap gagal
@@ -53,11 +53,12 @@ services:
     container_name: sowel-auth-service
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://postgres:postgres123@db:5432/auth_db
-      SECRET_KEY: your-secret-key-minimum-32-characters
-      ALGORITHM: HS256
-      ACCESS_TOKEN_EXPIRE_MINUTES: "60"
-      CORS_ORIGINS: "http://localhost:5173,http://localhost:3000,http://localhost"
+      DATABASE_URL: ${AUTH_DATABASE_URL:?Set AUTH_DATABASE_URL in .env}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost,http://localhost:8080}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "8001:8001"                                                 # Expose auth-service ke localhost:8001
     networks:
@@ -80,11 +81,12 @@ services:
     container_name: sowel-task-service
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://postgres:postgres123@db:5432/task_db
-      AUTH_SERVICE_URL: http://auth-service:8001                    # URL auth-service untuk verifikasi token
-      SECRET_KEY: your-secret-key-minimum-32-characters              # Harus sama dengan auth-service agar JWT valid
-      ALGORITHM: HS256
-      CORS_ORIGINS: "http://localhost:5173,http://localhost:3000,http://localhost"
+      DATABASE_URL: ${TASK_DATABASE_URL:?Set TASK_DATABASE_URL in .env}
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://auth-service:8001}  # URL auth-service untuk verifikasi token
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}              # Harus sama dengan auth-service agar JWT valid
+      ALGORITHM: ${ALGORITHM:-HS256}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000,http://localhost,http://localhost:8080}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "8002:8002"                                                 # Expose task-service ke localhost:8002
     networks:
@@ -107,7 +109,7 @@ services:
       context: ./frontend                                           # Lokasi source code frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://localhost                              # Frontend mengakses API via gateway (port 80)
+        VITE_API_URL: ${VITE_API_URL:-http://localhost}             # Frontend mengakses API via gateway (port 80)
     container_name: sowel-frontend
     restart: unless-stopped
     networks:

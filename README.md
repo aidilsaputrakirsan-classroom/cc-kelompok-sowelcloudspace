@@ -1,14 +1,18 @@
 # 📦 Cloud App - Sowel Task
-![CI](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-sowelcloudspace/actions/workflows/ci.yml/badge.svg)
+> Aplikasi cloud-native untuk manajemen inventory, dibangun dengan arsitektur
+> microservices sebagai proyek mata kuliah Komputasi Awan — Institut Teknologi
+> Kalimantan. 
 
+![CI](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-sowelcloudspace/actions/workflows/ci.yml/badge.svg)
+![CD](https://github.com/aidilsaputrakirsan-classroom/cc-kelompok-sowelcloudspace/actions/workflows/ci.yml/badge.svg?branch=main) 
 
 ## 🌐 Live Demo
 
 | Service | URL |
 |---------|-----|
-| Frontend | https://frontend-production-93f7a.up.railway.app/              |
-| Backend API | https://backend-production-b026.up.railway.app/             |
-| API Docs (Swagger) | https://backend-production-b026.up.railway.app/docs  |
+| Frontend | https://frontend-production-06bd.up.railway.app/                 |
+| Backend API | https://backend-production-3ffb5.up.railway.app/              |
+| API Docs (Swagger) | https://backend-production-3ffb5.up.railway.app/docs#/ |
 
 ## 🔄 CI/CD
 
@@ -39,28 +43,371 @@ Secara keseluruhan, aplikasi ini menjadi solusi ringan namun efektif untuk kebut
 
 ## 🛠️ Tech Stack
 
-| Teknologi        | Fungsi           |
-| ---------------- | ---------------- |
-| FastAPI          | Backend REST API |
-| React            | Frontend SPA     |
-| PostgreSQL       | Database         |
-| Docker           | Containerization |
-| GitHub Actions   | CI/CD            |
-| Railway / Render | Cloud Deployment |
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| Frontend | React + Vite | Single Page Application |
+| Backend | FastAPI (Python) | REST API microservices |
+| Database | PostgreSQL 16 | Relational database (per service) |
+| Gateway | Nginx | Reverse proxy + rate limiting |
+| Container | Docker + Docker Compose | Containerization |
+| CI/CD | GitHub Actions | Automated test + deploy |
+| Cloud | Railway | PaaS deployment |
+| Monitoring | Custom metrics + dashboard | Observability |
 
 ---
 
 ## 🏗️ Architecture
 
-User (Browser)
-     ↓
-[ React Frontend (Docker Container) ]
-     ↓ HTTP
-[ FastAPI Backend (Docker Container) ]
-     ↓
-[ PostgreSQL Database (Docker Container + Volume) ]
+```mermaid
+flowchart TD
+
+    USER["👤 User"]
+
+    FE["⚛️ React Frontend
+    Railway Deployment"]
+
+    BE["🚀 FastAPI Backend
+    Railway Deployment"]
+
+    DB[("🐘 PostgreSQL Database")]
+
+    USER -->|HTTPS| FE
+    FE -->|REST API + JWT| BE
+    BE -->|SQLAlchemy ORM| DB
+```
+---
+
+## 📈 Architecture Evolution
+
+| Phase | Architecture |
+|---------|-------------|
+| Week 1-4 | Monolith (FastAPI + React + PostgreSQL) |
+| Week 5-7 | Docker Containerization |
+| Week 9-11 | CI/CD with GitHub Actions |
+| Week 12-14 | Cloud Deployment on Railway |
+| Week 15-16 | Security Hardening & Final Documentation |
+
+
+# 🚀 Deployment Guide
+
+## Overview
+
+Sowel Task dideploy menggunakan Railway sebagai platform cloud hosting. Aplikasi terdiri dari:
+
+* Frontend: React + Vite
+* Backend: FastAPI
+* Database: PostgreSQL
+* CI/CD: GitHub Actions
 
 ---
+
+## 1. Persiapan Repository
+
+Pastikan seluruh perubahan kode sudah berada pada branch `main`.
+
+```bash
+git checkout main
+git pull origin main
+git push origin main
+```
+
+Verifikasi bahwa:
+
+* Semua test berhasil dijalankan
+* Docker image berhasil dibangun
+* Tidak ada error pada GitHub Actions
+
+---
+
+## 2. Deployment Backend (FastAPI)
+
+### Langkah 1: Login Railway
+
+Masuk ke Railway menggunakan akun GitHub:
+
+https://railway.app
+
+---
+
+### Langkah 2: Buat Project Baru
+
+1. Klik **New Project**
+2. Pilih **Deploy from GitHub Repo**
+3. Pilih repository proyek
+
+---
+
+### Langkah 3: Konfigurasi Environment Variables
+
+Tambahkan environment variable berikut:
+
+```env
+DATABASE_URL=postgresql://username:password@host:5432/database
+
+SECRET_KEY=your-secret-key-minimum-32-characters
+
+ALGORITHM=HS256
+
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+
+ALLOWED_ORIGINS=https://frontend-production.up.railway.app
+```
+
+---
+
+### Langkah 4: Konfigurasi Start Command
+
+Railway akan menjalankan backend menggunakan:
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+---
+
+### Langkah 5: Verifikasi Deployment
+
+Setelah deployment selesai:
+
+```text
+https://backend-production.up.railway.app
+```
+
+Cek endpoint:
+
+```text
+/health
+```
+
+Contoh:
+
+```text
+https://backend-production.up.railway.app/health
+```
+
+Response yang diharapkan:
+
+```json
+{
+  "status": "healthy"
+}
+```
+
+---
+
+## 3. Deployment Database PostgreSQL
+
+### Langkah 1
+
+Pada Railway:
+
+1. Klik **New**
+2. Pilih **Database**
+3. Pilih **PostgreSQL**
+
+---
+
+### Langkah 2
+
+Salin Connection String yang diberikan Railway.
+
+Contoh:
+
+```env
+DATABASE_URL=postgresql://postgres:password@host:5432/railway
+```
+
+---
+
+### Langkah 3
+
+Masukkan nilai tersebut ke Environment Variables backend.
+
+---
+
+## 4. Deployment Frontend (React)
+
+### Langkah 1
+
+Buat service baru dari repository yang sama.
+
+Pilih folder:
+
+```text
+frontend/
+```
+
+---
+
+### Langkah 2
+
+Tambahkan Environment Variable:
+
+```env
+VITE_API_URL=https://backend-production.up.railway.app
+```
+
+---
+
+### Langkah 3
+
+Konfigurasi Build Command
+
+```bash
+npm install && npm run build
+```
+
+---
+
+### Langkah 4
+
+Konfigurasi Start Command
+
+```bash
+npm run preview -- --host 0.0.0.0 --port $PORT
+```
+
+---
+
+### Langkah 5
+
+Verifikasi Deployment
+
+Buka URL frontend:
+
+```text
+https://frontend-production.up.railway.app
+```
+
+Pastikan:
+
+* Login berjalan
+* Register berjalan
+* CRUD Task berjalan
+* Statistik task tampil dengan benar
+
+---
+
+## 5. CI/CD Pipeline
+
+Deployment otomatis dilakukan melalui GitHub Actions.
+
+Workflow:
+
+```text
+Developer Push
+        ↓
+GitHub Actions
+        ↓
+Backend Test (pytest)
+        ↓
+Frontend Test (Vitest)
+        ↓
+Build Application
+        ↓
+Railway Deployment
+```
+
+Setiap perubahan yang berhasil di-merge ke branch `main` akan memicu proses deployment otomatis.
+
+---
+
+## 6. Verifikasi Produksi
+
+Checklist setelah deployment:
+
+* Backend dapat diakses
+* Frontend dapat diakses
+* Database terkoneksi
+* Login berhasil
+* Register berhasil
+* CRUD Task berhasil
+* JWT Authentication berjalan
+* Health Check mengembalikan status healthy
+* CI/CD pipeline berstatus passing
+
+---
+
+## 7. Monitoring
+
+Endpoint monitoring yang tersedia:
+
+| Endpoint  | Fungsi                    |
+| --------- | ------------------------- |
+| `/health` | Status aplikasi           |
+| `/docs`   | Swagger API Documentation |
+
+Contoh:
+
+```text
+https://backend-production.up.railway.app/health
+```
+
+```text
+https://backend-production.up.railway.app/docs
+```
+
+---
+
+## 8. Troubleshooting
+
+### Backend Tidak Bisa Terkoneksi Database
+
+Periksa:
+
+```env
+DATABASE_URL
+```
+
+dan pastikan PostgreSQL Railway sedang aktif.
+
+---
+
+### Frontend Tidak Bisa Mengakses API
+
+Periksa:
+
+```env
+VITE_API_URL
+```
+
+dan konfigurasi:
+
+```env
+ALLOWED_ORIGINS
+```
+
+---
+
+### Deployment Gagal
+
+Periksa log deployment Railway dan log GitHub Actions untuk mengetahui penyebab error.
+
+## 🔐 Security
+
+- JWT authentication with expiry
+- bcrypt password hashing
+- Input validation (Pydantic)
+- CORS configured per environment
+- Secrets via environment variables (never hardcoded)
+- Database per service (no shared DB)
+
+
+## 📄 Documentation
+
+- [Architecture Guide](docs/architecture.md)
+- [Deployment Guide](docs/deployment-guide.md)
+- [Operations Guide](docs/operations-guide.md)
+- [API Contract](docs/api-contract.md)
+- [Release Notes](docs/release-notes-m3.md)
+- [Dokumentasi hasil testing semua endpoint via Swagger](docs/api-test-results.md)
+- [Dokumentasi UI testing](docs/ui-test-results.md)
+- [Dokumentasi Auth testing](docs/auth-test-results.md)
+- [Docker Cheatsheet](docs/docker-cheatsheet.md)
+- [Setup Guide](docs/setup-guide.md)
+- [Testing Guide](docs/testing-guide.md)
+- [Production Test](docs/production-test.md)
+- [Git Workflow](docs/git-workflow.md)
 
 ## 🚀 Getting Started
 
@@ -70,21 +417,38 @@ User (Browser)
 - Node.js 18+
 - Git
 
-### ⚙️ Backend Setup (Without Docker)
+### Run Locally
 
+```bash
+# Clone repository
+git clone https://github.com/[org]/[repo].git
+cd [repo]
+
+# Copy environment file
+cp .env.example .env
+# Edit .env with your values
+
+# Start all services
+docker compose up -d
+
+# Verify
+docker compose ps
+curl http://localhost/health
+```
+
+Open http://localhost in your browser.
+
+### Run Without Docker
+
+```bash
+# Backend (Auth Service)
 cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+uvicorn main:app --reload --port 8001
 
-### 🎨 Frontend Setup (Without Docker)
-
+# Frontend
 cd frontend
-npm install
 npm run dev
-
-### 🐳 Run with Docker
-
-docker-compose up --build
+```
 
 ---
 
@@ -97,80 +461,106 @@ docker-compose up --build
 | 3      | React Frontend         | ✅     |
 | 4      | Full-Stack Integration | ✅     |
 | 5-7    | Docker & Compose       | ✅     |
-| 8      | UTS Demo               | ⬜     |
-| 9-11   | CI/CD Pipeline         | ⬜     |
-| 12-14  | Microservices          | ⬜     |
-| 15-16  | Final & UAS            | ⬜     |
+| 8      | UTS Demo               | ✅     |
+| 9-11   | CI/CD Pipeline         | ✅     |
+| 12-14  | Microservices          | ✅     |
+| 15-16  | Final & UAS            | ✅     |
 
 ---
+
 
 ## 📁 Project Structure
 
 ```text
+```text
 cc-kelompok-sowelcloudspace/
-├── docker-compose.yml                           # BARU (orchestrasi multi-container: backend, frontend, db, dll)
-
+├── docker-compose.yml                           # Updated (konfigurasi container, logging, dan monitoring)
+│
 ├── backend/                                     # FastAPI Backend
 │   ├── scripts/
-│   │   └── wait-for-db.sh                       # Startup script — ping PostgreSQL sebelum start uvicorn
-│   ├── main.py                                  # Entry point aplikasi (auth endpoints, CORS, task CRUD)
-│   ├── auth.py                                  # JWT utilities (create token)
-│   ├── database.py                              # Koneksi database & session management
+│   │   └── wait-for-db.sh                       # Menunggu PostgreSQL siap sebelum backend dijalankan
+│   │
+│   ├── shared/                                  # BARU (modul bersama untuk observability)
+│   │   ├── logging_config.py                    # Konfigurasi format dan level logging aplikasi
+│   │   ├── logging_middleware.py                # Middleware untuk mencatat request & response HTTP
+│   │   └── metrics.py                           # Pengumpulan metrik aplikasi (request count, response time,health)
+│   │
+│   ├── main.py                                  # Entry point aplikasi (auth endpoints, task CRUD, logging,metrics)
+│   ├── auth.py                                  # JWT utilities (create & verify token)
+│   ├── database.py                              # Koneksi database dan session management
 │   ├── models.py                                # SQLAlchemy models (Task, User)
-│   ├── schemas.py                               # Pydantic schemas (TaskCreate, TaskUpdate, TaskResponse, UserCreate)
-│   ├── crud.py                                  # CRUD operations (user + task)
-│   ├── requirements.txt                         # Python dependencies (fastapi, jose, passlib, bcrypt, dll)
-│   ├── Dockerfile                               # Docker image config (multi-step, healthcheck, wait-for-db)
-│   ├── .dockerignore                            # File yang dikecualikan dari Docker build
-│   ├── .env                                     # Environment variables (DATABASE_URL, JWT, CORS)
-│   ├── .env.docker                              # BARU (env khusus untuk container Docker)
+│   ├── schemas.py                               # Pydantic schemas untuk validasi request/response
+│   ├── crud.py                                  # Operasi CRUD untuk task dan user
+│   ├── requirements.txt                         # Dependency Python
+│   ├── Dockerfile                               # Konfigurasi image Docker backend
+│   ├── .dockerignore                            # File yang dikecualikan saat build Docker
+│   ├── .env                                     # Environment variables lokal
+│   ├── .env.docker                              # Environment variables untuk Docker
 │   └── .env.example                             # Template konfigurasi environment
 │
 ├── frontend/                                    # React Frontend (Vite + Nginx)
-│   ├── public/                                  # Aset statis publik
-│   │   └── vite.svg
-│   ├── src/                                     # Source code utama
-│   │   ├── assets/                              # Gambar & aset statis
-│   │   │   └── react.svg
+│   ├── public/
+│   │   └── vite.svg                             # Asset publik
+│   │
+│   ├── src/
+│   │   ├── assets/
+│   │   │   └── react.svg                        # Asset React
+│   │   │
 │   │   ├── components/
-│   │   │   ├── Header.jsx                       # Header & statistik task
-│   │   │   ├── LoginPage.jsx                    # Halaman login & register
-│   │   │   ├── SearchBar.jsx                    # Input pencarian task
-│   │   │   ├── SortDropdown.jsx                 # Dropdown sorting task
-│   │   │   ├── TaskCard.jsx                     # Card untuk setiap task
+│   │   │   ├── Header.jsx                       # Header aplikasi & statistik task
+│   │   │   ├── LoginPage.jsx                    # Halaman login dan register
+│   │   │   ├── SearchBar.jsx                    # Fitur pencarian task
+│   │   │   ├── SortDropdown.jsx                 # Fitur sorting task
+│   │   │   ├── TaskCard.jsx                     # Tampilan setiap task
 │   │   │   ├── TaskForm.jsx                     # Form create/edit task
-│   │   │   ├── TaskList.jsx                     # Container daftar tasks
-│   │   │   └── ItemList.jsx                     # Container daftar items (legacy)
-│   ├── services/
-│   │   └── api.js                               # Semua fungsi fetch API
-│   ├── App.jsx                                  # Komponen utama React
-│   ├── App.css                                  # Style komponen App
-│   ├── main.jsx                                 # Entry point React
-│   ├── index.css                                # Style global
-│   ├── index.html                               # Template HTML utama
-│   ├── package.json                             # Dependency & scripts Node.js
+│   │   │   ├── TaskList.jsx                     # Daftar seluruh task
+│   │   │   └── ItemList.jsx                     # Komponen legacy item list
+│   │   │
+│   │   ├── pages/                               # BARU
+│   │   │   └── StatusPage.jsx                   # Dashboard status aplikasi dan monitoring service
+│   │   │
+│   │   ├── services/
+│   │   │   └── api.js                           # Seluruh komunikasi API frontend-backend
+│   │   │
+│   │   ├── App.jsx                              # Komponen utama React
+│   │   ├── App.css                              # Styling App
+│   │   ├── main.jsx                             # Entry point React
+│   │   ├── index.css                            # Global styling
+│   │   └── index.html                           # Template HTML utama
+│   │
+│   ├── package.json                             # Dependency dan script Node.js
 │   ├── vite.config.js                           # Konfigurasi Vite
 │   ├── eslint.config.js                         # Konfigurasi ESLint
-│   ├── Dockerfile                               # BARU (build + serve pakai Nginx)
-│   ├── nginx.conf                               # BARU (config reverse proxy / static serve)
-│   └── .dockerignore                            # BARU
+│   ├── Dockerfile                               # Build dan deployment frontend container
+│   ├── nginx.conf                               # Konfigurasi Nginx untuk serving frontend
+│   └── .dockerignore                            # File yang diabaikan saat build Docker
 │
-├── docs/                                        # Dokumentasi tim
+├── scripts/                                     # BARU (utility project)
+│   ├── logs.sh                                  # Script untuk melihat dan memfilter log container
+│   └── migrate_data.py                          # Script migrasi atau transfer data
+│
+├── docs/                                        # Dokumentasi proyek
 │   ├── docs/
-│   │   └── image-comparison.md
-│   ├── images/                                  # Screenshot endpoint & hasil testing
-│   ├── member-[Anjas-Geofany-Diamare].md
-│   ├── member-arya.md
-│   ├── member-Cantika Ade Qutnindra Maharani.md
-│   ├── member-Meiske Handayani.md
-│   ├── api-test-results.md
-│   ├── docker-cheatsheet.md
-│   └── ui-test-result.md
+│   │   └── image-comparison.md                  # Dokumentasi perbandingan hasil gambar
+│   │
+│   ├── images/                                  # Screenshot pengujian dan bukti implementasi
+│   │
+│   ├── member-[Anjas-Geofany-Diamare].md        # Kontribusi Lead Backend
+│   ├── member-arya.md                           # Kontribusi Lead DevOps
+│   ├── member-Cantika-Ade-Qutnindra-Maharani.md # Kontribusi Lead Frontend
+│   ├── member-Meiske-Handayani.md               # Kontribusi Lead QA & Docs
+│   │
+│   ├── api-test-results.md                      # Hasil pengujian API
+│   ├── docker-cheatsheet.md                     # Panduan penggunaan Docker
+│   ├── ui-test-result.md                        # Hasil pengujian UI
+│   ├── monitoring-guide.md                      # BARU (panduan monitoring aplikasi)
+│   └── reliability-testing.md                   # BARU (hasil pengujian reliability dan recovery)
 │
 ├── setup.sh                                     # Script setup awal proyek
-├── .gitignore
-└── README.md
+├── .gitignore                                   # Daftar file yang tidak di-track Git
+└── README.md                                    # Dokumentasi utama proyek
 ```
+
 
 # API Endpoints Documentation
 
@@ -252,7 +642,7 @@ Contoh isi `.env`:
 DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/sowel_task
 
 # JWT
-SECRET_KEY=your-secret-key-minimum-32-characters
+SECRET_KEY=CHANGE_ME_RANDOM_STRING_MIN_32_CHARS
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 

@@ -30,7 +30,20 @@ logger = logging.getLogger("sowel-api")
 
 Base.metadata.create_all(bind=engine)
 
-# ==================== APP INIT ====================
+# ==================== AUTO MIGRATION ====================
+try:
+    from sqlalchemy import inspect
+    inspector = inspect(engine)
+    if inspector.has_table("tasks"):
+        columns = [col["name"] for col in inspector.get_columns("tasks")]
+        if "visible_to" not in columns:
+            logger.info("Migrating database: Adding 'visible_to' column to 'tasks' table...")
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE tasks ADD COLUMN visible_to TEXT DEFAULT '[]'"))
+                conn.execute(text("UPDATE tasks SET visible_to = '[]' WHERE visible_to IS NULL"))
+            logger.info("Migration completed successfully.")
+except Exception as e:
+    logger.error("Error during auto-migration: %s", e)# ==================== APP INIT ====================
 app = FastAPI(
     title=APP_TITLE,
     version=APP_VERSION,
@@ -206,15 +219,38 @@ def verify_username(username: str, db: Session = Depends(get_db)):
 # ==================== TASK (PROTECTED) ====================
 
 def check_task_permission(task, user_id: int, db: Session, required_level: str = "read_write"):
-    # 1. User is the task owner
-    if task.owner_id == user_id:
+    """Cek akses user ke task. task bisa berupa dict (dari _task_to_dict) atau ORM object."""
+    # Helper: ambil field dari dict atau object
+    def _get(field):
+        if isinstance(task, dict):
+            return task.get(field)
+        return getattr(task, field, None)
+
+    task_owner_id = _get("owner_id")
+    task_folder_id = _get("folder_id")
+    task_visible_to = _get("visible_to") or []
+
+    # 1. User is the task owner → selalu boleh
+    if task_owner_id == user_id:
         return
 
-    # 2. Check folder-based access
-    if task.folder_id is not None:
+    # 2. Cek visible_to: jika diisi, hanya user di list yang boleh akses
+    if task_visible_to:
+        from models import User
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user or not any(v.lower() == user.name.lower() for v in task_visible_to):
+            raise HTTPException(status_code=403, detail="Tidak punya akses ke task ini")
+        # User ada di visible_to, lanjut cek level
+        if required_level == "read_write":
+            return
+        # Untuk admin (delete), hanya owner task yang boleh
+        raise HTTPException(status_code=403, detail="Hanya pemilik task yang boleh menghapus")
+
+    # 3. visible_to kosong → fallback ke folder-based access
+    if task_folder_id is not None:
         from models import Folder, User
         import json
-        folder = db.query(Folder).filter(Folder.id == task.folder_id).first()
+        folder = db.query(Folder).filter(Folder.id == task_folder_id).first()
         if folder:
             is_folder_owner = folder.owner_id == user_id
             
@@ -277,12 +313,35 @@ def read_all(
     return crud.get_tasks(db, int(user_id), skip=skip, limit=limit, folder_id=folder_id)
 
 
+# REMINDERS
+@app.get("/tasks/reminders/upcoming", response_model=list[TaskResponse])
+def get_upcoming_reminders(
+    difficulty: str | None = None,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    user_id=Depends(get_current_user),
+):
+    """Mendapatkan tugas dengan deadline terdekat yang belum selesai."""
+    return crud.get_upcoming_reminders(db, int(user_id), difficulty=difficulty, limit=limit)
+
+
+@app.get("/tasks/reminders/calendar", response_model=list[TaskResponse])
+def get_calendar_reminders(
+    year: int,
+    month: int,
+    db: Session = Depends(get_db),
+    user_id=Depends(get_current_user),
+):
+    """Mendapatkan semua tugas yang memiliki deadline pada bulan dan tahun tertentu."""
+    return crud.get_calendar_reminders(db, int(user_id), year=year, month=month)
+
+
 # STATS
 @app.get("/tasks/stats")
 def stats(db: Session = Depends(get_db), user_id=Depends(get_current_user)):
     tasks = crud.get_tasks(db, int(user_id))
     total = len(tasks)
-    done = len([t for t in tasks if t.status == "done"])
+    done = len([t for t in tasks if t["status"] == "done"])
     return {
         "total": total,
         "completed": done,

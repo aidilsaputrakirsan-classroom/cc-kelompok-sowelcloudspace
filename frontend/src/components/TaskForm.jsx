@@ -321,6 +321,16 @@ const styles = {
     fontFamily: "'Inter', sans-serif",
     fontWeight: 600,
   },
+  lockedField: {
+    padding: "0.75rem 0.85rem",
+    border: "2px solid #e5e7eb",
+    borderRadius: "8px",
+    fontSize: "0.92rem",
+    color: "#4b5563",
+    background: "#f8fafc",
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: 600,
+  },
   priorityGroup: {
     display: "flex",
     gap: "0.4rem",
