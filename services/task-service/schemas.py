@@ -1,6 +1,6 @@
 """Pydantic schemas for Task Service — disesuaikan dengan backend monolith."""
-from pydantic import BaseModel, field_validator
-from typing import Optional
+from pydantic import BaseModel, field_validator, Field
+from typing import Optional, Any
 from datetime import datetime
 import json
 
