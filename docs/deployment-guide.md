@@ -448,5 +448,64 @@ dos2unix backend/scripts/wait-for-db.sh
 - Lakukan login ulang untuk mendapatkan token baru
 - Di production, gunakan `SECRET_KEY` yang kuat (minimal 32 karakter)
 
+---
+
+## Final DevOps Notes - Modul 15
+
+### Docker Compose Environment
+
+Deployment final memakai root `.env.example` sebagai template konfigurasi. Copy file tersebut menjadi `.env`, lalu isi semua nilai `CHANGE_ME` sebelum menjalankan Compose.
+
+```bash
+cp .env.example .env
+docker compose up --build -d
+```
+
+Variabel wajib:
+
+| Variable | Keterangan |
+|----------|------------|
+| `POSTGRES_PASSWORD` | Password PostgreSQL, wajib kuat |
+| `AUTH_DATABASE_URL` | URL database Auth Service |
+| `TASK_DATABASE_URL` | URL database Task Service |
+| `SECRET_KEY` | Secret JWT yang sama untuk Auth dan Task |
+| `CORS_ORIGINS` | Origin frontend yang diizinkan |
+| `VITE_API_URL` | URL gateway untuk frontend |
+
+Untuk production, Compose memakai guard `${VAR:?message}` pada secret penting. Artinya service akan gagal start jika env wajib belum diisi, sehingga tidak diam-diam memakai password default lemah.
+
+### Gateway Rate Limiting
+
+Gateway Nginx sudah menerapkan rate limiting:
+
+| Route | Limit | Keterangan |
+|-------|-------|------------|
+| `/auth/login` | 5 req/s, burst 10 | Proteksi brute force login |
+| `/auth/register` | 5 req/s, burst 5 | Proteksi abuse registrasi |
+| `/tasks` | 20 req/s, burst 30 | Proteksi API task |
+| `/api/folders` | 20 req/s, burst 30 | Proteksi API folder |
+| `/users/verify` | 20 req/s, burst 20 | Proteksi verifikasi user |
+| `/` | 30 req/s, burst 50 | Proteksi frontend dan route umum |
+
+Test cepat:
+
+```bash
+for i in $(seq 1 20); do
+  curl -s -o /dev/null -w "Request $i: %{http_code}\n" \
+    -X POST http://localhost/auth/login \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "username=demo&password=wrong"
+done
+```
+
+Expected: setelah beberapa request, gateway mengembalikan HTTP `429`.
+
+### Operations Documents
+
+Dokumen operasional tambahan:
+
+- `docs/operations-guide.md`
+- `docs/final-checklist.md`
+
 
 

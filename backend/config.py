@@ -11,6 +11,7 @@ Environment:
 
 import os
 import logging
+import secrets
 from dotenv import load_dotenv
 
 # Load .env file (tidak error jika file tidak ada)
@@ -33,11 +34,15 @@ APP_VERSION: str = os.getenv("APP_VERSION", "1.0.0")
 # ==================== DATABASE ====================
 DATABASE_URL: str = os.getenv(
     "DATABASE_URL",
-    "postgresql://postgres:admin@localhost:5432/sowel_task",
+    "sqlite:///./sowel_task.db",
 )
 
 # ==================== JWT / AUTH ====================
-SECRET_KEY: str = os.getenv("SECRET_KEY", "supersecretkey123")
+SECRET_KEY: str = os.getenv("SECRET_KEY") or secrets.token_urlsafe(32)
+if not os.getenv("SECRET_KEY"):
+    logging.getLogger("sowel-api").warning(
+        "SECRET_KEY is not set; using an ephemeral development key"
+    )
 ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
