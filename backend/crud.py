@@ -164,6 +164,89 @@ def delete_task(db: Session, task_id: int):
     return True
 
 
+# ==================== REMINDER CRUD ====================
+
+def get_upcoming_reminders(db: Session, owner_id: int, difficulty: str | None = None, limit: int = 50):
+    """Ambil tugas dengan deadline terdekat yang belum selesai, bisa difilter berdasarkan difficulty/priority."""
+    from sqlalchemy import or_
+    folders = get_folders_by_owner(db, owner_id)
+    accessible_folder_ids = [f["id"] for f in folders]
+
+    query = db.query(Task).filter(
+        or_(
+            Task.owner_id == owner_id,
+            Task.folder_id.in_(accessible_folder_ids) if accessible_folder_ids else False
+        ),
+        Task.deadline.isnot(None),
+        Task.status != "done"
+    )
+
+    if difficulty:
+        query = query.filter(Task.priority == difficulty)
+
+    # Urutkan berdasarkan waktu paling dekat
+    query = query.order_by(Task.deadline.asc())
+    all_tasks = query.limit(limit).all()
+
+    # Filter berdasarkan visible_to
+    user = db.query(User).filter(User.id == owner_id).first()
+    username = user.name if user else ""
+
+    filtered = []
+    for task in all_tasks:
+        visible_list = _parse_visible_to(task.visible_to)
+        if not visible_list:
+            filtered.append(task)
+        elif task.owner_id == owner_id:
+            filtered.append(task)
+        elif any(v.lower() == username.lower() for v in visible_list):
+            filtered.append(task)
+
+    return [_task_to_dict(t) for t in filtered]
+
+def get_calendar_reminders(db: Session, owner_id: int, year: int, month: int):
+    """Ambil tugas untuk ringkasan kalender bulanan."""
+    from sqlalchemy import or_
+    import calendar
+    from datetime import datetime
+    
+    # Menentukan range tanggal awal dan akhir bulan
+    _, last_day = calendar.monthrange(year, month)
+    start_date = datetime(year, month, 1)
+    end_date = datetime(year, month, last_day, 23, 59, 59)
+
+    folders = get_folders_by_owner(db, owner_id)
+    accessible_folder_ids = [f["id"] for f in folders]
+
+    query = db.query(Task).filter(
+        or_(
+            Task.owner_id == owner_id,
+            Task.folder_id.in_(accessible_folder_ids) if accessible_folder_ids else False
+        ),
+        Task.deadline.isnot(None),
+        Task.deadline >= start_date,
+        Task.deadline <= end_date
+    ).order_by(Task.deadline.asc())
+    
+    all_tasks = query.all()
+
+    user = db.query(User).filter(User.id == owner_id).first()
+    username = user.name if user else ""
+
+    filtered = []
+    for task in all_tasks:
+        visible_list = _parse_visible_to(task.visible_to)
+        if not visible_list:
+            filtered.append(task)
+        elif task.owner_id == owner_id:
+            filtered.append(task)
+        elif any(v.lower() == username.lower() for v in visible_list):
+            filtered.append(task)
+
+    return [_task_to_dict(t) for t in filtered]
+
+
+
 # ==================== FOLDER CRUD ====================
 
 
