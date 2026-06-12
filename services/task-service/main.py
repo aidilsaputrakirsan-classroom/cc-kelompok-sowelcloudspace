@@ -79,6 +79,20 @@ async def verify_token_local(request: Request) -> str:
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+async def verify_token_optional(request: Request) -> str | None:
+    """Dependency: Verifikasi JWT token secara lokal, tapi tidak throw error jika gagal (graceful degradation)."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return None
+
+    token = auth_header.split("Bearer ")[1]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        return str(user_id) if user_id else None
+    except Exception:
+        return None
+
 async def get_user_name(user_id: int, request: Request) -> str:
     """Helper untuk mengambil nama user dari auth-service (hanya dipanggil saat butuh validasi group folder)."""
     auth_header = request.headers.get("Authorization")
@@ -332,8 +346,16 @@ async def read_tasks(
 async def task_stats(
     request: Request,
     db: Session = Depends(get_db),
-    user_id: str = Depends(verify_token_local),
+    user_id: str | None = Depends(verify_token_optional),
 ):
+    if user_id is None:
+        # Graceful degradation fallback
+        return {
+            "total": 0,
+            "completed": 0,
+            "pending": 0,
+        }
+
     uid = int(user_id)
     # Similar filtering logic as read_tasks
     query = db.query(Task)
@@ -358,6 +380,15 @@ async def task_stats(
         "completed": done,
         "pending": total - done,
     }
+
+
+@app.get("/tasks/public", response_model=list[TaskResponse])
+async def get_public_tasks(
+    db: Session = Depends(get_db),
+    limit: int = 10
+):
+    """Endpoint publik yang tidak membutuhkan otentikasi."""
+    return db.query(Task).limit(limit).all()
 
 
 @app.get("/tasks/{task_id}", response_model=TaskResponse)
