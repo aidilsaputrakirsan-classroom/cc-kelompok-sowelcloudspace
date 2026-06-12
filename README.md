@@ -84,7 +84,32 @@ npm run dev
 
 ### 🐳 Run with Docker
 
-docker-compose up --build
+```bash
+cp .env.example .env
+# edit .env dan isi semua CHANGE_ME
+docker compose up --build -d
+```
+
+Mode development dengan hot reload:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
+```
+
+Mode production:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+```
+
+### Final DevOps Hardening
+
+- Root `.env.example` menjadi template konfigurasi Compose final.
+- Secret penting (`POSTGRES_PASSWORD`, `DATABASE_URL`, `SECRET_KEY`) dibaca dari environment variables.
+- Gateway Nginx menerapkan rate limiting untuk `/auth/login`, `/auth/register`, `/tasks`, `/api/folders`, dan route umum.
+- Production Compose tidak memakai default password/secret lemah.
+- Panduan operasional tersedia di `docs/operations-guide.md`.
+- Checklist UAS DevOps tersedia di `docs/final-checklist.md`.
 
 ---
 
@@ -252,7 +277,7 @@ Contoh isi `.env`:
 DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/sowel_task
 
 # JWT
-SECRET_KEY=your-secret-key-minimum-32-characters
+SECRET_KEY=CHANGE_ME_RANDOM_STRING_MIN_32_CHARS
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 

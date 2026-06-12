@@ -10,6 +10,7 @@ Disesuaikan dengan backend monolith Sowel Task API yang sudah ada.
 """
 import os
 import logging
+import secrets
 from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, Depends, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
@@ -56,7 +57,10 @@ app.add_middleware(
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT config — harus sama dengan yang dipakai di monolith
-SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey123")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    SECRET_KEY = secrets.token_urlsafe(32)
+    logger.warning("SECRET_KEY is not set; using an ephemeral development key")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 

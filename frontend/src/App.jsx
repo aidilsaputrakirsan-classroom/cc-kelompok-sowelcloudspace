@@ -59,11 +59,12 @@ function App() {
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false)
   const [folderModalMode, setFolderModalMode] = useState("create")
   const [folderEditingId, setFolderEditingId] = useState(null)
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
+  const [taskModalMode, setTaskModalMode] = useState("create")
+  const [taskModalFolderId, setTaskModalFolderId] = useState(null)
   const [folders, setFolders] = useState([])
   const [selectedFolderId, setSelectedFolderId] = useState(null)
   const [isFolderDetailLoading, setIsFolderDetailLoading] = useState(false)
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false)
-  const [taskModalMode, setTaskModalMode] = useState("create")
   const [fatalError, setFatalError] = useState(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
@@ -79,6 +80,9 @@ function App() {
     setPriorityFilter("all")
     setDashboardQuery("")
     setSelectedFolderId(null)
+    setIsTaskModalOpen(false)
+    setTaskModalMode("create")
+    setTaskModalFolderId(null)
     setFolders([])
     setToast({ message: "Logout berhasil", type: "success" })
   }, [])
@@ -288,18 +292,24 @@ function App() {
       }
       setIsTaskModalOpen(false)
       await loadTasks()
+      setIsTaskModalOpen(false)
+      setTaskModalMode("create")
+      setTaskModalFolderId(null)
+      setEditingTask(null)
     } catch (err) {
       if (err.message === "UNAUTHORIZED") handleLogout()
       else if (!escalateApiError(err, "Gagal menyimpan reminder.")) {
         setToast({ message: `Gagal menyimpan: ${getUserFriendlyErrorMessage(err)}`, type: "error" })
       }
+      throw err
     } finally {
       setLoading(false)
     }
   }
 
   const handleEdit = (task) => {
-    setSelectedFolderId(task.folderId || null)
+    setTaskModalMode("edit")
+    setTaskModalFolderId(task.folderId || null)
     setEditingTask(task)
     setTaskModalMode("edit")
     setIsTaskModalOpen(true)
@@ -534,6 +544,7 @@ function App() {
               onEditTask={handleEdit}
               onDeleteTask={handleDelete}
               onCompleteTask={handleComplete}
+              onAddTask={handleOpenCreateTaskModal}
             />
           )}
 
