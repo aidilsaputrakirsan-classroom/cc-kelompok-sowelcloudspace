@@ -15,6 +15,7 @@ const DashboardHome = lazy(() => import("./components/DashboardHome"))
 const ReminderPage = lazy(() => import("./components/ReminderPage"))
 const YearCalendarPage = lazy(() => import("./components/YearCalendarPage"))
 const FolderDetailPage = lazy(() => import("./components/FolderDetailPage"))
+const StatusPage = lazy(() => import("./components/StatusPage"))
 
 function Toast({ message, type, onClose }) {
   useEffect(() => {
@@ -559,6 +560,8 @@ function App() {
           )}
 
 
+
+          {currentPage === "status" && <StatusPage />}
 
           {currentPage === "about" && <AboutPage onBack={() => setCurrentPage("home")} />}
         </main>
