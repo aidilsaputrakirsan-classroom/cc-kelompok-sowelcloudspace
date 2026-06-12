@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 # ================= TASK =================
@@ -11,6 +11,7 @@ class TaskBase(BaseModel):
     deadline: Optional[datetime] = None
     assigned_to: Optional[str] = None
     folder_id: Optional[int] = None
+    visible_to: List[str] = Field(default_factory=list)  # kosong = semua member folder bisa lihat
 
 class TaskCreate(TaskBase):
     pass
@@ -23,16 +24,17 @@ class TaskUpdate(BaseModel):
     deadline: Optional[datetime] = None
     assigned_to: Optional[str] = None
     folder_id: Optional[int] = None
+    visible_to: Optional[List[str]] = None
 
 class TaskResponse(TaskBase):
     id: int
     status: str
     owner_id: Optional[int] = None
     folder_id: Optional[int] = None
+    visible_to: List[str] = Field(default_factory=list)
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 # ================= AUTH =================

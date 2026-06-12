@@ -28,6 +28,7 @@ function FolderDetailPage({
   onOpenCreateTaskModal,
   onDeleteTask,
   onCompleteTask,
+  onAddTask,
 }) {
   const folderTasks = selectedFolder
     ? tasks.filter((task) => String(task.folderId ?? task.folder_id ?? "") === String(selectedFolder.id))
@@ -63,11 +64,11 @@ function FolderDetailPage({
   return (
     <WorkspacePage
       selectedFolder={selectedFolder}
-        folders={folders}
-        totalTasks={folderTasks.length}
-        filteredTasks={folderTasks.length}
-        completedTasks={completedTasks}
-        isConnected={isConnected}
+      folders={folders}
+      totalTasks={folderTasks.length}
+      filteredTasks={folderTasks.length}
+      completedTasks={completedTasks}
+      isConnected={isConnected}
       onAddFolder={onAddFolder}
       onClearFolder={onClearFolder}
       onSelectFolder={onSelectFolder}
@@ -161,16 +162,20 @@ function FolderDetailPage({
           <div className="panel__head">
             <div>
               <h2>Reminder di Folder Ini</h2>
-              <p>Semua task yang terhubung ke folder ini ditampilkan di bawah.</p>
+              <p>
+                {selectedFolder.type === "group"
+                  ? "Folder group ini bisa dipakai kolaborasi oleh member yang sudah terhubung ke folder."
+                  : "Semua task yang terhubung ke folder ini ditampilkan dan bisa dikelola di sini."}
+              </p>
             </div>
             {loading ? <span>Memuat...</span> : <span>{folderTasks.length} item</span>}
           </div>
 
-          <div style={{ marginBottom: "1rem" }}>
+          <div className="folder-detail-task-actions">
             <button
               type="button"
               className="primary-button"
-              onClick={() => onOpenCreateTaskModal(selectedFolder.id)}
+              onClick={() => onAddTask(selectedFolder.id)}
             >
               Tambah Task Baru
             </button>

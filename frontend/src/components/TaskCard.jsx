@@ -99,6 +99,7 @@ const styles = {
     boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
     transition: "all 0.2s",
     fontFamily: "'Inter', sans-serif",
+    minWidth: 0,
   },
   cardHeader: {
     display: "flex",
@@ -107,32 +108,37 @@ const styles = {
     marginBottom: "0.5rem",
     gap: "0.75rem",
     flexWrap: "wrap",
+    minWidth: 0,
   },
   taskTitle: {
     margin: 0,
     fontSize: "1.05rem",
     fontWeight: 700,
-    flex: 1,
+    flex: "1 1 180px",
+    minWidth: 0,
+    overflowWrap: "anywhere",
   },
   badges: {
     display: "flex",
     gap: "0.35rem",
-    flexShrink: 0,
+    flex: "1 1 120px",
     flexWrap: "wrap",
     justifyContent: "flex-end",
+    minWidth: 0,
   },
   badge: {
     padding: "0.2rem 0.6rem",
     borderRadius: "20px",
     fontSize: "0.7rem",
     fontWeight: 600,
-    whiteSpace: "nowrap",
+    overflowWrap: "anywhere",
   },
   description: {
     color: "#666",
     fontSize: "0.88rem",
     margin: "0.25rem 0 0.75rem 0",
     lineHeight: 1.5,
+    overflowWrap: "anywhere",
   },
   meta: {
     display: "flex",
@@ -142,7 +148,9 @@ const styles = {
     color: "#888",
     marginBottom: "0.75rem",
   },
-  metaItem: {},
+  metaItem: {
+    overflowWrap: "anywhere",
+  },
   actions: {
     display: "flex",
     gap: "0.4rem",
@@ -151,7 +159,7 @@ const styles = {
     flexWrap: "wrap",
   },
   btnComplete: {
-    flex: 1,
+    flex: "1 1 86px",
     padding: "0.45rem",
     background: "#d1fae5",
     color: "#059669",
@@ -164,7 +172,7 @@ const styles = {
     fontFamily: "'Inter', sans-serif",
   },
   btnEdit: {
-    flex: 1,
+    flex: "1 1 72px",
     padding: "0.45rem",
     background: "#ede9fe",
     color: "#7c5cbf",
@@ -177,7 +185,7 @@ const styles = {
     fontFamily: "'Inter', sans-serif",
   },
   btnDelete: {
-    flex: 1,
+    flex: "1 1 72px",
     padding: "0.45rem",
     background: "#fee2e2",
     color: "#dc2626",

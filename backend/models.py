@@ -12,6 +12,7 @@ class Task(Base):
     priority = Column(String, default="medium")
     deadline = Column(DateTime, nullable=True)
     assigned_to = Column(String, nullable=True)
+    visible_to = Column(Text, default="[]")               # JSON array string, e.g. '["Anjas","Cantika"]' — empty = semua member folder
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     folder_id = Column(Integer, ForeignKey("folders.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
