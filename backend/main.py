@@ -1,11 +1,17 @@
 import logging
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from jose import jwt, JWTError
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address)
 
 from config import (
     APP_TITLE,
@@ -51,6 +57,9 @@ app = FastAPI(
     docs_url="/docs" if DOCS_ENABLED else None,
     redoc_url="/redoc" if DOCS_ENABLED else None,
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 logger.info("Starting %s v%s [env=%s, debug=%s]", APP_TITLE, APP_VERSION, ENV, DEBUG)
 
@@ -147,7 +156,8 @@ def team():
 # ==================== AUTH ENDPOINT ====================
 
 @app.post("/auth/register")
-def register(user: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/second")
+def register(request: Request, user: UserCreate, db: Session = Depends(get_db)):
     db_user = crud.create_user(db, user)
     if not db_user:
         raise HTTPException(400, "Email already registered")
@@ -159,7 +169,8 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @app.post("/auth/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@limiter.limit("5/second")
+def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """
     Login menggunakan OAuth2 password flow.
     - username: isi dengan name/username user (bukan email)

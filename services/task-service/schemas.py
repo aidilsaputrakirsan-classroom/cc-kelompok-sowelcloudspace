@@ -15,6 +15,13 @@ class TaskBase(BaseModel):
     assigned_to: Optional[str] = None
     folder_id: Optional[int] = None
 
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, v):
+        if len(v.strip()) < 1:
+            raise ValueError("Judul tidak boleh kosong")
+        return v.strip()
+
 
 class TaskCreate(TaskBase):
     pass
@@ -50,6 +57,15 @@ class FolderCreate(BaseModel):
     members: list[str] = []
     color: str = "sunset"
     image_data: str = ""           # base64 data-URL string
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v):
+        if len(v.strip()) < 1:
+            raise ValueError("Nama folder tidak boleh kosong")
+        if len(v) > 100:
+            raise ValueError("Nama folder maksimal 100 karakter")
+        return v.strip()
 
 class FolderUpdate(BaseModel):
     name: Optional[str] = None
