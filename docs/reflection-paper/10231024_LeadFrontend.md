@@ -1,0 +1,27 @@
+# Reflection Paper - Cantika Ade Qutnindra Maharani (10231024)
+
+## Peran dan Kontribusi
+
+Sebagai anggota tim yang mengerjakan bagian frontend, saya banyak berfokus pada bagaimana aplikasi SowelTask dapat digunakan dengan nyaman oleh pengguna, mulai dari halaman login, dashboard utama, folder, reminder/task, kalender tahunan, hingga halaman status monitoring layanan. Pekerjaan frontend yang saya lakukan tidak hanya sebatas membuat tampilan, tetapi juga menghubungkan tampilan tersebut dengan data dari backend melalui API. Saya mengatur alur autentikasi pengguna, penyimpanan token login, pengambilan data task dan folder, pembuatan serta pengeditan reminder, penghapusan data, pencarian folder, filter task, notifikasi toast, tampilan loading, serta penanganan error ketika backend tidak dapat dihubungi.
+
+## Kendala yang Dihadapi
+
+Kendala terbesar saya selama mengerjakan frontend adalah memahami alur data React yang ternyata cukup kompleks. Pada awalnya, saya sering bingung kapan harus menyimpan data di useState, kapan harus memproses data menggunakan useMemo, dan kapan harus mengambil ulang data menggunakan useEffect. Akibatnya, beberapa data tidak langsung tampil setelah dibuat atau diubah, terutama data task yang terhubung dengan folder. Saya juga sempat mengalami masalah karena format data dari backend tidak selalu sama dengan format yang nyaman digunakan di frontend, misalnya perbedaan antara folder_id dan folderId, atau created_at dan createdAt. Jika tidak dinormalisasi, tampilan frontend menjadi tidak konsisten dan beberapa fitur seperti detail folder atau daftar reminder tidak berjalan sesuai harapan.
+
+Kesalahan lain yang sering saya lakukan adalah terlalu fokus pada tampilan visual terlebih dahulu sebelum memastikan alur datanya stabil. Misalnya, saya membuat kartu folder, halaman kalender, atau dashboard status agar terlihat rapi, tetapi kemudian menemukan bahwa data yang masuk belum lengkap, loading state belum ditangani, atau error dari backend belum ditampilkan dengan jelas kepada pengguna. Pada bagian API, saya juga belajar bahwa frontend tidak boleh hanya mengandalkan kondisi ideal. Ketika token kadaluarsa, backend mati, URL API salah, atau server mengembalikan error 500, aplikasi harus tetap memberi respons yang jelas, bukan hanya berhenti atau menampilkan halaman kosong.
+
+## Solusi
+
+Untuk menyelesaikan masalah alur data, saya mulai merapikan pusat logika aplikasi di App.jsx. Data penting seperti status login, user aktif, daftar task, daftar folder, halaman yang sedang dibuka, modal yang aktif, loading, dan error disimpan secara lebih terstruktur. Saya juga menggunakan useMemo untuk membuat data turunan seperti enhancedTasks, yaitu task yang sudah disambungkan kembali dengan folder-nya. Dengan cara ini, komponen lain seperti dashboard, reminder page, calendar, dan folder detail dapat menerima data yang lebih siap pakai.
+
+Masalah perbedaan format data backend dan frontend saya atasi melalui fungsi normalisasi di services/api.js. Data folder dan task dinormalisasi agar frontend bisa membaca folderId, folder_id, createdAt, dan created_at secara konsisten. Selain itu, saya membuat fungsi API khusus untuk login, register, mengambil task, membuat task, memperbarui task, menghapus task, mengambil folder, membuat folder, dan mengecek health backend. Penanganan error juga dibuat lebih jelas dengan ApiError, getUserFriendlyErrorMessage, dan pengecekan error fatal agar aplikasi bisa membedakan antara error biasa dan error yang perlu ditampilkan secara serius.
+
+Untuk memperbaiki pengalaman pengguna, saya menambahkan toast notification agar pengguna mendapat umpan balik setelah login, logout, membuat folder, menghapus reminder, atau ketika terjadi error. Saya juga menambahkan loading state dan error boundary agar aplikasi tidak langsung rusak ketika ada masalah koneksi. Pada bagian status page, saya membuat dashboard monitoring yang mengambil health dan metrics dari service, menampilkan status online/offline, database connection, uptime, total request, latency, success rate, serta visualisasi sederhana menggunakan SVG. Fitur auto-refresh juga ditambahkan agar status layanan dapat diperbarui otomatis tanpa pengguna harus me-refresh halaman secara manual.
+
+## Pelajaran yang Diambil
+
+Saya belajar bahwa mengerjakan frontend bukan hanya soal membuat tampilan yang menarik, tetapi juga memastikan data, state, dan interaksi pengguna berjalan dengan benar. React menuntut pemahaman yang rapi tentang alur data: dari API, masuk ke state, diproses, lalu ditampilkan ke komponen. Jika struktur state tidak jelas, bug kecil bisa menyebar ke banyak halaman.
+
+Saya juga belajar pentingnya membuat lapisan API yang rapi. Dengan memisahkan komunikasi backend ke dalam services/api.js, kode komponen menjadi lebih bersih dan lebih mudah dirawat. Normalisasi data menjadi pelajaran penting karena frontend dan backend sering menggunakan penamaan field yang berbeda. Daripada memperbaiki satu per satu di setiap komponen, lebih baik format data diseragamkan sejak awal.
+
+Pelajaran terbesar dari pengerjaan frontend ini adalah bahwa tampilan yang bagus harus didukung oleh logika yang stabil. Loading state, error handling, validasi form, feedback pengguna, dan konsistensi data adalah bagian penting dari kualitas aplikasi. Dari proyek ini, saya menjadi lebih paham bahwa frontend developer tidak hanya bertugas “mempercantik halaman”, tetapi juga membangun pengalaman pengguna yang jelas, responsif, dan tahan terhadap kondisi error.
