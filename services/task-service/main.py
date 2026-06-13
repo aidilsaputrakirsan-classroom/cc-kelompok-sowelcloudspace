@@ -317,6 +317,10 @@ async def delete_folder(
     folder = db.query(Folder).filter(Folder.id == folder_id, Folder.owner_id == uid).first()
     if not folder:
         raise HTTPException(404, "Folder not found atau anda bukan owner")
+        
+    # Hapus semua task yang ada di dalam folder ini
+    db.query(Task).filter(Task.folder_id == folder_id).delete()
+    
     db.delete(folder)
     db.commit()
     return {"message": "Folder deleted"}

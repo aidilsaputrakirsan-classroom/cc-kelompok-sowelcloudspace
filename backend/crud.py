@@ -356,6 +356,10 @@ def delete_folder(db: Session, folder_id: int, owner_id: int):
     folder = db.query(Folder).filter(Folder.id == folder_id, Folder.owner_id == owner_id).first()
     if not folder:
         return False
+        
+    # Hapus semua task di dalam folder ini
+    db.query(Task).filter(Task.folder_id == folder_id).delete()
+    
     db.delete(folder)
     db.commit()
     return True
