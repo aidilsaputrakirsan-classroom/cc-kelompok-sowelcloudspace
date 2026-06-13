@@ -35,6 +35,7 @@ Base.metadata.create_all(bind=engine)
 from logging_config import setup_logging
 from logging_middleware import RequestLoggingMiddleware
 from metrics import metrics
+from auth_client import fetch_user_name_from_auth, auth_circuit
 
 # Setup structured logging
 setup_logging()
@@ -129,22 +130,14 @@ async def verify_token_optional(request: Request) -> str | None:
         return None
 
 async def get_user_name(user_id: int, request: Request) -> str:
-    """Helper untuk mengambil nama user dari auth-service (hanya dipanggil saat butuh validasi group folder)."""
+    """Helper untuk mengambil nama user dari auth-service (menggunakan circuit breaker & retry)."""
     auth_header = request.headers.get("Authorization")
     correlation_id = getattr(request.state, "correlation_id", None)
     
-    headers = {"Authorization": auth_header}
-    if correlation_id:
-        headers["X-Correlation-ID"] = correlation_id
-
-    try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(f"{AUTH_SERVICE_URL}/auth/me", headers=headers, timeout=5.0)
-            if resp.status_code == 200:
-                return resp.json().get("name", "")
-    except Exception:
-        pass
-    return ""
+    if not auth_header:
+        return ""
+        
+    return await fetch_user_name_from_auth(auth_header, correlation_id)
 
 async def check_task_permission(task: Task, user_id: int, db: Session, request: Request, required_level: str = "read_write"):
     if task.owner_id == user_id:
@@ -179,10 +172,16 @@ async def check_task_permission(task: Task, user_id: int, db: Session, request: 
 
 @app.get("/health")
 def health_check(db: Session = Depends(get_db)):
+    cb_status = auth_circuit.get_status()
+    overall_status = "healthy" if cb_status["state"] == "CLOSED" else "degraded"
+
     health = {
-        "status": "healthy",
+        "status": overall_status,
         "service": "task-service",
         "version": "2.0.0",
+        "dependencies": {
+            "auth-service": cb_status
+        }
     }
     try:
         db.execute(text("SELECT 1"))
@@ -191,7 +190,7 @@ def health_check(db: Session = Depends(get_db)):
         health["status"] = "unhealthy"
         health["database"] = f"error: {str(e)}"
 
-    status_code = 200 if health["status"] == "healthy" else 503
+    status_code = 200 if health["status"] in ["healthy", "degraded"] else 503
     return JSONResponse(content=health, status_code=status_code)
 
 
