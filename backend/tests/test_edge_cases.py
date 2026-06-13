@@ -75,14 +75,12 @@ def test_login_empty_password(client):
 # ==================== EDGE CASE: TASK ====================
 
 def test_create_task_empty_title(client, auth_headers):
-    """Test membuat task dengan title kosong — tetap berhasil karena schema menerima str kosong."""
+    """Test membuat task dengan title kosong → 422 karena schema menolak judul kosong."""
     response = client.post("/tasks", json={
         "title": "",
         "priority": "high"
     }, headers=auth_headers)
-    # String kosong tetap valid untuk tipe str di Pydantic
-    assert response.status_code == 200
-    assert response.json()["title"] == ""
+    assert response.status_code == 422
 
 
 def test_create_task_missing_title(client, auth_headers):

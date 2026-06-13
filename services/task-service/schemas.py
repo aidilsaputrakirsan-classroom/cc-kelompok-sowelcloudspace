@@ -3,7 +3,6 @@ from pydantic import BaseModel, field_validator, Field
 from typing import Optional, Any
 from datetime import datetime
 import json
-import ast
 
 
 # ================= TASK =================

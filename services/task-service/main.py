@@ -228,8 +228,8 @@ async def create_folder(
 ):
     uid = int(user_id)
     folder_data = data.model_dump()
-    if 'members' in folder_data:
-        folder_data['members'] = json.dumps(folder_data['members'])
+    if isinstance(folder_data.get("members"), list):
+        folder_data["members"] = json.dumps(folder_data["members"])
     db_folder = Folder(**folder_data, owner_id=uid)
     db.add(db_folder)
     db.commit()
@@ -297,11 +297,10 @@ async def update_folder(
     folder = db.query(Folder).filter(Folder.id == folder_id, Folder.owner_id == uid).first()
     if not folder:
         raise HTTPException(404, "Folder not found atau anda bukan owner")
-    
+
     update_data = data.model_dump(exclude_unset=True)
-    if 'members' in update_data:
-        update_data['members'] = json.dumps(update_data['members'])
-        
+    if "members" in update_data and isinstance(update_data["members"], list):
+        update_data["members"] = json.dumps(update_data["members"])
     for key, value in update_data.items():
         setattr(folder, key, value)
         
