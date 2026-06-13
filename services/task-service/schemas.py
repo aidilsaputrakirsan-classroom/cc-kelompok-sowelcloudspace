@@ -8,12 +8,19 @@ import json
 # ================= TASK =================
 
 class TaskBase(BaseModel):
-    title: str
+    title: str = Field(..., max_length=50)
     description: Optional[str] = None
     priority: str = "medium"
     deadline: Optional[datetime] = None
     assigned_to: Optional[str] = None
     folder_id: Optional[int] = None
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, v):
+        if len(v.strip()) < 1:
+            raise ValueError("Judul tidak boleh kosong")
+        return v.strip()
 
 
 class TaskCreate(TaskBase):
@@ -51,6 +58,15 @@ class FolderCreate(BaseModel):
     color: str = "sunset"
     image_data: str = ""           # base64 data-URL string
 
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v):
+        if len(v.strip()) < 1:
+            raise ValueError("Nama folder tidak boleh kosong")
+        if len(v) > 50:
+            raise ValueError("Nama folder maksimal 50 karakter")
+        return v.strip()
+
 class FolderUpdate(BaseModel):
     name: Optional[str] = None
     type: Optional[str] = None
@@ -83,3 +99,19 @@ class FolderResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+    @field_validator('members', mode='before')
+    def parse_members(cls, v: Any) -> list[str]:
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, dict):
+                    return []
+                return parsed if isinstance(parsed, list) else []
+            except Exception:
+                try:
+                    parsed = ast.literal_eval(v)
+                    return parsed if isinstance(parsed, list) else []
+                except Exception:
+                    return []
+        return v if isinstance(v, list) else []

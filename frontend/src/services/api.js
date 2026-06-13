@@ -178,6 +178,11 @@ function authHeaders(isForm = false) {
 
 async function parseErrorResponse(response) {
   const errorBody = await response.json().catch(() => null)
+  
+  if (Array.isArray(errorBody?.detail)) {
+    return errorBody.detail.map(err => err.msg).join(", ")
+  }
+  
   return errorBody?.detail || errorBody?.message || null
 }
 
@@ -194,17 +199,22 @@ async function handleResponse(response) {
   if (!response.ok) {
     const detail = await parseErrorResponse(response)
     const message = detail || `Request gagal (${response.status})`
+    const isRateLimited = response.status === 429
     const isServerError = response.status >= 500
     const is503 = response.status === 503
 
     throw createApiError(message, {
-      code: is503 ? "SERVICE_UNAVAILABLE" : (isServerError ? "SERVER_ERROR" : "REQUEST_FAILED"),
+      code: isRateLimited
+        ? "RATE_LIMITED"
+        : (is503 ? "SERVICE_UNAVAILABLE" : (isServerError ? "SERVER_ERROR" : "REQUEST_FAILED")),
       status: response.status,
-      userMessage: is503
-        ? "Layanan tidak tersedia saat ini. Silakan coba beberapa saat lagi."
-        : (isServerError
-          ? "Server sedang bermasalah. Coba beberapa saat lagi."
-          : message),
+      userMessage: isRateLimited
+        ? "Terlalu banyak permintaan, silakan coba beberapa saat lagi"
+        : (is503
+          ? "Layanan tidak tersedia saat ini. Silakan coba beberapa saat lagi."
+          : (isServerError
+            ? "Server sedang bermasalah. Coba beberapa saat lagi."
+            : message)),
       isFatal: isServerError,
     })
   }
@@ -400,9 +410,11 @@ export async function checkHealth() {
 }
 
 export async function fetchServiceMetrics(service) {
-  return request(`/${service}/metrics`)
+  // Monolith doesn't have per-service metrics, avoid triggering 401 on /tasks/metrics
+  return request(`/metrics`)
 }
 
 export async function fetchServiceHealth(service) {
-  return request(`/${service}/health`)
+  // Monolith has a single /health endpoint
+  return request(`/health`)
 }

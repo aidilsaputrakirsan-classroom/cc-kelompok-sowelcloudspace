@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react"
 
+const TITLE_MAX_LENGTH = 50
+const TITLE_WARNING_LENGTH = 45
+
 function TaskForm({
   onSubmit,
   editingTask,
@@ -58,6 +61,10 @@ function TaskForm({
       setError("Judul task wajib diisi")
       return
     }
+    if (formData.title.trim().length > TITLE_MAX_LENGTH) {
+      setError(`Judul task maksimal ${TITLE_MAX_LENGTH} karakter`)
+      return
+    }
 
     const taskData = {
       title: formData.title.trim(),
@@ -93,6 +100,8 @@ function TaskForm({
   const selectedFolder = folderOptions.find((folder) => String(folder.id) === String(formData.folderId))
   const selectedFolderMembers = Array.isArray(selectedFolder?.members) ? selectedFolder.members : []
   const hasFolderMembers = selectedFolderMembers.length > 0
+  const titleLength = formData.title.length
+  const showTitleCounter = titleLength >= TITLE_WARNING_LENGTH
 
   const handleVisibleToChange = (member, isChecked) => {
     setFormData((prev) => {
@@ -127,7 +136,18 @@ function TaskForm({
               onChange={handleChange}
               placeholder="Contoh: Deploy ke Cloud Run"
               style={styles.input}
+              maxLength={TITLE_MAX_LENGTH}
             />
+            {showTitleCounter && (
+              <small
+                style={{
+                  ...styles.characterCounter,
+                  color: titleLength >= TITLE_MAX_LENGTH ? "#dc2626" : "#7c5cbf",
+                }}
+              >
+                {titleLength}/{TITLE_MAX_LENGTH} karakter
+              </small>
+            )}
           </div>
           <div style={{ ...styles.field, flex: 1 }}>
             <label style={styles.label}>Priority</label>
@@ -298,6 +318,11 @@ const styles = {
     fontSize: "0.82rem",
     fontWeight: 600,
     color: "#555",
+  },
+  characterCounter: {
+    alignSelf: "flex-end",
+    fontSize: "0.78rem",
+    fontWeight: 600,
   },
   input: {
     padding: "0.65rem 0.85rem",
