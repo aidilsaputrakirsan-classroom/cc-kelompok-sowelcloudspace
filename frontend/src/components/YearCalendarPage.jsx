@@ -70,21 +70,24 @@ function YearCalendarPage({ tasks, year, onOpenFolder }) {
                   const deadline = new Date(task.deadline)
                   return deadline.getDate() === cell.getDate()
                 })
+                const targetFolder = dayTasks.find((task) => task.folder)?.folder
 
                 return (
                   <div key={cell.toISOString()} className="month-card__cell">
                     <strong>{cell.getDate()}</strong>
-                    {dayTasks.slice(0, 2).map((task) => (
+                    {dayTasks.length > 0 && (
                       <button
-                        key={task.id}
                         type="button"
                         className="calendar-pill"
-                        onClick={() => task.folder && onOpenFolder(task.folder.id)}
+                        onClick={() => targetFolder && onOpenFolder(targetFolder.id)}
+                        disabled={!targetFolder}
+                        aria-label={`${dayTasks.length} task pada tanggal ${cell.getDate()}`}
+                        title={`${dayTasks.length} task`}
                       >
-                        {task.title}
+                        {dayTasks.length}
+                        <span className="sr-only"> task</span>
                       </button>
-                    ))}
-                    {dayTasks.length > 2 && <span className="calendar-more">+{dayTasks.length - 2}</span>}
+                    )}
                   </div>
                 )
               })}

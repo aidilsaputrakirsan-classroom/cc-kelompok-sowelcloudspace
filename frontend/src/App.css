@@ -1300,19 +1300,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 5px 8px;
-  border-radius: 10px;
-  font: 700 0.68rem/1.2 "Plus Jakarta Sans", sans-serif;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  word-break: break-all;
-  white-space: normal;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 999px;
+  font: 800 0.78rem/1 "Plus Jakarta Sans", sans-serif;
+  white-space: nowrap;
 }
 
 .calendar-pill {
   border: 0;
   background: #dac6f3;
   color: #553c7c;
+  cursor: pointer;
+  align-self: flex-start;
+  box-shadow: 0 8px 14px rgba(124, 104, 180, 0.16);
+}
+
+.calendar-pill:disabled {
+  cursor: default;
+  opacity: 1;
 }
 
 .calendar-more {
@@ -1938,9 +1945,9 @@
   }
 
   .calendar-pill {
-    justify-content: flex-start;
-    padding: 4px 6px;
-    font-size: 0.62rem;
+    width: 26px;
+    height: 26px;
+    font-size: 0.7rem;
   }
 
   .modal-backdrop {
@@ -2001,7 +2008,6 @@
     min-height: 48px;
   }
 
-  .calendar-pill,
   .calendar-more {
     display: none;
   }
