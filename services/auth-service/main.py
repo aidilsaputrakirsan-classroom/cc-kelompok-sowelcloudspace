@@ -31,8 +31,12 @@ from schemas import (
 # Create tables
 Base.metadata.create_all(bind=engine)
 
-# Logging
-logging.basicConfig(level=logging.INFO)
+from logging_config import setup_logging
+from logging_middleware import RequestLoggingMiddleware
+from metrics import metrics
+
+# Setup structured logging
+setup_logging()
 logger = logging.getLogger("auth-service")
 
 app = FastAPI(
@@ -80,6 +84,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Logging middleware (setelah CORS)
+app.add_middleware(RequestLoggingMiddleware)
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -132,6 +139,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 # =====================
 
 @app.get("/health")
+@app.get("/auth/health")
 def health_check(db: Session = Depends(get_db)):
     """Health check endpoint — cek status auth-service dan database."""
     health = {
@@ -265,4 +273,13 @@ def verify_username(username: str, db: Session = Depends(get_db)):
         "id": user.id,
         "name": user.name,
         "email": user.email,
+    }
+
+
+@app.get("/metrics")
+def get_metrics():
+    """Return application metrics."""
+    return {
+        "service": "auth-service",
+        **metrics.get_metrics(),
     }

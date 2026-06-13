@@ -2,6 +2,8 @@ import { useEffect, useState } from "react"
 
 import { API_URL, getToken, getUserFriendlyErrorMessage, isApiError } from "../services/api"
 
+const FOLDER_NAME_MAX_LENGTH = 50
+
 const DEFAULT_FORM = {
   name: "",
   type: "personal",
@@ -16,6 +18,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
   const [formData, setFormData] = useState(DEFAULT_FORM)
   const [isVerifying, setIsVerifying] = useState(false)
   const [memberError, setMemberError] = useState("")
+  const [formError, setFormError] = useState("")
   const isGroupFolder = formData.type === "group"
 
   useEffect(() => {
@@ -23,6 +26,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
       setFormData(DEFAULT_FORM)
       setIsVerifying(false)
       setMemberError("")
+      setFormError("")
       return
     }
 
@@ -38,12 +42,14 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
       })
       setIsVerifying(false)
       setMemberError("")
+      setFormError("")
       return
     }
 
     setFormData(DEFAULT_FORM)
     setIsVerifying(false)
     setMemberError("")
+    setFormError("")
   }, [initialData, isOpen, mode])
 
   if (!isOpen) return null
@@ -73,6 +79,10 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
       })
 
       if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error("Terlalu banyak permintaan, silakan coba beberapa saat lagi")
+        }
+
         if (response.status === 404) {
           throw new Error(`Username '${normalizedName}' tidak terdaftar!`)
         }
@@ -154,7 +164,20 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
     if (isVerifying) return
 
     const pendingInput = formData.memberInput.trim()
+    const folderName = formData.name.trim()
     let nextMembers = formData.type === "group" ? formData.members : []
+
+    setFormError("")
+
+    if (!folderName) {
+      setFormError("Nama folder wajib diisi")
+      return
+    }
+
+    if (folderName.length > FOLDER_NAME_MAX_LENGTH) {
+      setFormError(`Nama folder maksimal ${FOLDER_NAME_MAX_LENGTH} karakter`)
+      return
+    }
 
     if (formData.type === "group" && pendingInput) {
       const result = await addMember(pendingInput)
@@ -165,7 +188,7 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
     }
 
     await onSubmit({
-      name: formData.name.trim(),
+      name: folderName,
       type: formData.type,
       description: formData.description.trim() || "Folder reminder baru.",
       members: formData.type === "group" ? nextMembers.filter(Boolean) : [],
@@ -186,14 +209,22 @@ function FolderModal({ isOpen, mode = "create", initialData = null, onClose, onS
         </div>
 
         <form className="modal-form" onSubmit={handleSubmit}>
+          {formError ? <div className="modal-form__error">{formError}</div> : null}
+
           <label>
             <span>Nama folder</span>
             <input
               type="text"
               value={formData.name}
-              onChange={(event) => setFormData((prev) => ({ ...prev, name: event.target.value }))}
+              onChange={(event) => {
+                setFormData((prev) => ({ ...prev, name: event.target.value }))
+                if (formError) {
+                  setFormError("")
+                }
+              }}
               placeholder="Contoh: tugas studio"
               required
+              maxLength={FOLDER_NAME_MAX_LENGTH}
             />
           </label>
 
