@@ -124,7 +124,7 @@ export default function StatusPage() {
       <header className="status-page__header">
         <div>
           <h1 className="status-page__title">Service Status Dashboard</h1>
-          <p className="status-page__subtitle">Pemantauan real-time microservices Sowel Cloudspace</p>
+          <p className="status-page__subtitle">Pemantauan real-time Aplikasi SowelTask</p>
         </div>
         <div className="status-page__controls">
           <div className="status-page__refresh-indicator" aria-label="Auto refresh countdown">
